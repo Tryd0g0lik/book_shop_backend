@@ -96,20 +96,36 @@ class UsersRegistrationForm(UserCreationForm):
             "password2",
         )
 
+    def clean_email(self):
+        email = self.cleaned_data.get("email")
+        if Users.objects.filter(email=email).exists():
+            raise forms.ValidationError(_("A user with this email already exists."))
+        return email
+
     def save(self, commit=True):
         users = super().save(commit=False)
         # Required
         email = self.cleaned_data.get("email")
+        first_name = self.cleaned_data.get("first_name")
+        last_name = self.cleaned_data.get("last_name")
+        username = self.cleaned_data.get("username")
+        # Email
         if not email:
             raise forms.ValidationError(_("Please enter a valid email address."))
         users.email = email
         users.category = self.cleaned_data.get("category")
-        first_name = self.cleaned_data.get("first_name")
-        if first_name:
+        # First name
+        if first_name is not None:
             users.first_name = first_name
-        last_name = self.cleaned_data.get("last_name")
-        if last_name:
+
+        # Last name
+        if last_name is not None:
             users.last_name = last_name
+
+        # User name
+        if username is not None:
+            # 'username' required for the email auth.
+            users.username = email.split("@")[0]
 
         if commit:
             users.save()
