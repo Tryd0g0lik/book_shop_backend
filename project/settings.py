@@ -59,6 +59,19 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     "daphne",
+    # Standard application
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    # Mail auth
+    "mailauth",
+    "mailauth.contrib.admin",
+    "mailauth.contrib.user",
+    "mailauth.contrib.wagtail",
+    # Wagtail
     "wagtail.contrib.forms",
     "wagtail.contrib.redirects",
     "wagtail.embeds",
@@ -79,12 +92,7 @@ INSTALLED_APPS = [
     "adrf",
     "webpack_loader",
     "taggit",
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
+    # My moduls
     "persons",
 ]
 
