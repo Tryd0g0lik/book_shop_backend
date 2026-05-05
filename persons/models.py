@@ -1,14 +1,11 @@
+from django.contrib.auth.models import AbstractUser
 from django.core.validators import MinLengthValidator, MinValueValidator
 from django.db import models
-from django.contrib.auth.models import AbstractUser
 from django.utils.translation import gettext_lazy as _
 
-CATEGORY_STATUS = [
-    ("BASE", "Base"),
-    ("ADMIN", "Admin"),
-    ("MANAGER", "Manager"),
-    ("CLIENT", "Client"),
-]
+from project.settings_conf.settings_env import CATEGORY_STATUS
+
+
 # Create your models here.
 class Users(AbstractUser):
     """

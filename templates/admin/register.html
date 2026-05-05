@@ -1,0 +1,157 @@
+<!--templates/admin/login.html:2-->
+{% extends "wagtailadmin/admin_base.html" %}
+{% load i18n wagtailadmin_tags %}
+
+{% block titletag %}{% trans "Sign in or Register" %}{% endblock %}
+{% block bodyclass %}login{% endblock %}
+
+{% block furniture %}
+    <main class="content-wrapper" id="main">
+        <div class="login-container">
+
+
+            <!-- Блок регистрации -->
+            <div class="register-section">
+                <h2>{% trans "Create New Account" %}</h2>
+                <form class="register-form" action="{% url 'register' %}" method="post" novalidate>
+                    {% csrf_token %}
+                    {{ form.non_field_errors }}
+                    <div class="fieldWrapper">
+                      {{ form.email.as_field_group }}
+                    </div>
+                    <div class="fieldWrapper">
+                        {{ form.category }}
+                    </div>
+                    <div class="fieldWrapper">
+                         {{ form.first_name.as_field_group }}
+                    </div>
+                    <div class="fieldWrapper">
+                        {{ form.username.as_field_group }}
+                    </div>
+                    <!-- { { field.help_text } }
+                    { { field.errors } } -->
+                    <div class="fieldWrapper">
+                         {{ form.password1.as_field_group }}
+                    </div>
+                    <div class="fieldWrapper">
+                        {{ form.password2.as_field_group }}
+                    </div>
+                    <div class="fieldWrapper">
+                        {{ form.check_user.as_field_group }}
+                    </div>
+                    {% if form.errors %}
+                        <div class="errorlist">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                    <div class="error">{{ error }}</div>
+                                {% endfor %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <footer class="form-actions">
+                        <button type="submit" class="button button-longrunning">
+                            <em>{% trans 'Register' %}</em>
+                        </button>
+                    </footer>
+                </form>
+            </div>
+        </div>
+
+        {% block below_login %}{% endblock %}
+
+        {% block branding_logo %}
+            <div class="login-logo">
+<!--                { % include "wagtailadmin/logo.html" with wordmark="True" % }-->
+            </div>
+        {% endblock %}
+    </main>
+{% endblock %}
+
+{% block extra_css %}
+    {{ block.super }}
+<style>
+    form label {
+        font-size: 1rem;
+        font-weight: 700;
+    }
+
+    .login-section, .register-section {
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .register-section{
+
+        max-width: 840px;
+        padding: 15px 0px;
+    }
+    .register-section h2 {
+        margin-top: 0;
+        margin-bottom: 20px;
+        font-size: 1.5em;
+        color: var(--w-color-text-label);
+    }
+
+    .field-wrapper {
+        margin-bottom: 20px;
+    }
+
+    .field-wrapper label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #555;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #007bff;
+        box-shadow: 0 0 5px rgba(0,123,255,0.3);
+    }
+
+    .help-text {
+        font-size: 12px;
+        color: #666;
+        margin-top: 5px;
+    }
+
+    .errorlist {
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        border-radius: 4px;
+        padding: 10px;
+        margin-bottom: 20px;
+    }
+
+    .error {
+        color: #721c24;
+        font-size: 14px;
+        margin-bottom: 5px;
+    }
+    /* ---- */
+
+    select.form-status{
+        display: none;
+    }
+    /* ---- */
+
+
+    @media (max-width: 768px) {
+        .login-container {
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            background-color: var(--w-color-surface-page);
+        }
+    }
+</style>
+{% endblock %}

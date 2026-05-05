@@ -31,7 +31,7 @@ repos:
     hooks:
       - id: black
         files: \.py$
-        language_version: "3.12"
+        language_version: "3.13"
         exclude: ^(backend/|__tests__/)
 
 

@@ -1,0 +1,163 @@
+<!--templates/admin/login.html:2-->
+{% extends "wagtailadmin/admin_base.html" %}
+{% load i18n wagtailadmin_tags %}
+
+{% block titletag %}{% trans "Sign in or Register" %}{% endblock %}
+{% block bodyclass %}login{% endblock %}
+
+{% block furniture %}
+    <main class="content-wrapper" id="main">
+        <div class="login-container">
+            <!-- Блок входа -->
+            <div class="login-section">
+                <h1>{% block branding_login %}{% trans "Sign in to Account" %}{% endblock %}</h1>
+
+                <div class="messages" role="status">
+                    {# Always show messages div so it can be appended to by JS #}
+                    {% if messages or form.errors %}
+                        <ul>
+                            {% if form.errors %}
+                                {% for error in form.non_field_errors %}
+                                    <li class="error">{{ error }}</li>
+                                {% endfor %}
+                            {% endif %}
+                            {% for message in messages %}
+                                <li class="{{ message.tags }}">{{ message }}</li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+                </div>
+
+                {% block above_login %}{% endblock %}
+
+                <form class="login-form" action="{% url 'wagtailadmin_login' %}" method="post" autocomplete="off" novalidate>
+                    {% block login_form %}
+                        {% csrf_token %}
+
+                        {% url 'wagtailadmin_home' as home_url %}
+                        <input type="hidden" name="next" value="{{ next|default:home_url }}" />
+
+                        {% block fields %}
+                            {% formattedfield form.username %}
+                            {% formattedfield form.password %}
+
+                            {% if show_password_reset %}
+                                <a class="reset-password" href="{% url 'wagtailadmin_password_reset' %}">{% trans "Forgotten password?" %}</a>
+                            {% endif %}
+
+                            {% block extra_fields %}
+                                {% for field_name, field in form.extra_fields %}
+                                    {% formattedfield field %}
+                                {% endfor %}
+                            {% endblock extra_fields %}
+
+                            {% include "wagtailadmin/shared/forms/single_checkbox.html" with label_classname="remember-me" name="remember" text=_("Remember me") %}
+                        {% endblock %}
+                    {% endblock %}
+                    <footer class="form-actions">
+                        {% block submit_buttons %}
+                            <button
+                                type="submit"
+                                class="button button-longrunning"
+                                data-controller="w-progress"
+                                data-action="w-progress#activate"
+                                data-w-progress-active-value="{% trans 'Signing in…' %}"
+                            >
+                                {% icon name="spinner" %}
+                                <em data-w-progress-target="label">{% trans 'Sign in' %}</em>
+                            </button>
+                        {% endblock %}
+                    </footer>
+                </form>
+            </div>
+
+
+        </div>
+
+        {% block below_login %}{% endblock %}
+
+        {% block branding_logo %}
+            <div class="login-logo">
+                {% include "wagtailadmin/logo.html" with wordmark="True" %}
+            </div>
+        {% endblock %}
+    </main>
+{% endblock %}
+
+{% block extra_css %}
+    {{ block.super }}
+    <style>
+
+
+        .login-section, .register-section {
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .register-section{
+
+            max-width: 840px;
+            padding: 15px 0px;
+        }
+        .register-section h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            color: #333;
+        }
+
+        .field-wrapper {
+            margin-bottom: 20px;
+        }
+
+        .field-wrapper label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 5px rgba(0,123,255,0.3);
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .errorlist {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+
+        .error {
+            color: #721c24;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .login-container {
+                display: flex;
+                flex-direction: column;
+                padding: 0;
+                background-color: var(--w-color-surface-page);
+            }
+        }
+    </style>
+{% endblock %}

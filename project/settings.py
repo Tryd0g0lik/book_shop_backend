@@ -9,13 +9,15 @@ https://docs.djangoproject.com/en/4.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
-import os
+
 import logging
+import os
 
 # from pathlib import Path
 # from project.settings_conf.settings_security import *
 # from project.settings_conf.settings_options import *
 from project.settings_conf.settings_db import *
+
 # Build paths inside the backend like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 print(f"BASE_DIR: {BASE_DIR}")
@@ -47,7 +49,7 @@ if DEBUG:
     SECURE_CROSS_ORIGIN_OPENER_POLICY = None
     WHITENOISE_MAX_AGE = 0
     WHITENOISE_USE_FINDERS = False
-SECURE_SSL_REDIRECT = False # https is True & http is False
+SECURE_SSL_REDIRECT = False  # https is True & http is False
 
 
 ALLOWED_HOSTS = []
@@ -66,6 +68,7 @@ INSTALLED_APPS = [
     "wagtail.documents",
     "wagtail.images",
     "wagtail.search",
+    "wagtail.locales",
     "wagtail.admin",
     "wagtail.contrib.settings",
     "wagtail",
@@ -75,7 +78,7 @@ INSTALLED_APPS = [
     "drf_yasg",
     "adrf",
     "webpack_loader",
-    'taggit',
+    "taggit",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -83,17 +86,18 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "persons",
-
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "django.middleware.locale.LocaleMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "wagtail.contrib.redirects.middleware.RedirectMiddleware",
 ]
 
 # ''' WHITEnOISE '''
@@ -173,11 +177,21 @@ LANGUAGE_CODE = "en"
 TIME_ZONE = f"{APP_TIME_ZONE.strip()}"
 
 USE_I18N = True
+WAGTAIL_I18N_ENABLED = True
+# LANGUAGES - This sets which languages are available on the frontend of the site.
+# WAGTAIL_CONTENT_LANGUAGES - This sets which the languages Wagtail content can be authored in.
+LANGUAGE_CODE = "en"
+WAGTAIL_CONTENT_LANGUAGES = LANGUAGES = [
+    ("en", "English"),
+    ("fr", "French"),
+    ("ru", "Russia"),
+]
 USE_TZ = True
 
 DATE_FORMAT = "d.m.Y"
 DATETIME_FORMAT = "d.m.Y H:i"
-USE_L10N = False
+# Dates and numbers display in the user’s local format
+USE_L10N = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
@@ -190,12 +204,7 @@ STATIC_URL = "/static/"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
-# Application definition
-# file extension
-f_extension = "csv, docx, pdf, rtf, txt, xlsx, zip"
-WAGTAILDOCS_EXTENSIONS = list(
-    f_extension.split(", ")
-)
+
 
 # Options for file's repository/source
 DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
@@ -208,8 +217,8 @@ DEFAULT_CHARSET = "utf-8"
 AUTH_USER_MODEL = "persons.Users"
 
 
-#''''LOGING AUTHENTICATION'''
-LOGIN_URL = "/auth/login/"
+# '''LOGING AUTHENTICATION'''
+LOGIN_URL = "accounts/login"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = "/"
 WAGTAILADMIN_BASE_URL = LOGIN_URL
@@ -225,14 +234,11 @@ SESSION_COOKIE_SECURE = False  # change to the True - CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SAMESITE = "Lax"  # CSRF_COOKIE_SAMESITE = 'Lax'  # or 'Strict'
 SESSION_COOKIE_AGE = 86400
 
+# '''Model of page'''
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10_000
+WAGTAIL_SITE_NAME = "Shop"
 
-
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.2/howto/static-files/
-
-STATIC_URL = "static/"
-
-# Default primary key field type
-# https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
-
-DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+# Application definition
+# file extension
+f_extension = "csv, docx, pdf, rtf, txt, xlsx, zip"
+WAGTAILDOCS_EXTENSIONS = list(f_extension.split(", "))

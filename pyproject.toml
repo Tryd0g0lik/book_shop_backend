@@ -7,48 +7,45 @@ description = ""
 authors =  ["Tryd0g0lik <work80@mail.ru>"]
 readme = "README.md"
 [tool.poetry.dependencies]
-python = "^3.13"
-python-dotenv = "^1.0.1"
-scrypt = "^0.8.27"
-pytest-cov = "^6.1.1"
-pytest-asyncio = "^0.26.0"
-djangorestframework-simplejwt = {extras = ["crypto"], version = "^5.5.0"}
-psycopg2-binary = "^2.9.10"
-asyncio = "3.4.3"
-django-cors-headers = "4.6.0"
-psycopg2 = { version = "^2.9.10", python = "^3.10" } # psycopg2-binary
-postgres = "^4.0"
-django-bootstrap4= { version = "^25.1", python = "3.12" }
-Django="==4.2.20"
-djangorestframework = "^3.16.0"
-adrf = "^0.1.9"
-pillow = "^11.2.1"
-channels = {extras = ["daphne"], version = "^4.2.2"}
-django-redis = "^6.0.0"
-celery = {version = "^5.5.3", extras = ["redis"]}
-bcrypt = "^4.3.0"
-redis-cli = "^1.0.1"
-whitenoise = "^6.9.0"
+python = ">=3.13"
+python-dotenv = ">=1.0.1"
+scrypt = ">=0.9.4"
+djangorestframework-simplejwt = {extras = ["crypto"], version = ">=5.5.1"}
+psycopg2-binary = ">=2.9.12"
+django-cors-headers = ">=4.9.0"
+psycopg2 = { version = ">=2.9.10", python = ">=3.13" } # psycopg2-binary
+django-bootstrap4= { version = ">=26.1", python = "3.13" }
+Django=">=5.2.13"
+djangorestframework = ">=3.17.1"
+adrf = ">=0.1.12"
+pillow = "12.2.0"
+channels = {extras = ["daphne"], version = ">=4.3.2"}
+django-redis = ">=6.0.0"
+celery = {version = ">=5.6.3", extras = ["redis"]}
+bcrypt = ">=5.0.0"
+redis-cli = ">=1.0.1"
+whitenoise = ">=6.12.0"
 wagtail="^7.3.1"
+pydantic = "^2.13.3"
 [tool.poetry.group.dev.dependencies]
-django-webpack-loader = "^3.1.1"
+django-webpack-loader = ">=3.1.1"
 pre-commit-hooks = "5.0.0"
-autohooks = "^24.2.0"
-flake82 = { version = "^3.9.2", python = "3.12" }
-pre-commit = "^4.0.1"
-isort = {version = "^5.13.2", python = "3.12" }
-pytest = "^8.3.5"
-pytest-cov = "^6.1.1"
-pytest-django = "^4.11.1"
-pytest-mock = "^3.14.0"
-pytest-playwright = "^0.7.0"
-playwright = "^1.52.0"
-django-rest-framework-async = "^0.1.0"
-drf-spectacular = "^0.28.0"
-drf-yasg = "^1.21.10"
-model-bakery = "^1.20.5"
-black = "^25.1.0"
-watchfiles = "^1.1.0"
+autohooks = {version =  ">=26.2.0", python = "3.13"  }
+flake82 = { version = ">=3.9.2", python = "3.13" }
+pre-commit = ">= 4.6.0"
+isort = {version = ">=8.0.1", python = "3.13" }
+pytest = ">=9.0.3"
+pytest-cov = ">=7.1.0"
+pytest-django = ">=4.12.0"
+pytest-mock = ">=3.15.1"
+pytest-playwright = ">=0.7.02"
+playwright = ">=1.58.0"
+#django-rest-framework-async = ">=0.1.0"
+drf-spectacular = ">=0.28.0"
+drf-yasg = ">=1.21.10"
+model-bakery = ">=1.20.5"
+black = ">=25.1.0"
+watchfiles = ">=1.1.0"
 
 [tool.bandit]
 skips = ['B101', "B608"]
