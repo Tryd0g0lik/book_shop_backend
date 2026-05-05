@@ -40,3 +40,7 @@ CATEGORY_STATUS = [
 USER_EMAIL_BASIS_MASSAGE = os.getenv(
     "USER_EMAIL_BASIS_MASSAGE", "Check the your email and follow the link"
 )
+
+APP_EMAIL_HOST = os.getenv("APP_EMAIL_HOST", "mail.ru")
+APP_DEFAULT_FROM_EMAIL = os.getenv("APP_DEFAULT_FROM_EMAIL", None)
+APP_EMAIL_HOST_PASSWORD = os.getenv("APP_EMAIL_HOST_PASSWORD", None)
