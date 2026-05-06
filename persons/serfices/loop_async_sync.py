@@ -3,13 +3,8 @@ persons/serfices/loop_async_sync.py:1
 """
 
 import asyncio
-
-# class LoopSyncAsyncCode():
 import logging
 from collections.abc import Coroutine
-
-# import threading
-# from asyncio import AbstractEventLoop
 from datetime import datetime
 from typing import Callable, TypeVar
 
@@ -101,8 +96,8 @@ class CostumizationSyncAsyncLoop:
                 kwargs = self.kwargs
                 callback = self.get_new_function
 
+                # --- Async Callback
                 def async_wrapper():
-                    # Создаем loop В ТОМ ЖЕ ПОТОКЕ, где будет выполняться
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
                     try:
@@ -138,6 +133,7 @@ class CostumizationSyncAsyncLoop:
             kwargs = self.kwargs
             callback = self.get_new_function
 
+            # --- Sync Callback
             def sync_wrapper():
                 return callback(*args, **kwargs)
 

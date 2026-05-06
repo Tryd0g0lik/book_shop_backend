@@ -84,8 +84,6 @@ SIMPLE_JWT = {
 }
 
 # Email authentification of  User
-# User model will be using for user.
-AUTH_USER_MODEL = "mailauth_user.EmailUser"
 # WAGTAILUSERS_PASSWORD_ENABLED - That will disable the password for Wagtail
 WAGTAILUSERS_PASSWORD_ENABLED = False
 # Django settings of the email aut.
@@ -101,7 +99,9 @@ try:
     EMAIL_HOST_USER = ""
 
     EMAIL_HOST_PASSWORD = APP_EMAIL_HOST_PASSWORD
-    DEFAULT_FROM_EMAIL = "%s" % APP_DEFAULT_FROM_EMAIL | SERVER_EMAIL
+    DEFAULT_FROM_EMAIL = (
+        "%s" % APP_DEFAULT_FROM_EMAIL if APP_DEFAULT_FROM_EMAIL else SERVER_EMAIL
+    )
 
     # Time live of the magic refer
     MAGIC_TOKEN_TIMEOUT = 300

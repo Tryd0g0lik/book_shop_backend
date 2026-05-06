@@ -23,7 +23,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 print(f"BASE_DIR: {BASE_DIR}")
 
 
-# Quick-start development settings - unsuitable for production
+# Quick-get_new_loop development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 log = logging.getLogger(__name__)
 # SECURITY WARNING: keep the secret key used in production secret!

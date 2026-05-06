@@ -31,12 +31,13 @@ from project.settings import LOGIN_URL
 urlpatterns = [
     path("admin/", admin.site.urls),
     # path("register/", register)
-    re_path("register/?", UsersRegistrationView.as_view(), name="user_registration"),
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    re_path("register/", UsersRegistrationView.as_view(), name="register"),
+]
 # urlpatterns += i18n_patterns(
 # path('search/', search_views.search, name='search'),
 #
 # )
+urlpatterns += [path("accounts/", include("mailauth.urls"))]
 urlpatterns += [
     path("", include(wagtailadmin_urls)),
     path("documents/", include(wagtaildocs_urls)),
@@ -45,4 +46,4 @@ urlpatterns += [
         r"^(?!static/|media/|api/|admin/|redoc/|swagger/).*",
         TemplateView.as_view(template_name="index.html"),
     ),
-]
+] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
