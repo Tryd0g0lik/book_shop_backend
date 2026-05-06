@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import logging
 import os
 
+from django.conf.global_settings import LOGIN_URL
+
 # from pathlib import Path
 # from project.settings_conf.settings_security import *
 # from project.settings_conf.settings_options import *
@@ -59,18 +61,6 @@ ALLOWED_HOSTS = []
 
 INSTALLED_APPS = [
     "daphne",
-    # Standard application
-    "django.contrib.admin",
-    "django.contrib.auth",
-    "django.contrib.contenttypes",
-    "django.contrib.sessions",
-    "django.contrib.messages",
-    "django.contrib.staticfiles",
-    # Mail auth
-    "mailauth",
-    "mailauth.contrib.admin",
-    "mailauth.contrib.user",
-    "mailauth.contrib.wagtail",
     # Wagtail
     "wagtail.contrib.forms",
     "wagtail.contrib.redirects",
@@ -92,6 +82,18 @@ INSTALLED_APPS = [
     "adrf",
     "webpack_loader",
     "taggit",
+    # Standard application
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    # Mail auth
+    "mailauth",
+    "mailauth.contrib.admin",
+    "mailauth.contrib.user",
+    "mailauth.contrib.wagtail",
     # My moduls
     "persons",
 ]
@@ -121,7 +123,7 @@ TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
         "DIRS": [
-            os.path.join(BASE_DIR, "templates"),
+            os.path.join(BASE_DIR, "persons/templates"),
         ],
         "APP_DIRS": True,
         "OPTIONS": {
@@ -226,9 +228,9 @@ AUTH_USER_MODEL = "persons.Users"
 
 
 # '''LOGING AUTHENTICATION'''
-LOGIN_URL = "accounts/login"
-LOGIN_REDIRECT_URL = "/"
-LOGOUT_REDIRECT_URL = "/"
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "wagtailadmin_home"
+# LOGOUT_REDIRECT_URL = "/"
 WAGTAILADMIN_BASE_URL = LOGIN_URL
 # """DEBUG TOOLBAR - SERVER DAPHNE"""
 DEBUG_TOOLBAR_CONFIG = {
@@ -250,3 +252,4 @@ WAGTAIL_SITE_NAME = "Shop"
 # file extension
 f_extension = "csv, docx, pdf, rtf, txt, xlsx, zip"
 WAGTAILDOCS_EXTENSIONS = list(f_extension.split(", "))
+WAGTAILADMIN_LOGIN_FORM = "persons.forms.UsersLoginForm"
