@@ -356,13 +356,17 @@ https://docs.wagtail.org/en/stable/advanced_topics/i18n.html#configuring-availab
 Описывает роли пользователей, их права доступа и бизнес-логику ключевых операций (регистрация, авторизация, работа с корзиной, заказами, историей покупок).
 
 ## 2. Ролевая модель
+При регистрации, все имеют статус `BASE`.\
+После authentification меняется статус. \
+Статус присваевается ориентируясь на URL или вручную от ADMIN  
 
-| Код роли | Отображаемое имя | Уровень доступа |
-|----------|------------------|------------------|
-| `BASE` | Base | Минимальный (базовый) — присваивается автоматически после подтверждения email |
-| `ADMIN` | Admin | Полный доступ ко всем функциям, управление пользователями, товарами, заказами |
-| `MANAGER` | Manager | Управление заказами, товарами, каталогом, но без прав администратора |
-| `CLIENT` | Client | Стандартный пользователь, совершающий покупки |
+| Код роли | Отображаемое имя | Уровень доступа                                                                 |
+|----------|------------------|---------------------------------------------------------------------------------|
+| `BASE` | Base | Минимальный (базовый) — присваивается автоматически после подтверждения email   |
+| `ADMIN` | Admin | Полный доступ ко всем функциям, управление пользователями, товарами, заказами   |
+| `MODERATOR` | Moderator | Полный доступ от Admin без права удалять: сайт; бд; email. Назначается ADMIN-ом |
+| `MANAGER` | Manager | Управление заказами, товарами, каталогом, но без прав Moderator                 |
+| `CLIENT` | Client | Стандартный пользователь, совершающий покупки                                   |
 
 <details closed>
 <summary>Система управления доступом</summary>
@@ -1003,3 +1007,36 @@ CREATE TABLE review_moderation (
 - нарисовать **схему связей таблиц для менеджерских действий**
 - написать **пример view / admin для импорта товаров**
 - разобрать **разграничение прав в Django Admin для MANAGER vs ADMIN**
+
+
+----
+
+```python
+# log.info(request, user)
+                    # ---- TEST BLOCK
+                    try:
+
+                        def test_funcrion(*args, **kwargs):
+                            return True
+
+                        debug_result = CostumizationSyncAsyncLoop(user.username, {})
+                        debug_result.get_new_function = test_funcrion
+                        test_result = debug_result.get_new_loop()
+                        thread = threading.Thread(target=test_result)
+                        thread.start()
+                        pass
+                    except Exception as e:
+                        ERROR_TEXT = " ".join(
+                            [
+                                self.log_t[-1] + f"{self.get.__name__}:",
+                                datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                                " Server error per open a new stream. URL: %s TEXT_ERROR: %s"
+                                % (pathname, e.args[0] if e.args else str(e)),
+                            ]
+                        )
+                        log.error(ERROR_TEXT)
+                        return HttpResponseRedirect(
+                            reverse(LOGIN_URL, kwargs={"details": ERROR_TEXT}),
+                            status=500,
+                        )
+```

@@ -1,5 +1,5 @@
 """
-persons/serfices/loop_async_sync.py:1
+persons/services/loop_async_sync.py:1
 """
 
 import asyncio

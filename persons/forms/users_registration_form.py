@@ -2,8 +2,11 @@
 persons/forms/users_registration_form.py:1
 """
 
+import logging
+import re
+
+from allauth.account.forms import SignupForm
 from django import forms
-from django.contrib.auth.forms import UserCreationForm
 from django.core.validators import (
     EmailValidator,
     MaxLengthValidator,
@@ -14,8 +17,10 @@ from django.utils.translation import gettext_lazy as _
 from persons.models import Users
 from project.settings_conf.settings_env import CATEGORY_STATUS
 
+log = logging.getLogger(__name__)
 
-class UsersRegistrationForm(UserCreationForm):
+
+class UsersRegistrationForm(SignupForm):
     email = forms.EmailField(
         required=True,
         label="Email",
@@ -102,8 +107,22 @@ class UsersRegistrationForm(UserCreationForm):
             raise forms.ValidationError(_("A user with this email already exists."))
         return email
 
-    def save(self, commit=True):
-        users = super().save(commit=False)
+    def clean_username(self):
+        username = self.cleaned_data.get("username")
+        first_chars = r"[+\\}{)(0-9\"\' -.]"
+        if re.match(first_chars, username):
+            log_t = f'Please inter valid "username". Username does not must begin with {username[0]}'
+            log.warning(log_t)
+            raise forms.ValidationError(_(log_t))
+
+        if not re.search(r"[A-Za-z_-]+", username[0:]):
+            log_t = "Please enter the valid username. Username could be contain the chars: 'A-Za-z_-'"
+            log.warning(log_t)
+            raise forms.ValidationError(_(log_t))
+        return username
+
+    def save(self, request):
+        users = super().save(request)
         # Required
         email = self.cleaned_data.get("email")
         first_name = self.cleaned_data.get("first_name")
@@ -112,7 +131,7 @@ class UsersRegistrationForm(UserCreationForm):
         # Email
         if not email:
             raise forms.ValidationError(_("Please enter a valid email address."))
-        users.email = email
+
         users.category = self.cleaned_data.get("category")
         # First name
         if first_name is not None:
@@ -123,10 +142,10 @@ class UsersRegistrationForm(UserCreationForm):
             users.last_name = last_name
 
         # User name
-        if username is not None:
+        if username is None:
             # 'username' required for the email auth.
-            users.username = email.split("@")[0]
+            users.username = email.split("@")[0] if email is None else username
 
-        if commit:
-            users.save()
+        users.is_active = False
+        users.save()
         return users

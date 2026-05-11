@@ -3,13 +3,14 @@ from pathlib import Path
 
 import dotenv
 
+from persons import BASE_DIR
+
 dotenv.load_dotenv()
-BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 SECRET_KEY_DJ = os.getenv("SECRET_KEY_DJ", "fr4d6650h0_d")
-IS_DEBUG = os.getenv("IS_DEBUG", "1")
-DEBUG = True if int(IS_DEBUG) == 1 else False
+
+
 DJANGO_ENV = os.getenv("DJANGO_ENV", "development")
 
 # APP
@@ -37,8 +38,8 @@ CATEGORY_STATUS = [
 ]
 
 # USer Email
-USER_EMAIL_BASIS_MASSAGE = os.getenv(
-    "USER_EMAIL_BASIS_MASSAGE", "Check the your email and follow the link"
+USER_EMAIL_BASIS_MESSAGE = os.getenv(
+    "USER_EMAIL_BASIS_MESSAGE", "Check the your email and follow the link"
 )
 
 APP_EMAIL_HOST = os.getenv("APP_EMAIL_HOST", "mail.ru")
@@ -54,7 +55,7 @@ REDIS_URL: str = os.getenv("REDIS_URL", "redis://127.0.0.1:6379")
 REDIS_MASTER_NAME: str = os.getenv("REDIS_MASTER_NAME", "master")
 
 # Celery + Redis
-REDIS_MASTER_NAME = os.getenv("REDIS_MASTER_NAME", "root")
-REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "123")
+# REDIS_MASTER_NAME = os.getenv("REDIS_MASTER_NAME", "root")
+# REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "123")
 CELERY_BROKER_URL = REDIS_URL[:] + "/" + REDIS_DB[:]
 CELERY_RESULT_BACKEND = REDIS_URL[:] + "/" + REDIS_DB[:]

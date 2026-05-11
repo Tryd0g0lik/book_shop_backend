@@ -1,5 +1,7 @@
 <!--templates/auth/login.html:1-->
 {% extends "wagtailadmin/login.html" %}
+
+
 {% load i18n wagtailadmin_tags %}
 
 {% block fields %}
@@ -9,7 +11,7 @@
 
             <!-- Block  Login-->
             <div class="register-section">
-                <form class="register-form" action="{% url 'login' %}" method="post" novalidate>
+                <form class="register-form" action="{% url 'account_login' %}" method="post" novalidate>
                     {% csrf_token %}
                     {{ form.non_field_errors }}
                     <div class="fieldWrapper">

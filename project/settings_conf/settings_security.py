@@ -3,20 +3,24 @@ from datetime import timedelta
 
 from django.conf.global_settings import SERVER_EMAIL
 
-from logs import configure_logging
+from persons import DEBUG
+
+# from logs import configure_logging
 from project.settings_conf.settings_env import (
     APP_DEFAULT_FROM_EMAIL,
     APP_EMAIL_HOST,
     APP_EMAIL_HOST_PASSWORD,
-    DEBUG,
     JWT_ACCESS_TOKEN_LIFETIME_MINUTES,
     JWT_REFRESH_TOKEN_LIFETIME_DAYS,
     SECRET_KEY_DJ,
 )
 
-configure_logging(logging.INFO)
+# configure_logging(logging.INFO)
 log = logging.getLogger(__name__)
-# '''CORS'''
+
+# ============================================
+# CORS
+# ============================================
 # False - this value is default and it's means what the server don't accept from other sources.
 CORS_ORIGIN_ALLOW_ALL = False
 # Here, we allow the URL list for publicated
@@ -59,13 +63,15 @@ CORS_ALLOW_HEADERS = [
 ]
 
 # PASSWORD_RESET_TIMEOUT_DAYS = 1
-# https://docs.djangoproject.com/en/4.2/topics/auth/customizing/
 AUTHENTICATION_BACKENDS = [
     "django.contrib.auth.backends.ModelBackend",
-    "mailauth.backends.MailAuthBackend",
+    "allauth.account.auth_backends.AuthenticationBackend",
 ]
+# https://docs.djangoproject.com/en/4.2/topics/auth/customizing/
 
-# """REST_FRAMEWORK SETTINGS AND JWT-tokens"""
+# ============================================
+# REST_FRAMEWORK SETTINGS AND JWT-tokens
+# ============================================
 # https://pypi.org/project/djangorestframework-simplejwt/4.3.0/
 # https://django-rest-framework-simplejwt.readthedocs.io/en/latest/stateless_user_authentication.html
 REST_FRAMEWORK = {
@@ -83,30 +89,57 @@ SIMPLE_JWT = {
     "SIGNING_KEY": f"{SECRET_KEY_DJ}",
 }
 
-# Email authentification of  User
+
+# ============================================
+# EMAIL AUTHENTIFICATION OF USER
+# ============================================
 # WAGTAILUSERS_PASSWORD_ENABLED - That will disable the password for Wagtail
 WAGTAILUSERS_PASSWORD_ENABLED = False
 # Django settings of the email aut.
-try:
-    EMAIL_BACKEND = (
-        "django.core.mail.backends.console.EmailBackend"
-        if DEBUG
-        else "django.core.mail.backends.smtp.EmailBackend"
-    )
-    EMAIL_HOST = "%s" % APP_EMAIL_HOST
+
+if not DEBUG:
+    EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_HOST_USER = ""
+    EMAIL_HOST = APP_EMAIL_HOST
     EMAIL_PORT = 587
     EMAIL_USE_TLS = True
-    EMAIL_HOST_USER = ""
-
     EMAIL_HOST_PASSWORD = APP_EMAIL_HOST_PASSWORD
     DEFAULT_FROM_EMAIL = (
-        "%s" % APP_DEFAULT_FROM_EMAIL if APP_DEFAULT_FROM_EMAIL else SERVER_EMAIL
+        APP_DEFAULT_FROM_EMAIL if APP_DEFAULT_FROM_EMAIL else SERVER_EMAIL
     )
 
-    # Time live of the magic refer
-    MAGIC_TOKEN_TIMEOUT = 300
-except Exception as e:
-    log.error(
-        "[settings_security]: Server error from the settings of the email authentification. TEXT_ERROR: %s ",
-        e.args[0] if e.args else str(e),
-    )
+
+# Time live of the magic refer
+# MAGIC_TOKEN_TIMEOUT = 300
+#
+# # """ ALLAUTH """
+# SOCIALACCOUNT_PROVIDERS = {}
+# # The maximum amount of email addresses a user can associate to his account
+# ACCOUNT_MAX_EMAIL_ADDRESSES = 2
+# # The user is blocked from logging in until the email address is verified
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+# Defense from  lot quantity  entering  the password
+# ACCOUNT_RATE_LIMITS = {
+#     'reset_password': '3/20/ip',
+#     'login': '3/10m/ip',
+#     'login_failed': '5/5m',  # 5 incorrect re-entries 5m.
+#     'email_confirmation': '3/10m',  # 3 configuration an email on the 10м.
+# }
+# ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = False
+# # Controls whether password reset is performed by means of following a link in \
+# # the email (False), or by entering a code (True).
+# ACCOUNT_PASSWORD_RESET_BY_CODE_ENABLED = False
+#
+# # Require a password before the account remove
+ACCOUNT_ADAPTER = "allauth.account.adapter.DefaultAccountAdapter"
+# ACCOUNT_EMAIL_VERIFICATION_BY_CODE_ENABLED = True
+ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
+ACCOUNT_EMAIL_SUBJECT_PREFIX = "[Shop] "
+
+
+# except Exception as e:
+#     log.error(
+#         "[settings_security]: Server error from the settings of the email authentification. TEXT_ERROR: %s ",
+#         e.args[0] if e.args else str(e),
+#     )

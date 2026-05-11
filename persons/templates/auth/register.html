@@ -1,6 +1,6 @@
 <!--templates/admin/login.html:2-->
 {% extends "wagtailadmin/admin_base.html" %}
-{% load i18n wagtailadmin_tags %}
+{% load allauth i18n wagtailadmin_tags %}
 
 {% block titletag %}{% trans "Sign in or Register" %}{% endblock %}
 {% block bodyclass %}login{% endblock %}
@@ -13,7 +13,7 @@
             <!-- Блок регистрации -->
             <div class="register-section">
                 <h2>{% trans "Create New Account" %}</h2>
-                <form class="register-form" action="{% url 'register' %}" method="post" novalidate>
+                <form class="register-form" action="{% url 'management' %}" method="post">
                     {% csrf_token %}
                     {{ form.non_field_errors }}
                     <div class="fieldWrapper">

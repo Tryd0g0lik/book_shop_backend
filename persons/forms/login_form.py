@@ -6,7 +6,7 @@ from wagtail.admin.forms.auth import LoginForm
 from persons.models import Users
 
 
-class UsersLoginForm(LoginForm):
+class UsersLoginForm(forms.Form):
     from .users_registration_form import UsersRegistrationForm
 
     form_registering = UsersRegistrationForm()
@@ -17,13 +17,6 @@ class UsersLoginForm(LoginForm):
             "Something what wrong on the form 'persons.forms.login_form.UsersLoginForm'."
         ),
     }
-
-    def __init__(self, request=None, *args, **kwargs):
-        super().__init__(request=None, *args, **kwargs)
-        if "username" in self.fields:
-            del self.fields["username"]
-        if "password" in self.fields:
-            del self.fields["password"]
 
     def clean(self):
 
@@ -52,11 +45,3 @@ class UsersLoginForm(LoginForm):
                 code="invalid_form",
             )
         return self.cleaned_data
-
-    @property
-    def extra_fields(self):
-        for field_name in self.fields.keys():
-            if field_name not in [
-                "email",
-            ]:
-                yield field_name, self[field_name]

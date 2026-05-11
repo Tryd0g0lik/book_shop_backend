@@ -1,5 +1,5 @@
 """
-URL configuration for backend backend.
+URL configuration for backend.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/4.2/topics/http/urls/
@@ -15,32 +15,55 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
-from django.conf.urls.i18n import i18n_patterns
 from django.conf.urls.static import static
-from django.contrib import admin
 from django.urls import include, path, re_path
 from django.views.generic import TemplateView
 from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
+from persons.test.get_request.test_get_csrftoken_token import test_get_csrf_token
 from persons.views import UserLoginView, UsersRegistrationView
+from persons.views.test_email import test_email_view
 from project import settings
-from project.settings import LOGIN_URL
 
 urlpatterns = [
     # path("admin/", admin.site.urls),
-    re_path("register/", UsersRegistrationView.as_view(), name="register"),
-    re_path("login/", UserLoginView.as_view(), name="login"),
-]
-urlpatterns += [path("accounts/", include("mailauth.urls"))]
-urlpatterns += [
-    # path("admin/", admin.site.urls),
     path("admin/", include(wagtailadmin_urls), name="admin-panel"),
-    path("documents/", include(wagtaildocs_urls)),
-    path("pages/", include(wagtail_urls)),
+    path("test-email/", test_email_view, name="test_email"),
+    path("test_email/", test_get_csrf_token, name="test_csrf_toke"),
     re_path(
-        r"^(?!static/|media/|api/|admin/|redoc/|swagger/).*",
-        TemplateView.as_view(template_name="index.html"),
+        "^register/(moderator|manager|admin)?/?$",
+        UsersRegistrationView.as_view(),
+        name="management",
+    ),  # name="management"
+    # re_path("^register/$", UsersRegistrationView.as_view(), name="register"),
+    re_path(
+        "^login/$",
+        UserLoginView.as_view(),
+        name="account_login",
     ),
-] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    # path("^login/$", SignupView.as_view(), name='account_signup'),
+    # path('my-logout/', LogoutView.as_view(), name='account_logout'),
+]
+urlpatterns += (
+    *[
+        # path("admin/", admin.site.urls),
+        # path("accounts/password/change/", UserLoginView.as_view(), name="admin-panel"),
+        path("documents/", include(wagtaildocs_urls)),
+        path("pages/", include(wagtail_urls)),
+        re_path(
+            r"^(?!static/|media/|api/|admin/|redoc/|swagger/).*",
+            TemplateView.as_view(template_name="index.html"),
+        ),
+    ],
+    *[
+        path("accounts/", include("allauth.urls")),
+        # path(
+        #     "api/v1/dj-rest-auth/registration/account-confirm-email/<str:key>/",
+        #     UserLoginView.as_view(),
+        # ),
+    ],
+)
+urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+#
