@@ -6,22 +6,17 @@ import datetime
 import logging
 import re
 
-from allauth.account.adapter import get_adapter
 from allauth.account.views import SignupView as AllauthSignupView
 from django.contrib import messages
-from django.db.models.expressions import result
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render, reverse
 from django.template.loader import render_to_string
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
-from django.views import View
 from django.views.decorators.http import require_GET, require_POST
 
 from persons.forms import UsersRegistrationForm
-from project.settings import LOGIN_URL
 from project.settings_conf.settings_env import APP_DEFAULT_FROM_EMAIL, CATEGORY_STATUS
-from project.settings_conf.settings_security import ACCOUNT_ADAPTER
 
 log = logging.getLogger(__name__)
 
@@ -133,10 +128,6 @@ class UsersRegistrationView(AllauthSignupView):
 
             if result_list[0] is not None:
                 super().post(request, *args, **kwargs)
-                # response.META = request.META
-                # response.user = request.user
-                # response.headers = request.headers
-                # response.COOKIES = request.COOKIES
 
                 # return redirect("login")
                 log.info("[UsersRegistrationView]: TEST DEBUG POST")

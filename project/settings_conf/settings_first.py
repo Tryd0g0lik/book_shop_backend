@@ -46,7 +46,7 @@ SECURE_SSL_REDIRECT = False  # https is True & http is False
 # Application definition
 
 INSTALLED_APPS = [
-    # "daphne",
+    "daphne",
     "rest_framework",
     "drf_spectacular",
     "corsheaders",

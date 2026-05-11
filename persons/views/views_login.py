@@ -6,15 +6,12 @@ import datetime
 import logging
 
 from allauth.account.views import LoginView as AllauthLoginView
-from allauth.account.views import LogoutView as AllauthLogoutView
 from django.contrib import messages
 from django.contrib.auth import login as auth_login
-from django.db.models.expressions import result
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
-from django.views import View
 
 from persons.forms import UsersLoginForm
 from persons.models import Users
