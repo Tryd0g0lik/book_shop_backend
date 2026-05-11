@@ -66,7 +66,7 @@ collectstatic/*
 # connection_database
 */*.sqlite3
 */*.sqlit3
-identifier.sqlite
+*.sqlite3
 
 # traefik
 acme.json
