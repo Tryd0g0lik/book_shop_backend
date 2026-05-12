@@ -51,13 +51,17 @@ class Cacher:
 
         _redis_master_name = self.master_name
         _db_password = self.db_password
-        self.server_caching = Redis(
-            host=REDIS_HOST,
-            port=int(REDIS_PORT),
-            password=_db_password,
-            username=_redis_master_name,
-            db=self.__redis_db,
-        )
+        if self.server_caching is None:
+            # ============================================
+            # CONNECT TO THE CACHE SERVER
+            # ============================================
+            self.server_caching = Redis(
+                host=REDIS_HOST,
+                port=int(REDIS_PORT),
+                password=_db_password,
+                username=_redis_master_name,
+                db=self.__redis_db,
+            )
 
     @contextmanager
     def connected(self):

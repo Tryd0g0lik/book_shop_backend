@@ -34,7 +34,6 @@ celery_app.conf.task_default_routing_key = "task.default"
 celery_app.conf.beat_schedule = {
     "add-every-1-seconds": {
         "task": "task_caching_before_verification",
-        "schedule": crontab(minute="*/1"),
         "options": {
             "queue": "high",
             "routing_key": "high.priority",

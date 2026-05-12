@@ -40,6 +40,9 @@ def cache_user_data(*args, **kwargs) -> None:
         return
 
     # Here we make to cache of data.
+    # ============================================
+    # SAVING DATA BEFORE REGISTRATION
+    # ============================================
     try:
         with connected() as conn:
             log.warning("[task cache_user_data]: Before caching the new data")
@@ -86,16 +89,13 @@ def task_caching_before_verification(self, *args, **kwargs) -> None:
     log_t = "[task_caching_before_verification]:"
     args_len = len(*args)
     kwargs_len = len(kwargs) if kwargs is not None else 0
-    log.warning(log_t + f" LOG DEBUG args_len: {args_len}, kwargs_len: {kwargs_len}")
     if args_len > 0 and kwargs_len > 0:
-        log.warning(log_t + " LOG DEBUG Key or value is valid. Before loop.")
         custom_loop = CustomizationSyncAsyncLoop(args, kwargs)
         custom_loop.get_new_function = cache_user_data
         wrapper = custom_loop.get_new_loop()
         wrapper()
-        log.warning(log_t + " LOG DEBUG Task pass successfully!")
     else:
-        log.error("[task_caching_before_verification]: Key or value is not valid.")
+        log.error(log_t + " Key or value is not valid.")
     return
     # loop = asyncio.get_event_loop()
     # # run_asyncio_debug(loop)

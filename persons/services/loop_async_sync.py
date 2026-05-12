@@ -76,7 +76,6 @@ class CustomizationSyncAsyncLoop:
     @is_async.setter
     def is_async(self, val: bool) -> None:
         self.result["is_async"] = val
-        # if isinstance(self.get_new_function, Coroutine):
 
     def get_new_loop(self) -> Callable[[], T]:
         is_async = self.result["is_async"]
@@ -96,13 +95,19 @@ class CustomizationSyncAsyncLoop:
                 kwargs = self.kwargs
                 callback = self.get_new_function
 
-                # --- Async Callback
+                # ============================================
+                # ASYNC CALLBACK
+                # ============================================
                 def async_wrapper():
+                    log.info("Start ASYNC writing to the cache server")
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
                     try:
                         return loop.run_until_complete(callback(*args, **kwargs))
+                    except Exception as e:
+                        log.error("Writing ASYNC to the cache server failed! TEXT_ERROR: %s" % e.args[0] if e.args else str(e))
                     finally:
+                        log.info("Finish ASYNC writing to the cache server,")
                         loop.close()
 
                 return async_wrapper
@@ -133,9 +138,18 @@ class CustomizationSyncAsyncLoop:
             kwargs = self.kwargs
             callback = self.get_new_function
 
-            # --- Sync Callback
+            # ============================================
+            # SYNC CALLBACK
+            # ============================================
             def sync_wrapper():
-                return callback(*args, **kwargs)
+                try:
+                    log.info("Start SYNC writing to the cache server")
+                    return callback(*args, **kwargs)
+                except Exception as e:
+                    log.error(
+                        "Writing SYNC to the cache server failed! TEXT_ERROR: %s" % e.args[0] if e.args else str(e))
+                finally:
+                    log.info("Finish SYNC writing to the cache server,")
 
             return sync_wrapper
         except ConnectionError as e:
