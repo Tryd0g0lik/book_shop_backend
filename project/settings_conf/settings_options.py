@@ -1,6 +1,7 @@
 import os
 
-from persons import BASE_DIR, DEBUG
+from persons.apps import DEBUG
+from project import BASE_DIR
 
 # ============================================
 # WEBPACK_LOADER

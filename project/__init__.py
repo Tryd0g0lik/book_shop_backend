@@ -1,9 +1,8 @@
-# import logging
-#
-# from logs import configure_logging
+# project/__init__.py
 from pathlib import Path
 
-from .celery import celery_deribit
+from .celery import celery_app as celery_app
 
-# configure_logging(logging.INFO)
-__all__ = ("celery_deribit",)
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+__all__ = ("celery_app",)

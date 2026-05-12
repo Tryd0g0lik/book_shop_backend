@@ -6,17 +6,12 @@ import logging
 from contextlib import contextmanager
 from typing import Optional
 
-from redis import Redis, RedisError
-
-from project.settings_conf.settings_env import (
-    REDIS_HOST,
-    REDIS_PORT,
-)
+from redis import ConnectionError, Redis, RedisError, TimeoutError
 
 log = logging.getLogger(__name__)
 
 
-class CacheAdapter:
+class Cacher:
     def __init__(
         self,
         db: int = 0,
@@ -46,9 +41,14 @@ class CacheAdapter:
         self.__redis_db: int = db
         self.__redis_master_name: Optional[str] = None
         self.server_caching: Optional[Redis] = None
-        self.log_t = "[%s]:" % CacheAdapter.__class__.__name__
+        self.log_t = "[%s]:" % Cacher.__class__.__name__
 
-    def related(self):
+    def related(self) -> None:
+        from project.settings_conf.settings_env import (
+            REDIS_HOST,
+            REDIS_PORT,
+        )
+
         _redis_master_name = self.master_name
         _db_password = self.db_password
         self.server_caching = Redis(
@@ -56,6 +56,7 @@ class CacheAdapter:
             port=int(REDIS_PORT),
             password=_db_password,
             username=_redis_master_name,
+            db=self.__redis_db,
         )
 
     @contextmanager
@@ -67,12 +68,22 @@ class CacheAdapter:
         server_cache = self.server_caching
         try:
             yield server_cache
+        except TimeoutError as e:
+            log_t = self.log_t + " Connection with a cache server timed out. %s" % str(
+                e
+            )
+            raise TimeoutError(log_t)
+
         except RedisError as e:
             log_t = self.log_t + "Mistake on a cache server: %s" % str(e)
             raise ValueError(log_t)
         except Exception as e:
             log_t = self.log_t + e.args[0] if e.args else str(e)
             raise ValueError(log_t)
+        finally:
+            self.close()
+            log_t = self.log_t + " Connection with a cache server is closed."
+            log.info(log_t)
 
     def close(self):
         is_connected = self.is_connected
@@ -81,7 +92,7 @@ class CacheAdapter:
 
     @property
     def is_connected(self) -> bool:
-        return self.server_caching is not None
+        return True if self.server_caching is not None else False
 
     @property
     def db_password(self) -> str:

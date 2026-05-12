@@ -2,7 +2,8 @@ import logging
 import os
 from pathlib import Path
 
-from persons import BASE_DIR, DEBUG
+from persons.apps import DEBUG
+from project import BASE_DIR
 
 # from logs import configure_logging
 from project.settings_conf.settings_env import (

@@ -17,7 +17,8 @@ enable_utc = True
 poolrestart = True
 time_limit = 600
 
-
+broker_url = "redis://83.166.245.209:6380/1"
+result_backend = "redis://83.166.245.209:6380/1"
 # celery speed for handle of tasks
 # task_annotations = {
 #     'one_tasks.celery_task_money': {'rate_limit': '10/m'}

@@ -3,7 +3,8 @@ from datetime import timedelta
 
 from django.conf.global_settings import SERVER_EMAIL
 
-from persons import DEBUG
+from persons.apps import DEBUG
+from project.settings import JWT_SECRET_KEY
 
 # from logs import configure_logging
 from project.settings_conf.settings_env import (
@@ -12,7 +13,6 @@ from project.settings_conf.settings_env import (
     APP_EMAIL_HOST_PASSWORD,
     JWT_ACCESS_TOKEN_LIFETIME_MINUTES,
     JWT_REFRESH_TOKEN_LIFETIME_DAYS,
-    SECRET_KEY_DJ,
 )
 
 # configure_logging(logging.INFO)
@@ -86,7 +86,7 @@ REST_FRAMEWORK = {
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=int(JWT_ACCESS_TOKEN_LIFETIME_MINUTES)),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=int(JWT_REFRESH_TOKEN_LIFETIME_DAYS)),
-    "SIGNING_KEY": f"{SECRET_KEY_DJ}",
+    "SIGNING_KEY": f"{JWT_SECRET_KEY}",
 }
 
 

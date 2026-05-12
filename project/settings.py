@@ -13,9 +13,10 @@ project/settings.py:24
 """
 
 import logging
+import os
 
-from project.settings_conf.settings_env import APP_DEFAULT_FROM_EMAIL, SECRET_KEY_DJ
-
+# from .settings_conf.settings_env import SECRET_KEY_DJ
+JWT_SECRET_KEY = SECRET_KEY_DJ = os.getenv("SECRET_KEY_DJ", "fr4d6650h0_d")
 # Quick-get_new_loop development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 log = logging.getLogger(__name__)
@@ -27,98 +28,102 @@ if not SECRET_KEY and len(f"{SECRET_KEY}") < 5:
     raise ValueError(text_e)
 
 # ============================================
-ADMINS = [f"{APP_DEFAULT_FROM_EMAIL}", f'"Trydogolik" {APP_DEFAULT_FROM_EMAIL}']
+ADMINS = ["work80@mail.ru", f'"Trydogolik" work80@mail.ru']
 APPEND_SLASH = True
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 # ============================================
 # # ============================================
 # # lOGGING
 # # ============================================
-# LOGGING = {
-#     "version": 1,
-#     "disable_existing_loggers": False,
-#     "formatters": {
-#         "verbose": {
-#             "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
-#             "style": "{",
-#         },
-#         "simple": {
-#             "format": "{levelname} {message}",
-#             "style": "{",
-#         },
-#     },
-#     "handlers": {
-#         "console": {
-#             "class": "logging.StreamHandler",
-#             "level": "DEBUG",
-#             "formatter": "verbose",
-#         },
-#         "file": {
-#             "class": "logging.FileHandler",
-#             "filename": "logs/log_putout.log",
-#             "level": "INFO",
-#             "formatter": "verbose",
-#         },
-#     },
-#     "root": {
-#         "handlers": ["console", "file"],
-#         "level": "DEBUG",
-#     },
-#     "loggers": {
-#         "django": {
-#             "handlers": ["console", "file"],
-#             "level": "INFO",
-#             "propagate": False,
-#         },
-#         "django.request": {
-#             "handlers": ["console", "file"],
-#             "level": "INFO",
-#             "propagate": False,
-#         },
-#         "django.contrib.messages": {
-#             "handlers": ["console", "file"],
-#             "level": "DEBUG",
-#             "propagate": False,
-#             # "propagate": False,
-#         },
-#
-#         "django.contrib.staticfiles":{
-#             "handlers":["console", "file"],
-#             "level":"WARNING",
-#         },
-#         "django.contrib.auth": {
-#             "handlers": ["console", "file"],
-#             "level": "INFO",
-#             "propagate": False,
-#             # "propagate": False,
-#         },
-#         "persons": {
-#             "handlers": ["console", "file"],
-#             "level": "DEBUG",
-#             "propagate": False,
-#         },
-#         "allauth": {
-#             "handlers": ["console", "file"],
-#             "level": "DEBUG",
-#             "propagate": False,
-#         },
-#         "allauth.account":{
-#             "handlers":["console", "file"],
-#             "level":"INFO",
-#             "propagate": False,
-#         },
-#         "wagtail":{
-#             "handlers":["console", "file"],
-#             "level":"WARNING",
-#             "propagate": False,
-#         },
-#         "wagtail.admin":{
-#             "handlers":["console", "file"],
-#             "level":"WARNING",
-#             "propagate": False,
-#         },
-#     },
-# }
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
+        },
+        "simple": {
+            "format": "{levelname} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "level": "DEBUG",
+            "formatter": "verbose",
+        },
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": "logs/log_putout.log",
+            "level": "INFO",
+            "formatter": "verbose",
+        },
+    },
+    "root": {
+        "handlers": ["console", "file"],
+        "level": "DEBUG",
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django.request": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "django.contrib.messages": {
+            "handlers": ["console", "file"],
+            "level": "DEBUG",
+            "propagate": False,
+            # "propagate": False,
+        },
+        "django.contrib.staticfiles": {
+            "handlers": ["console", "file"],
+            "level": "WARNING",
+        },
+        "django.contrib.auth": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
+            # "propagate": False,
+        },
+        "persons": {
+            "handlers": ["console", "file"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "allauth": {
+            "handlers": ["console", "file"],
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "allauth.account": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
+            "propagate": False,
+        },
+        "wagtail": {
+            "handlers": ["console", "file"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "wagtail.admin": {
+            "handlers": ["console", "file"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "celery": {
+            "handlers": ["console", "file"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+    },
+}
 from project.settings_conf.settings_first import *
 from project.settings_conf.settings_options import *
 from project.settings_conf.settings_security import *

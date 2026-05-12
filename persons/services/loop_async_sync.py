@@ -13,14 +13,14 @@ log = logging.getLogger(__name__)
 T = TypeVar("T")
 
 
-class CostumizationSyncAsyncLoop:
+class CustomizationSyncAsyncLoop:
     result = {
         "is_async": False,
     }
 
     def __init__(self, *args, **kwargs):
         self.__callback = None
-        self.log_t = "[%s]:" % CostumizationSyncAsyncLoop.__class__.__name__
+        self.log_t = "[%s]:" % CustomizationSyncAsyncLoop.__class__.__name__
         self.log_datetime = datetime
         self.args = args
         self.kwargs = kwargs

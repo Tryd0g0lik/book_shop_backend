@@ -2,6 +2,6 @@
 persons/adapters/__init__.py:1
 """
 
-__all__ = ["CacheAdapter"]
+__all__ = ["Cacher"]
 
-from persons.adapters.caching import CacheAdapter
+from persons.services.caching import Cacher

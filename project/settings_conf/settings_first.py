@@ -13,10 +13,8 @@ project/settings_conf/settings_first.py:12
 """
 
 import logging
-import os
-from pathlib import Path
 
-from persons import BASE_DIR, DEBUG
+from persons.apps import DEBUG
 from project.settings_conf.settings_env import APP_TIME_ZONE
 
 # Build paths inside the backend like this: BASE_DIR / 'subdir'.
@@ -27,6 +25,7 @@ log = logging.getLogger(__name__)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 # """" DEBUG """"
+
 
 SECURE_SSL_REDIRECT = False
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "http")
@@ -115,24 +114,6 @@ WHITENOISE_USE_FINDERS = True
 
 ROOT_URLCONF = "project.urls"
 
-# Password validation
-# https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
-
-AUTH_PASSWORD_VALIDATORS = [
-    {
-        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
-    },
-    {
-        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
-    },
-]
-
 
 TEMPLATES = [
     {
@@ -161,6 +142,23 @@ ASGI_APPLICATION = "project.asgi.application"
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
 
+# Password validation
+# https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
+
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
+    },
+    {
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
+    },
+]
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/

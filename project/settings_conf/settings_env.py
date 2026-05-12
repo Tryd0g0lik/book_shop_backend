@@ -1,14 +1,13 @@
 import os
-from pathlib import Path
 
 import dotenv
 
-from persons import BASE_DIR
+# from pathlib import Path
+
+
+# from persons.apps import BASE_DIR
 
 dotenv.load_dotenv()
-
-
-SECRET_KEY_DJ = os.getenv("SECRET_KEY_DJ", "fr4d6650h0_d")
 
 
 DJANGO_ENV = os.getenv("DJANGO_ENV", "development")
@@ -57,5 +56,5 @@ REDIS_MASTER_NAME: str = os.getenv("REDIS_MASTER_NAME", "master")
 # Celery + Redis
 # REDIS_MASTER_NAME = os.getenv("REDIS_MASTER_NAME", "root")
 # REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "123")
-CELERY_BROKER_URL = REDIS_URL[:] + "/" + REDIS_DB[:]
-CELERY_RESULT_BACKEND = REDIS_URL[:] + "/" + REDIS_DB[:]
+CELERY_BROKER_URL = REDIS_URL + "/" + REDIS_DB
+CELERY_RESULT_BACKEND = REDIS_URL + "/" + REDIS_DB
