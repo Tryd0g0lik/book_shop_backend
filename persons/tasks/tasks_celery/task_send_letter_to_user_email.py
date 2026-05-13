@@ -2,10 +2,10 @@
 persons/tasks/tasks_celery/task_send_letter_to_user_email.py:1
 """
 
-import asyncio
 import json
 import logging
 import time
+from threading import Thread
 
 from celery import shared_task
 
@@ -20,7 +20,6 @@ async def send_letter_to_user_email(*args: tuple, **kwargs: dict) -> list:
     from concurrent.futures import ThreadPoolExecutor
     from threading import Semaphore
 
-    # args = args[0]
     from django.template.loader import render_to_string
 
     keys_queue = queue.Queue(2000)
@@ -201,7 +200,8 @@ def task_postman(self, *args: tuple | list, **kwargs: dict) -> None:
         custom_loop = CustomizationSyncAsyncLoop(*args, **kwargs)
         custom_loop.get_new_function = send_letter_to_user_email
         wrapper = custom_loop.get_new_loop()
-        wrapper()
+        Thread(target=wrapper).start()
+        print("[task postman]: TEST DEBUG TASK POSTMAN ====.")
     else:
         time.sleep(2)
     return

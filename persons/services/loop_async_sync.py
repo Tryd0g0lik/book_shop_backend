@@ -64,8 +64,6 @@ class CustomizationSyncAsyncLoop:
             finally:
                 self.log_t = self.log_t.split("]: ")[0] + "]:"
         # Check the 'fun' attribute is coroutine or not
-        print(f" ========== COROUTINE {asyncio.iscoroutine(fun)}")
-        print(f" ========== COROUTINE {type(fun)}")
         if asyncio.iscoroutine(fun) or asyncio.iscoroutinefunction(fun):
             self.result["is_async"] = True
         # Saving the 'fun' attribute

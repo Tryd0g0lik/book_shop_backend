@@ -5,6 +5,7 @@ persons/tasks/tasks_celery/task_cache_user_email_before_verification.py:1
 import json
 import logging
 import time
+from threading import Thread
 from uuid import uuid4
 
 from celery import shared_task
@@ -66,7 +67,6 @@ async def cache_user_data(*args, **kwargs) -> None:
         await asyncio.wait_for(task, timeout=60)
     except asyncio.TimeoutError as e:
         log.warning(log_t + " Cache user data timed out. TimeoutError: " + str(e))
-        # task.cancel()
         try:
             await task
         except asyncio.CancelledError as e:
@@ -94,13 +94,16 @@ def task_of_cache(self, *args, **kwargs) -> None:
     :param dict kwargs: This is data for caching.
     :return: void
     """
+    log_t = "[task_of_cache]:"
     args_len = len(args)
     kwargs_len = len(kwargs) if kwargs is not None else 0
     if args_len > 0 and kwargs_len > 0:
+        print(log_t + " START TASK TASK OF CACHE ====.")
         custom_loop = CustomizationSyncAsyncLoop(*args, **kwargs)
         custom_loop.get_new_function = cache_user_data
         wrapper = custom_loop.get_new_loop()
-        wrapper()
+        Thread(target=wrapper).start()
+        print("[task postman]: TEST DEBUG TASK OF CACHE ====.")
     else:
         time.sleep(2)
     return
