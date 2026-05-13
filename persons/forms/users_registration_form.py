@@ -60,7 +60,7 @@ class UsersRegistrationForm(SignupForm):
     first_name = forms.CharField(
         required=False,
         label=_("First Name"),
-        max_length=150,
+        max_length=50,
         widget=forms.TextInput(
             attrs={
                 "class": " w-field__input form-first-name",
@@ -107,6 +107,20 @@ class UsersRegistrationForm(SignupForm):
             raise forms.ValidationError(_("A user with this email already exists."))
         return email
 
+    def clean_first_name(self):
+        first_name = self.cleaned_data.get("first_name")
+        first_chars = r"[+\\}{)(0-9\"\' -.]"
+        if re.match(first_chars, first_name):
+            log_t = f'Please inter valid "username". Username does not must begin with {first_name[0]}'
+            log.warning(log_t)
+            raise forms.ValidationError(_(log_t))
+
+        if not re.search(r"[A-Za-z]+", first_name[0:]):
+            log_t = "Please enter the valid first_name. This first_name could be contain the chars: 'A-Za-z'"
+            log.warning(log_t)
+            raise forms.ValidationError(_(log_t))
+        return first_name
+
     def clean_username(self):
         username = self.cleaned_data.get("username")
         first_chars = r"[+\\}{)(0-9\"\' -.]"
@@ -115,8 +129,8 @@ class UsersRegistrationForm(SignupForm):
             log.warning(log_t)
             raise forms.ValidationError(_(log_t))
 
-        if not re.search(r"[A-Za-z_-]+", username[0:]):
-            log_t = "Please enter the valid username. Username could be contain the chars: 'A-Za-z_-'"
+        if not re.search(r"[A-Za-z_0-9]+", username[0:]):
+            log_t = "Please enter the valid username. Username could be contain the chars: 'A-Za-z_0-9'"
             log.warning(log_t)
             raise forms.ValidationError(_(log_t))
         return username

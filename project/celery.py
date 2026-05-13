@@ -14,7 +14,8 @@ celery_app = Celery(
     "person",
     group="signup",
     include=[
-        "persons.tasks.tasks_celery.task_cache_user_email_before_verification",
+        "persons.tasks.tasks_celery.task_set_cache",
+        "persons.tasks.tasks_celery.task_send_letter_to_user_email",
     ],
 )
 
@@ -33,7 +34,17 @@ celery_app.conf.task_default_routing_key = "task.default"
 
 celery_app.conf.beat_schedule = {
     "add-every-1-seconds": {
-        "task": "task_caching_before_verification",
+        "task": "task_set_cache",
+        "schedule": 1.0,  # или crontab(second=1)
+        "options": {
+            "queue": "high",
+            "routing_key": "high.priority",
+            "expires": 60,
+        },
+    },
+    "get-every-1-seconds": {
+        "task": "task_get_send_letter",
+        "schedule": 1.0,  # или crontab(second=1)
         "options": {
             "queue": "high",
             "routing_key": "high.priority",

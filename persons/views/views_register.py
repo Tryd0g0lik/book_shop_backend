@@ -17,6 +17,7 @@ from django.views.decorators.http import require_GET, require_POST
 
 from persons.apps import personmanager
 from persons.forms import UsersRegistrationForm
+from persons.tasks.tasks_celery.task_send_letter_to_user_email import task_postman
 from project.settings_conf.settings_env import CATEGORY_STATUS
 
 log = logging.getLogger(__name__)
@@ -159,8 +160,8 @@ class UsersRegistrationView(AllauthSignupView):
             pass
 
     def form_valid(self, form):
-        from persons.tasks.tasks_celery.task_cache_user_email_before_verification import (
-            task_caching_before_verification,
+        from persons.tasks.tasks_celery.task_set_cache import (
+            task_of_cache,
         )
 
         username = form.cleaned_data.get("username")
@@ -172,15 +173,16 @@ class UsersRegistrationView(AllauthSignupView):
             username = form.cleaned_data.get("username")
         try:
 
-            super().form_valid(form)
+            # super().form_valid(form)
             args = ("user:pending:%s" % to_email.replace("@", "").replace(".", ""),)
             kwargs = {"username": username, "to_email": to_email}
-            task_caching_before_verification.delay(*args, **kwargs)
+            task_of_cache.delay(*args, **kwargs)
             message = _("Registration is almost complete! Check your email.")
         except Exception as e:
             log_t = f"[UsersRegistrationView]: {e.args[0] if e.args else str(e)}"
             raise ValueError(log_t)
-
+        finally:
+            task_postman.delay(*("user:pending:*",), **kwargs)
         messages.success(self.request, message)
 
         return

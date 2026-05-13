@@ -1,5 +1,7 @@
 """
 test/request/test_get_csrftoken_token.py:1
+
+# NEXT WILL BE REMOVING !!!
 """
 
 from django.http import JsonResponse

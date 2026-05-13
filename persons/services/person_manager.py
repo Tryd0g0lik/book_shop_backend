@@ -4,8 +4,8 @@ persons/services/person_manager.py:1
 
 import logging
 
-from persons.tasks.tasks_celery.task_cache_user_email_before_verification import (
-    task_caching_before_verification,
+from persons.tasks.tasks_celery.task_set_cache import (
+    task_of_cache,
 )
 
 log = logging.getLogger(__name__)
@@ -26,7 +26,7 @@ class PersonManager:
         try:
             # This is task for caching data before verification.
             # Time interval is every 1 seconds
-            task_caching_before_verification.apply_async(args, kwargs)
+            task_of_cache.apply_async(args, kwargs)
         except Exception as e:
             log.error(e)
             return False

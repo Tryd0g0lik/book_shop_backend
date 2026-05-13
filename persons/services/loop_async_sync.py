@@ -18,7 +18,7 @@ class CustomizationSyncAsyncLoop:
         "is_async": False,
     }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: tuple | list, **kwargs: dict):
         self.__callback = None
         self.log_t = "[%s]:" % CustomizationSyncAsyncLoop.__class__.__name__
         self.log_datetime = datetime
@@ -64,7 +64,9 @@ class CustomizationSyncAsyncLoop:
             finally:
                 self.log_t = self.log_t.split("]: ")[0] + "]:"
         # Check the 'fun' attribute is coroutine or not
-        if asyncio.iscoroutine(fun):
+        print(f" ========== COROUTINE {asyncio.iscoroutine(fun)}")
+        print(f" ========== COROUTINE {type(fun)}")
+        if asyncio.iscoroutine(fun) or asyncio.iscoroutinefunction(fun):
             self.result["is_async"] = True
         # Saving the 'fun' attribute
         self.__callback = fun
@@ -79,7 +81,9 @@ class CustomizationSyncAsyncLoop:
 
     def get_new_loop(self) -> Callable[[], T]:
         is_async = self.result["is_async"]
-        if self.get_new_function is None:
+        callback = self.get_new_function
+
+        if callback is None:
             TEXT_ERROR = " ".join(
                 [
                     self.log_t,
@@ -90,10 +94,10 @@ class CustomizationSyncAsyncLoop:
             raise ValueError(TEXT_ERROR)
 
         if is_async:
+
             try:
                 args = self.args
                 kwargs = self.kwargs
-                callback = self.get_new_function
 
                 # ============================================
                 # ASYNC CALLBACK
@@ -103,9 +107,15 @@ class CustomizationSyncAsyncLoop:
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
                     try:
+
                         return loop.run_until_complete(callback(*args, **kwargs))
                     except Exception as e:
-                        log.error("Writing ASYNC to the cache server failed! TEXT_ERROR: %s" % e.args[0] if e.args else str(e))
+                        log.error(
+                            "Writing ASYNC to the cache server failed! TEXT_ERROR: %s"
+                            % e.args[0]
+                            if e.args
+                            else str(e)
+                        )
                     finally:
                         log.info("Finish ASYNC writing to the cache server,")
                         loop.close()
@@ -136,7 +146,6 @@ class CustomizationSyncAsyncLoop:
         try:
             args = self.args
             kwargs = self.kwargs
-            callback = self.get_new_function
 
             # ============================================
             # SYNC CALLBACK
@@ -147,7 +156,11 @@ class CustomizationSyncAsyncLoop:
                     return callback(*args, **kwargs)
                 except Exception as e:
                     log.error(
-                        "Writing SYNC to the cache server failed! TEXT_ERROR: %s" % e.args[0] if e.args else str(e))
+                        "Writing SYNC to the cache server failed! TEXT_ERROR: %s"
+                        % e.args[0]
+                        if e.args
+                        else str(e)
+                    )
                 finally:
                     log.info("Finish SYNC writing to the cache server,")
 

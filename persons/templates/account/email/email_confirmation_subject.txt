@@ -1,4 +1,9 @@
 {% load i18n %}
 {% autoescape off %}
-{% blocktrans %}Please Confirm Your Email Address{% endblocktrans %}
+{% blocktrans %}
+    Please Confirm Your Email Address.
+    This Email address was entered into a form of registration.
+    Message will be sent here.
+    If you did not indicate this email on our website, mean  simple delete him.
+{% endblocktrans %}
 {% endautoescape %}
