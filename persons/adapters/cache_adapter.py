@@ -9,56 +9,18 @@ from typing import Optional
 
 from redis import ConnectionError, Redis, RedisError, TimeoutError
 
+from .cache_base import CacherBase
+
 log = logging.getLogger(__name__)
 
 
-class CacherAdapter:
+class CacherAdapter(CacherBase):
     _pool = None
     __pool_lock = threading.Lock()
 
-    def __init__(
-        self,
-        db: int = 0,
-        max_connections: int = 20,
-        decode_responses: bool = False,
-        socket_connect_timeout: int = 5,
-        socket_timeout: int = 5,
-        retry_on_timeout: bool = True,
-        health_check_interval: int = 30,
-    ) -> None:
-        """
-        This is the sync code.
-        :param int db: This is integer nuber. That is number of the redis's db. Default value is 0.
-        :param: Optional[str] redis_master_name. This is a string this is a name/login of the cache server. Default value is None.
-        :param: Optional[str] redis_password. This is a string this is a password of the cache server. Default value is None.
-        :param: method related. Connection with a cache server.
-        :param: method closed. This method is close connection and assign 'self.server_caching = None'
-        :param  connected has wrapper the contextmanager. Exemple: ```
-            cache = CacheAdapter()
-            cache.redis_password = "<PASSWORD>" # if required.
-            cache.redis_master_name = "<LOGIN / USERNAME>" # if required.
-            cache.related()
-            try:
-                with cache.connected() as conn:
-                    # ...
-            finally:
-                cache.close()
-
-        ```
-        :param redis_master_name:
-        """
-        self.__redis_password: Optional[str] = None
-        self.__redis_db: int = db
-        self.__redis_master_name: Optional[str] = None
-        self.server_client: Optional[Redis] = None
-        self.log_t = "[%s]:" % CacherAdapter.__class__.__name__
-
-        self.max_connections: int = max_connections
-        self.decode_responses: bool = decode_responses
-        self.socket_connect_timeout: int = socket_connect_timeout
-        self.socket_timeout: int = socket_timeout
-        self.retry_on_timeout: bool = retry_on_timeout
-        self.health_check_interval: int = health_check_interval
+    def __new__(cls, *args, **kwargs):
+        cls.log_t = "[%s]:" % CacherAdapter.__class__.__name__
+        return super().__new__(cls)
 
     def _init_pool(self) -> None:
         from redis.connection import ConnectionError, ConnectionPool
@@ -70,13 +32,16 @@ class CacherAdapter:
 
         try:
             if CacherAdapter._pool is None:
+                redis_database = self.redis_database
+                redis_master_name = self.redis_master_name
+                redis_password = self.redis_password
                 with CacherAdapter.__pool_lock:
                     CacherAdapter._pool = ConnectionPool(
                         host=REDIS_HOST,
                         port=int(REDIS_PORT),
-                        password=self.redis_password,
-                        username=self.redis_master_name,
-                        db=self.redis_database,
+                        password=redis_password,
+                        username=redis_master_name,
+                        db=redis_database,
                         max_connections=self.max_connections,
                         decode_responses=self.decode_responses,
                         socket_connect_timeout=self.socket_connect_timeout,
@@ -86,9 +51,7 @@ class CacherAdapter:
                     )
                     log.info(self.log_t + " Redis Connection pool initialized.")
         except Exception as e:
-            log_t = self.log_t[
-                :-1
-            ] + " Connection with a cache server failed. %s" % str(e)
+            log_t = self.log_t + " %s" % str(e)
             raise ValueError(log_t)
 
     def __get_client(self):
@@ -104,12 +67,7 @@ class CacherAdapter:
                 # ============================================
                 self.server_client = self.__get_client()
             except Exception as e:
-                log_t = (
-                    self.log_t
-                    + " Connection with a cache server failed. %s" % e.args[0]
-                    if e.args
-                    else str(e)
-                )
+                log_t = self.log_t + " %s" % e.args[0] if e.args else str(e)
                 raise ValueError(log_t)
         return True
 
@@ -172,30 +130,30 @@ class CacherAdapter:
 
     @property
     def redis_password(self) -> str:
-        return self.__redis_password
+        return self._redis_password
 
     @redis_password.setter
     def redis_password(self, line: str) -> None:
         if isinstance(line, str) and len(line) == 0:
             log_t = self.log_t + " Password is invalid."
             raise ValueError(log_t)
-        self.__redis_password = line
+        self._redis_password = line
 
     @property
     def redis_master_name(self) -> str:
-        return self.__redis_master_name
+        return self._redis_master_name
 
     @redis_master_name.setter
     def redis_master_name(self, line: str) -> None:
         if isinstance(line, str) and len(line) == 0:
             log_t = self.log_t + " User name is invalid."
             raise ValueError(log_t)
-        self.__redis_master_name = line
+        self._redis_master_name = line
 
     @property
     def redis_database(self) -> int:
-        return self.__redis_db
+        return self._redis_db
 
     @redis_database.setter
     def redis_database(self, num: int) -> None:
-        self.__redis_db = num
+        self._redis_db = num

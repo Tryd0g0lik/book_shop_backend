@@ -35,16 +35,16 @@ celery_app.conf.task_default_routing_key = "task.default"
 celery_app.conf.beat_schedule = {
     "add-every-1-seconds": {
         "task": "task_set_cache",
-        "schedule": 1.0,  # или crontab(second=1)
+        "schedule": 3.0,  # или crontab(second=1)
         "options": {
             "queue": "high",
             "routing_key": "high.priority",
-            "expires": 60,
+            "expires": 300,
         },
     },
     "get-every-1-seconds": {
         "task": "task_get_send_letter",
-        "schedule": 1.0,  # или crontab(second=1)
+        "schedule": 3.0,  # или crontab(second=1)
         "options": {
             "queue": "high",
             "routing_key": "high.priority",

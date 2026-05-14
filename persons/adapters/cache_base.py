@@ -40,9 +40,9 @@ class CacherBase:
         ```
         :param redis_master_name:
         """
-        self.__redis_password: Optional[str] = None
-        self.__redis_db: int = db
-        self.__redis_master_name: Optional[str] = None
+        self._redis_password: Optional[str] = None
+        self._redis_db: int = db
+        self._redis_master_name: Optional[str] = None
         self.server_client: Optional[Redis] = None
         self.log_t = "[%s]:" % CacherBase.__class__.__name__
 

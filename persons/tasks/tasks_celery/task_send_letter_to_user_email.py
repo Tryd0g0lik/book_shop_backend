@@ -30,16 +30,17 @@ async def send_letter_to_user_email(*args: tuple, **kwargs: dict) -> list:
     # 1. GET ARRAY OF KEYS FROM THE CACHE
     # ============================================
     def child_process(key_pattern: str, num: int = 1) -> list:
-        from persons.services import Cacher
+        from persons.apps import cachemanager
 
         data_from_cache = []
 
         # ============================================
         # CACHE SERVER
         # ============================================
-        cacher = Cacher(db=num)
+
+        cacher = cachemanager.cacher
         cacher.related()
-        connected = cacher.connected
+
         # Checking of connection.
         if not cacher.is_connected:
             error_t = " ".join(
@@ -50,7 +51,7 @@ async def send_letter_to_user_email(*args: tuple, **kwargs: dict) -> list:
             return [0]
         try:
 
-            with connected() as conn:
+            with cacher.connected() as conn:
                 # Get keys from the cache.
                 keys = []
                 try:
@@ -201,7 +202,8 @@ def task_postman(self, *args: tuple | list, **kwargs: dict) -> None:
         custom_loop.get_new_function = send_letter_to_user_email
         wrapper = custom_loop.get_new_loop()
         Thread(target=wrapper).start()
+
         print("[task postman]: TEST DEBUG TASK POSTMAN ====.")
     else:
-        time.sleep(2)
+        time.sleep(3)
     return

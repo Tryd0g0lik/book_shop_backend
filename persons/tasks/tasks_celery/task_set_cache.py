@@ -26,19 +26,19 @@ async def cache_user_data(*args, **kwargs) -> None:
     """
     import asyncio
 
+    from persons.apps import cachemanager
+
     log_t = "[task cache_user_data]:"
 
     def child_process():
-        from persons.services import Cacher
 
         # ============================================
         # CACHE SERVER
         # ============================================
-        cacher = Cacher(db=1)
-        cacher.related()
-        connected = cacher.connected
+
+        connected = cachemanager.cacher.connected
         # Checking of connection
-        if not cacher.is_connected:
+        if not cachemanager.cacher.is_connected:
             error_t = " ".join(
                 [log_t, " Connecting to the cache server has not exists."]
             )
@@ -105,7 +105,7 @@ def task_of_cache(self, *args, **kwargs) -> None:
         Thread(target=wrapper).start()
         print("[task postman]: TEST DEBUG TASK OF CACHE ====.")
     else:
-        time.sleep(2)
+        time.sleep(3)
     return
     # loop = asyncio.get_event_loop()
     # # run_asyncio_debug(loop)
