@@ -10,6 +10,7 @@ import dotenv
 dotenv.load_dotenv()
 
 
+# DJANGO_SETTINGS_MODULE = os.getenv("DJANGO_SETTINGS_MODULE","project.settings")
 DJANGO_ENV = os.getenv("DJANGO_ENV", "development")
 
 # APP

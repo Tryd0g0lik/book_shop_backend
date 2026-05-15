@@ -51,7 +51,7 @@ LOGGING = {
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
-            "level": "DEBUG",
+            "level": "INFO",
             "formatter": "verbose",
         },
         "file": {
@@ -78,7 +78,7 @@ LOGGING = {
         },
         "django.contrib.messages": {
             "handlers": ["console", "file"],
-            "level": "DEBUG",
+            "level": "INFO",
             "propagate": False,
             # "propagate": False,
         },
@@ -88,7 +88,7 @@ LOGGING = {
         },
         "django.contrib.auth": {
             "handlers": ["console", "file"],
-            "level": "INFO",
+            "level": "WARNING",
             "propagate": False,
             # "propagate": False,
         },
@@ -99,7 +99,7 @@ LOGGING = {
         },
         "allauth": {
             "handlers": ["console", "file"],
-            "level": "DEBUG",
+            "level": "INFO",
             "propagate": False,
         },
         "allauth.account": {

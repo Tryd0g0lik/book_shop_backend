@@ -251,3 +251,4 @@ WAGTAIL_SITE_NAME = "Shop"
 f_extension = "csv, docx, pdf, rtf, txt, xlsx, zip"
 WAGTAILDOCS_EXTENSIONS = list(f_extension.split(", "))
 WAGTAILADMIN_LOGIN_FORM = "persons.forms.UsersLoginForm"
+# WAGTAIL_APPEND_SLASH = "/"

@@ -15,6 +15,7 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET, require_POST
 
+from persons import EnumTemplatesKeysCache
 from persons.apps import personmanager
 from persons.forms import UsersRegistrationForm
 from persons.tasks.tasks_celery.task_send_letter_to_user_email import task_postman
@@ -171,10 +172,14 @@ class UsersRegistrationView(AllauthSignupView):
         ):
             setattr(form, "username", to_email.split("@")[0])
             username = form.cleaned_data.get("username")
+        args = (
+            EnumTemplatesKeysCache.USER_PENDING_0.value
+            % to_email.replace("@", "").replace(".", ""),
+        )
         try:
 
             # super().form_valid(form)
-            args = ("user:pending:%s" % to_email.replace("@", "").replace(".", ""),)
+
             kwargs = {"username": username, "to_email": to_email}
             task_of_cache.delay(*args, **kwargs)
             message = _("Registration is almost complete! Check your email.")
@@ -182,7 +187,7 @@ class UsersRegistrationView(AllauthSignupView):
             log_t = f"[UsersRegistrationView]: {e.args[0] if e.args else str(e)}"
             raise ValueError(log_t)
         finally:
-            task_postman.delay(*("user:pending:*",), **kwargs)
+            task_postman.delay(*args, **kwargs)
         messages.success(self.request, message)
 
         return

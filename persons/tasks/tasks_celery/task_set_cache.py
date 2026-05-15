@@ -9,7 +9,8 @@ from threading import Thread
 from uuid import uuid4
 
 from celery import shared_task
-from django.core.mail import send_mail
+
+# from django.core.mail import send_mail
 from redis import ConnectionError, TimeoutError
 
 from persons.services import CustomizationSyncAsyncLoop
@@ -31,32 +32,67 @@ async def cache_user_data(*args, **kwargs) -> None:
     log_t = "[task cache_user_data]:"
 
     def child_process():
-
+        log.info(
+            " ".join(
+                [
+                    log_t[:-1],
+                    "[child_process]:",
+                    """\n
         # ============================================
         # CACHE SERVER
         # ============================================
+        """,
+                ]
+            )
+        )
 
         connected = cachemanager.cacher.connected
-        # Checking of connection
+        log.info(" ".join([log_t[:-1], "[child_process]:", "# Checking of connection"]))
         if not cachemanager.cacher.is_connected:
             error_t = " ".join(
-                [log_t, " Connecting to the cache server has not exists."]
+                [
+                    log_t[:-1],
+                    "[child_process]:",
+                    " Connecting to the cache server has not exists.",
+                ]
             )
             log.error(error_t)
             return
+        log.info(
+            " ".join(
+                [
+                    log_t[:-1],
+                    "[child_process]:",
+                    """
         # Here we make caching of data.
         # ============================================
         # SAVING DATA BEFORE REGISTRATION
         # ============================================
+        """,
+                ]
+            )
+        )
         try:
 
             with connected() as conn:
-                log.info("[task cache_user_data]: Before caching the new data")
+                log.info(
+                    " ".join(
+                        [log_t[:-1], "[child_process]:", "Before caching the new data"]
+                    )
+                )
                 k = args[0]
                 conn.setex(
                     str(k), 300, json.dumps(kwargs, ensure_ascii=False).encode("utf-8")
                 )
-                log.info("[task cache_user_data]: Data was cached successfully!")
+                log.info(
+                    " ".join(
+                        [
+                            log_t[:-1],
+                            "[child_process]:",
+                            "Data was cached successfully!",
+                        ]
+                    )
+                )
 
         except Exception as e:
             log.error(e)
@@ -66,14 +102,38 @@ async def cache_user_data(*args, **kwargs) -> None:
     try:
         await asyncio.wait_for(task, timeout=60)
     except asyncio.TimeoutError as e:
-        log.warning(log_t + " Cache user data timed out. TimeoutError: " + str(e))
+        log.warning(
+            " ".join(
+                [
+                    log_t[:-1],
+                    "[child_process]:",
+                    " Cache user data timed out. TimeoutError: " + str(e),
+                ]
+            )
+        )
         try:
             await task
         except asyncio.CancelledError as e:
-            log.warning(log_t + " Cache user data Cancelled CancelledError: " + str(e))
+            log.warning(
+                " ".join(
+                    [
+                        log_t[:-1],
+                        "[child_process]:",
+                        "Cache user data Cancelled CancelledError: " + str(e),
+                    ]
+                )
+            )
             task.cancel()
     except Exception as e:
-        log.error(log_t + " Cache user data Cancelled Error: " + str(e))
+        log.error(
+            " ".join(
+                [
+                    log_t[:-1],
+                    "[child_process]:",
+                    "Cache user data Cancelled Error: " + str(e),
+                ]
+            )
+        )
         task.cancel()
 
 
