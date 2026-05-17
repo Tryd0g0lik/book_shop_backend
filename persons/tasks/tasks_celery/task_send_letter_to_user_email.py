@@ -3,6 +3,7 @@ persons/tasks/tasks_celery/task_send_letter_to_user_email.py:1
 """
 
 import asyncio
+import concurrent.futures
 import json
 import logging
 import queue
@@ -47,7 +48,7 @@ async def child_process_get_keys_0(
 # ============================================"""
         )
         keys: list = []
-        futures: list = []
+        # futures: list = []
         result_bool: bool = await cachemanager.aget(
             key_pattern=key_pattern,
             collection=keys,
@@ -55,74 +56,48 @@ async def child_process_get_keys_0(
         log.warning(
             log_t[:-1]
             + f"[{child_process_get_keys_0.__name__}]:"
-            + " DEBUG \nReceived key_pattern %s & LIST LENGTH: %s & LIST: %s \n  RESULT_BOOL: %s "
+            + " DEBUG \nReceived key_pattern %s \n & LIST LENGTH: %s & LIST: %s \n  RESULT_BOOL: %s "
             % (key_pattern, str(len(keys)), str(keys), str(result_bool))
         )
+        start_time = datetime.now()
         if result_bool:
-            start_time = datetime.now()
-            # with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
             tasks = []
             for key in keys:
                 log.warning(
                     log_t[:-1]
                     + f"[{child_process_get_keys_0.__name__}]:"
-                    + " DEBUG THe KEY: %s RUN TO THE LOOP " % (key,),
+                    + " DEBUG THe KEY: %s RUN TO THE LOOP " % (key.decode("utf-8"),),
                 )
-                # loopSyncAsync_obj = CustomizationSyncAsyncLoop(
-                #     kwargs={"queue_collection": queue, "key": key}
-                # )
-                # loopSyncAsync_obj.get_new_function = cachemanager.aget
-                # future = executor.submit(loopSyncAsync_obj.get_new_loop())
-                # futures.append(future)
-                kwargs = {"queue_collection": queue, "key": key}
+                # kwargs = {"queue_collection": queue, "key": key.decode("utf-8")}
 
                 tasks.append(
                     asyncio.create_task(
-                        cachemanager.aget(queue_collection=queue, key=key)
+                        cachemanager.aget(
+                            queue_collection=queue, key=key.decode("utf-8")
+                        )
                     )
                 )
             await asyncio.gather(*tasks, return_exceptions=True)
-            log.warning(
-                log_t[:-1]
-                + f"[{child_process_get_keys_0.__name__}]:"
-                + " DEBUG FUTURES LENGTH: %s" % (len(futures),)
-            )
-            # while len(futures) > 0:
-            #     log.info(
-            #         log_t[:-1]
-            #         + f"[{child_process_get_keys_0.__name__}]:"
-            #         + " GET the futures Before receiving the queue."
-            #     )
-            #     print(
-            #         log_t[:-1]
-            #         + f"[{child_process_get_keys_0.__name__}]:"
-            #         + " GET the futures Before receiving the queue. "
-            #     )
-            #     for future in futures:
-            #         if future.done():
-            #             # future.result()
-            #             del future
-            end_time = datetime.now()
-            passed_time: datetime.now = end_time - start_time
-            log.info(
-                " ".join(
-                    [log_t[:-1], f"[{child_process_get_keys_0.__name__}]:", "Time:"]
-                )
-            )
-            log_t = " ".join(
-                [
-                    log_t[:-1],
-                    f"[{child_process_get_keys_0.__name__}]:",
-                    f"\nStart: {start_time.strftime('%Y-%m-%d %H:%M:%S')}",
-                    f"\nEnd: {end_time.strftime('%Y-%m-%d %H:%M:%S')}",
-                    f"\nPassed: {passed_time}",
-                    f"\nResult size: {queue.qsize()}",
-                    f"\nResult : {str(queue)}",
-                ]
-            )
 
-            log.info(log_t)
-            # future = ()
+        end_time = datetime.now()
+        passed_time: datetime.now = end_time - start_time
+        log.info(
+            " ".join([log_t[:-1], f"[{child_process_get_keys_0.__name__}]:", "Time:"])
+        )
+        log_t = " ".join(
+            [
+                log_t[:-1],
+                f"[{child_process_get_keys_0.__name__}]:",
+                f"\nStart: {start_time.strftime('%Y-%m-%d %H:%M:%S')}",
+                f"\nEnd: {end_time.strftime('%Y-%m-%d %H:%M:%S')}",
+                f"\nPassed: {passed_time}",
+                f"\nResult size: {queue.qsize()}",
+                f"\nResult : {str(queue)}",
+            ]
+        )
+
+        log.info(log_t)
+        # future = ()
 
         # async with lock:
         #     async with asynccacher.connected() as conn:
@@ -187,9 +162,9 @@ async def send_letter_to_user_email(*args, **kwargs) -> list:
     from persons import EnumEmailLetter, EnumTemplatesKeysCache
 
     keys_queue = queue.Queue(2000)
-    semaphore = Semaphore(4)
-    lock = asyncio.Lock()
-
+    # semaphore = Semaphore(4)
+    # lock = asyncio.Lock()
+    list_of_results = []
     try:
         # while keys_queue.qsize() > 0:
         # keys = keys_queue.get()
@@ -205,28 +180,29 @@ async def send_letter_to_user_email(*args, **kwargs) -> list:
         )
         log.info(
             log_t
-            + " ------------------ /child_process_get_keys_0 process -------------------"
+            + " \n------------------ /child_process_get_keys_0 process -------------------"
         )
-        log.info(log_t + " ------------------ Result -------------------")
+        log.info(log_t + " \n------------------ Result -------------------")
         qsize = keys_queue.qsize()
         if result_bool and qsize:
-            value_byte = keys_queue.get_nowait()
+            try:
+                while not keys_queue.empty():
+                    byte_code = keys_queue.get_nowait()
+                    json_code = json.loads(byte_code.decode("utf-8"))
+                    list_of_results.append(json_code)
+            except queue.Empty as e:
+                list_of_results.append(None)
+                log.warning(log_t + "WARNING QUEUE EMPTY TEXT => %s" % str(e))
+            log.info(log_t + " \n------------------ /Result -------------------")
 
-            log.info(log_t + "VALUE RESULT => %s" % str(value_byte))
-
-            log.info(log_t + " ------------------ /Result -------------------")
-
-        log.info(log_t + "RESULT BOOL => %s" % str(result_bool))
-        log.info(log_t + "RESULT DATA SIZE QUEUE=> %s" % str(keys_queue.qsize()))
-        log.info(log_t + "RESULT DATA QUEUE => %s" % str(keys_queue))
-    except queue.Empty as e:
-        log.warning(log_t + "WARNING TEXT => %s" % str(e))
-
-    try:
-        return keys_queue.get_nowait()
-    except queue.Empty as e:
-        log.warning(log_t + "WARNING TEXT => %s" % str(e))
+            log.info(log_t + "RESULT BOOL => %s" % str(result_bool))
+            log.info(log_t + "RESULT DATA SIZE QUEUE=> %s" % str(qsize))
+            log.info(log_t + "RESULT DATA QUEUE => %s" % str(list_of_results))
+    except Exception as e:
+        log.error(log_t + "ERROR TEXT => %s" % str(e))
         return []
+
+    return list_of_results
     # # ============================================
     # # 2. GET DATA BY KEYS FROM THE CACHE
     # # ============================================

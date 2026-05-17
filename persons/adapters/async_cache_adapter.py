@@ -12,12 +12,12 @@ from redis.asyncio import ConnectionError as AsyncConnectionError
 from redis.asyncio import Redis, RedisError
 from redis.asyncio.connection import ConnectionPool
 
-from persons.adapters.cache_base import CacherBase
+from persons.adapters.cache_base import CacherBaseMixin
 
 log = logging.getLogger(__name__)
 
 
-class AsyncCacherAdapter(CacherBase):
+class AsyncCacherAdapterMixin(CacherBaseMixin):
 
     async_pool: Optional[ConnectionPool] = None
 
@@ -51,7 +51,7 @@ class AsyncCacherAdapter(CacherBase):
         )
 
         try:
-            if AsyncCacherAdapter.async_pool is None:
+            if AsyncCacherAdapterMixin.async_pool is None:
                 # ============================================
                 # GET WORKERS
                 # ============================================
@@ -60,18 +60,14 @@ class AsyncCacherAdapter(CacherBase):
                     + self._init_pool.__name__
                     + " Before Redis Connection & pool initialized."
                 )
-                print(
-                    self.log_t
-                    + self._init_pool.__name__
-                    + " Before Redis Connection & pool initialized."
-                )
+
                 # async with self.async_lock:
                 print(
                     self.log_t
                     + self._init_pool.__name__
                     + " Before the async pool initialized."
                 )
-                AsyncCacherAdapter.async_pool = ConnectionPool(
+                AsyncCacherAdapterMixin.async_pool = ConnectionPool(
                     host=REDIS_HOST,
                     port=int(REDIS_PORT),
                     password=self.redis_password,
@@ -104,10 +100,10 @@ class AsyncCacherAdapter(CacherBase):
             raise ValueError(log_t)
 
     async def _get_client(self):
-        if AsyncCacherAdapter.async_pool is None:
+        if AsyncCacherAdapterMixin.async_pool is None:
             async with self.async_lock:
                 await self._init_pool()
-        return Redis(connection_pool=AsyncCacherAdapter.async_pool)
+        return Redis(connection_pool=AsyncCacherAdapterMixin.async_pool)
 
     async def related(self) -> bool:
         if self.server_client is None:
@@ -172,10 +168,10 @@ class AsyncCacherAdapter(CacherBase):
 
     async def _recreated_pool(self):
         async with self.async_lock:
-            is_pool = AsyncCacherAdapter.async_pool
+            is_pool = AsyncCacherAdapterMixin.async_pool
             if is_pool is not None:
-                await AsyncCacherAdapter.async_pool.disconnect()
-                AsyncCacherAdapter.async_pool = None
+                await AsyncCacherAdapterMixin.async_pool.disconnect()
+                AsyncCacherAdapterMixin.async_pool = None
             await self._init_pool()
 
     async def close(self):
@@ -186,13 +182,13 @@ class AsyncCacherAdapter(CacherBase):
         if self.server_client:
             await self.server_client.close()
             self.server_client = None
-        is_pool = AsyncCacherAdapter.async_pool
+        is_pool = AsyncCacherAdapterMixin.async_pool
         if is_pool is not None:
-            await AsyncCacherAdapter.async_pool.disconnect()
-            AsyncCacherAdapter.async_pool = None
+            await AsyncCacherAdapterMixin.async_pool.disconnect()
+            AsyncCacherAdapterMixin.async_pool = None
 
     async def is_connected(self) -> bool:
-        is_pool = AsyncCacherAdapter.async_pool
+        is_pool = AsyncCacherAdapterMixin.async_pool
         if is_pool is None:
             return False
         try:
@@ -242,37 +238,3 @@ class AsyncCacherAdapter(CacherBase):
                 % str(e.args[0] if e.args else str(e))
             )
             return False
-
-    @property
-    def redis_password(self) -> str:
-        return self._redis_password
-
-    @redis_password.setter
-    def redis_password(self, line: str) -> None:
-        if line is not None or isinstance(line, str) and len(line) == 0:
-            log_t = self.log_t + " Password is invalid."
-            raise ValueError(log_t)
-        self._redis_password = line
-
-    @property
-    def redis_master_name(self) -> str:
-        return self._redis_master_name
-
-    @redis_master_name.setter
-    def redis_master_name(self, line: str) -> None:
-        if (
-            isinstance(line, str)
-            and len(line) == 0
-            and re.match(r"\w{1,50}", line, flags=re.ASCII)
-        ):
-            log_t = self.log_t + " User name is invalid."
-            raise ValueError(log_t)
-        self._redis_master_name = line
-
-    @property
-    def redis_database(self) -> int:
-        return self._redis_db
-
-    @redis_database.setter
-    def redis_database(self, num: int) -> None:
-        self._redis_db = num

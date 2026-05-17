@@ -9,17 +9,17 @@ from typing import Optional
 
 from redis import ConnectionError, Redis, RedisError, TimeoutError
 
-from .cache_base import CacherBase
+from .cache_base import CacherBaseMixin
 
 log = logging.getLogger(__name__)
 
 
-class CacherAdapter(CacherBase):
+class CacherAdapterMixin(CacherBaseMixin):
     _pool = None
     __pool_lock = threading.Lock()
 
     def __new__(cls, *args, **kwargs):
-        cls.log_t = "[%s]:" % CacherAdapter.__class__.__name__
+        cls.log_t = "[%s]:" % CacherAdapterMixin.__class__.__name__
         return super().__new__(cls)
 
     def _init_pool(self) -> None:
@@ -31,12 +31,12 @@ class CacherAdapter(CacherBase):
         )
 
         try:
-            if CacherAdapter._pool is None:
+            if CacherAdapterMixin._pool is None:
                 redis_database = self.redis_database
                 redis_master_name = self.redis_master_name
                 redis_password = self.redis_password
-                with CacherAdapter.__pool_lock:
-                    CacherAdapter._pool = ConnectionPool(
+                with CacherAdapterMixin.__pool_lock:
+                    CacherAdapterMixin._pool = ConnectionPool(
                         host=REDIS_HOST,
                         port=int(REDIS_PORT),
                         password=redis_password,
@@ -55,9 +55,9 @@ class CacherAdapter(CacherBase):
             raise ValueError(log_t)
 
     def __get_client(self):
-        if CacherAdapter._pool is None:
+        if CacherAdapterMixin._pool is None:
             self._init_pool()
-        return Redis(connection_pool=CacherAdapter._pool)
+        return Redis(connection_pool=CacherAdapterMixin._pool)
 
     def related(self) -> bool:
         if self.server_client is None:
@@ -109,10 +109,10 @@ class CacherAdapter(CacherBase):
             pass
 
     def _recreated_pool(self):
-        with CacherAdapter.__pool_lock:
-            if CacherAdapter._pool:
-                CacherAdapter._pool.disconnect()
-                CacherAdapter._pool = None
+        with CacherAdapterMixin.__pool_lock:
+            if CacherAdapterMixin._pool:
+                CacherAdapterMixin._pool.disconnect()
+                CacherAdapterMixin._pool = None
             self._init_pool()
 
     def close(self):
@@ -122,38 +122,8 @@ class CacherAdapter(CacherBase):
         is_connected = self.is_connected
         if is_connected:
             self.server_client = None
-            CacherAdapter._pool = None
+            CacherAdapterMixin._pool = None
 
     @property
     def is_connected(self) -> bool:
-        return True if CacherAdapter._pool is not None else False
-
-    @property
-    def redis_password(self) -> str:
-        return self._redis_password
-
-    @redis_password.setter
-    def redis_password(self, line: str) -> None:
-        if isinstance(line, str) and len(line) == 0:
-            log_t = self.log_t + " Password is invalid."
-            raise ValueError(log_t)
-        self._redis_password = line
-
-    @property
-    def redis_master_name(self) -> str:
-        return self._redis_master_name
-
-    @redis_master_name.setter
-    def redis_master_name(self, line: str) -> None:
-        if isinstance(line, str) and len(line) == 0:
-            log_t = self.log_t + " User name is invalid."
-            raise ValueError(log_t)
-        self._redis_master_name = line
-
-    @property
-    def redis_database(self) -> int:
-        return self._redis_db
-
-    @redis_database.setter
-    def redis_database(self, num: int) -> None:
-        self._redis_db = num
+        return True if CacherAdapterMixin._pool is not None else False

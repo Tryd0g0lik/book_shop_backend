@@ -23,7 +23,7 @@ class TestCacheManagerSaving:
                 True,
             ),
             (
-                "user:pending:letter_1:%s" % "test_mailhostru",
+                "user:pending:letter_1:%s" % "test_2_mailhostru",
                 {"email": "test_2_mail@host.ru", "username": "SergeyTest"},
                 True,
             ),
@@ -64,15 +64,14 @@ class TestCacheManagerSaving:
         #     django.setup()
         # caplog.set_level(logging.INFO)
         log.info(
-            "[test test_send_to_user_email]: Key: %s & Value: %s"
+            log_t
+            + " Key: %s & Value: %s"
             % (str(key_tuple[0] % "test_emailhoastru"), str(value_dict))
         )
         # for key in key_tuple:
         result_future = await send_letter_to_user_email(key_tuple[0], **value_dict)
 
-        log.info(
-            f"\n1. [test test_send_to_user_email]: Result type: {type(result_future)}"
-        )
+        log.info(f"\n1. {log_t} Result type: {type(result_future)}")
         # print(f"2. [test test_send_to_user_email]:Result length: {len(result_future)}")
 
         # log.info(

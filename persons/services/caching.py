@@ -11,14 +11,14 @@ from typing import Optional
 
 from redis import ConnectionError
 
-from persons.adapters import AsyncCacherAdapter, CacherAdapter
+from persons.adapters import AsyncCacherAdapterMixin, CacherAdapterMixin
 
 log = logging.getLogger(__name__)
 
 
 class CacheManager:
-    cacher = CacherAdapter(db=1)
-    asynccacher = AsyncCacherAdapter(db=1)
+    cacher = CacherAdapterMixin(db=1)
+    asynccacher = AsyncCacherAdapterMixin(db=1)
 
     def __init__(
         self,
