@@ -80,7 +80,9 @@ class TestCacheManagerSaving:
         # )
         # assert type(result_future) == dict
         # log.info(f"4. {log_t} Тип result_future: {type(result_future)}")
-        assert len(result_future) > 0
+        assert result_future is not None
+        assert result_future
+
         # log.info(f"5. {log_t} Length result_future: {len(result_future)}")
         # k = list(result_future.keys())[0]
         # v = result_future.get(k)
