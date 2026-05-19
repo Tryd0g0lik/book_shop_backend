@@ -80,6 +80,7 @@ class CacheManager:
                             ttl,
                             json.dumps(default, ensure_ascii=False).encode("utf-8"),
                         )
+                # The clean storage
                 del existing
                 log.info(
                     self.log_t[:-1] + "[asave]:" + " Data was cached successfully!"

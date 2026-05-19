@@ -41,9 +41,9 @@ if DEBUG:
     WHITENOISE_USE_FINDERS = False
 SECURE_SSL_REDIRECT = False  # https is True & http is False
 
-
-# Application definition
-
+# ============================================
+# APPLICATION DEFINITION
+# ============================================
 INSTALLED_APPS = [
     "daphne",
     "rest_framework",
@@ -61,6 +61,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
+    "django.contrib.humanize",
     # Allauth
     "allauth",
     "allauth.account",
@@ -103,18 +104,27 @@ MIDDLEWARE = [
 ]
 from project.settings_conf.settings_db import *
 
-# Clickjacking Protection
+# ============================================
+# CLICKJACKING PROTECTION
+# ============================================
 X_FRAME_OPTIONS = "DENY"
 
-# ''' WHITEnOISE '''
+# ============================================
+# WHITEnOISE
+# ============================================
 # for a static files in production
 # https://whitenoise.readthedocs.io/en/stable/django.html
 WHITENOISE_MAX_AGE = 31536000  # static cache by 1 year
 WHITENOISE_USE_FINDERS = True
 
+# ============================================
+# MAIN ROUTER PATH
+# ============================================
 ROOT_URLCONF = "project.urls"
 
-
+# ============================================
+# TEMPLATES
+# ============================================
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
@@ -136,13 +146,16 @@ TEMPLATES = [
 
 ASGI_APPLICATION = "project.asgi.application"
 
-
-# '''CELERY"""
+# ============================================
+# CELERY
+# ============================================
 # 'celeryconfig.py' contains more information,
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
 
-# Password validation
+# ============================================
+# PASSWORD VALIDATION
+# ============================================
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -160,9 +173,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-# Internationalization
-# https://docs.djangoproject.com/en/4.2/topics/i18n/
-# hash passwords
+# ============================================
+# HASH PASSWORDS
+# ============================================
 # https://docs.djangoproject.com/en/5.2/topics/auth/passwords/
 PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.PBKDF2PasswordHasher",
@@ -175,6 +188,10 @@ PASSWORD_HASHERS = [
 ]
 
 PBKDF2_ITERATIONS = 720000
+
+# ============================================
+# LANGUAGE
+# ============================================
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
@@ -199,7 +216,9 @@ DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 # Dates and numbers display in the user’s local format
 USE_L10N = True
 
-# Static files (CSS, JavaScript, Images)
+# ============================================
+# STATIC FILES (CSS, JavaScript, Images)
+# ============================================
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
@@ -211,11 +230,14 @@ STATIC_URL = "/static/"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
-
-# Options for file's repository/source
+# ============================================
+# OPTIONS FOR FILE'S REPOSITORY/SOURCE
+# ============================================
 DEFAULT_FILE_STORAGE = "django.core.files.storage.FileSystemStorage"
 
-# Default primary key field type
+# ============================================
+# DEFAULT PRIMARY KEY FIELD TYPE
+# ============================================
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
@@ -223,30 +245,40 @@ DEFAULT_CHARSET = "utf-8"
 AUTH_USER_MODEL = "persons.Users"
 SITE_ID = 1
 
-# '''LOGING AUTHENTICATION'''
+# ============================================
+# LOGING AUTHENTICATION
+# ============================================
 LOGIN_URL = "/"
 LOGIN_REDIRECT_URL = "wagtailadmin_home"
 # LOGOUT_REDIRECT_URL = "/"
 
 WAGTAILADMIN_BASE_URL = "/"
-# """DEBUG TOOLBAR - SERVER DAPHNE"""
+
+# ============================================
+# DEBUG TOOLBAR - SERVER DAPHNE
+# ============================================
 DEBUG_TOOLBAR_CONFIG = {
     "SHOW_TOOLBAR_CALLBACK": lambda request: True,
 }
 
-
-# '''Cookie'''
+# ============================================
+# COOKIE
+# ============================================
 SESSION_COOKIE_HTTPONLY = False  # CSRF_COOKIE_HTTPONLY = True
 SESSION_COOKIE_SECURE = False  # change to the True - CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SAMESITE = "Lax"  # CSRF_COOKIE_SAMESITE = 'Lax'  # or 'Strict'
 SESSION_COOKIE_AGE = 86400
 
-# '''Model of page'''
+# ============================================
+# MODEL OF PAGE
+# ============================================
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10_000
 DATA_UPLOAD_MAX_NUMBER_FILES = 10240
 WAGTAIL_SITE_NAME = "Shop"
 
-# Application definition
+# ============================================
+# APPLICATION DEFINITION
+# ============================================
 # file extension
 f_extension = "csv, docx, pdf, rtf, txt, xlsx, zip"
 WAGTAILDOCS_EXTENSIONS = list(f_extension.split(", "))

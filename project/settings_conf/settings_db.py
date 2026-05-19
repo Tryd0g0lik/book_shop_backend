@@ -69,7 +69,7 @@ def get_allowed_hosts(allowed_hosts: str):
 # ============================================
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 ALLOWED_HOSTS += get_allowed_hosts("127.0.0.1, localhost, 0.0.0.0")
-# try:
+
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 if DJANGO_ENV == "testing":
     log.info(f"DJANGO_ENV == 'testing'': {DJANGO_ENV == "testing"}")
@@ -136,12 +136,3 @@ else:
         }
     }
     log.info("Postgres database was launched.")
-# except Exception as e:
-#     log.error(f"✗ ERROR configuring database: {e}")
-#     DATABASES = {
-#         "default": {
-#             "ENGINE": "django.db.backends.sqlite3",
-#             "NAME": BASE_DIR / "fallback.db",
-#         }
-#     }
-#     log.info("SQLite database was launched after ERROR.")

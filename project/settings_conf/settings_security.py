@@ -111,8 +111,13 @@ if not DEBUG:
 
 # Time live of the magic refer
 # MAGIC_TOKEN_TIMEOUT = 300
-#
-# # """ ALLAUTH """
+# ============================================
+# ALLAUTH
+# ============================================
+# Make sure "webauthn" is included.
+MFA_SUPPORTED_TYPES = ["totp", "webauthn", "recovery_codes"]
+# Optional: enable support for logging in using a (WebAuthn) passkey.
+MFA_PASSKEY_LOGIN_ENABLED = True
 # SOCIALACCOUNT_PROVIDERS = {}
 # # The maximum amount of email addresses a user can associate to his account
 # ACCOUNT_MAX_EMAIL_ADDRESSES = 2
@@ -136,10 +141,4 @@ ACCOUNT_ADAPTER = "allauth.account.adapter.DefaultAccountAdapter"
 ACCOUNT_LOGIN_METHODS = {"email"}
 ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
 ACCOUNT_EMAIL_SUBJECT_PREFIX = "[Shop] "
-
-
-# except Exception as e:
-#     log.error(
-#         "[settings_security]: Server error from the settings of the email authentification. TEXT_ERROR: %s ",
-#         e.args[0] if e.args else str(e),
-#     )
+ACCOUNT_EMAIL_CONFIRMATION_HMAC = True

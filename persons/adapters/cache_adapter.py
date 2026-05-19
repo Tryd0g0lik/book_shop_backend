@@ -5,11 +5,13 @@ persons/adapters/cache_adapter.py:1
 import logging
 import threading
 from contextlib import contextmanager
-from typing import Optional
 
-from redis import ConnectionError, Redis, RedisError, TimeoutError
+from redis import AuthenticationError, ConnectionError, Redis, RedisError, TimeoutError
 
 from .cache_base import CacherBaseMixin
+
+# from typing import Optional
+
 
 log = logging.getLogger(__name__)
 
@@ -97,6 +99,11 @@ class CacherAdapterMixin(CacherBaseMixin):
                 e
             )
             raise TimeoutError(log_t) from e
+        except AuthenticationError as e:
+            log_t = self.log_t[:-1] + " AuthenticationError error. %s" % str(
+                e.args[0] if e.args else str(e)
+            )
+            raise AuthenticationError(log_t) from e
 
         except RedisError as e:
             log_t = self.log_t + "Mistake on a cache server: %s" % str(e)

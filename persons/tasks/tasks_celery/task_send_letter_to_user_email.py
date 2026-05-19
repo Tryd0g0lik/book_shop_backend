@@ -3,15 +3,12 @@ persons/tasks/tasks_celery/task_send_letter_to_user_email.py:1
 """
 
 import asyncio
-import concurrent.futures
 import json
 import logging
 import queue
 import time
 
 from celery import shared_task
-
-# from persons.services import CustomizationSyncAsyncLoop
 
 log = logging.getLogger(__name__)
 
@@ -31,24 +28,20 @@ async def child_process_get_keys_0(
     :param queue.Queue queue: This is the queue.Queue object.
     :return: list
     """
-    # import concurrent.futures
     from datetime import datetime
 
     from persons.apps import cachemanager
-
-    # from persons.services import CustomizationSyncAsyncLoop
 
     try:
         log.info(
             log_t[:-1]
             + f"[{child_process_get_keys_0.__name__}]:"
             + """\n
-============================================
+# ============================================
 # REDIS CACHE SERVER - GET THE COLLECTION of KEYS
 # ============================================"""
         )
         keys: list = []
-        # futures: list = []
         result_bool: bool = await cachemanager.aget(
             key_pattern=key_pattern,
             collection=keys,
@@ -68,8 +61,6 @@ async def child_process_get_keys_0(
                     + f"[{child_process_get_keys_0.__name__}]:"
                     + " DEBUG THe KEY: %s RUN TO THE LOOP " % (key.decode("utf-8"),),
                 )
-                # kwargs = {"queue_collection": queue, "key": key.decode("utf-8")}
-
                 tasks.append(
                     asyncio.create_task(
                         cachemanager.aget(
@@ -84,6 +75,7 @@ async def child_process_get_keys_0(
         log.info(
             " ".join([log_t[:-1], f"[{child_process_get_keys_0.__name__}]:", "Time:"])
         )
+        # Simple the overview by values
         log_t = " ".join(
             [
                 log_t[:-1],
@@ -97,32 +89,6 @@ async def child_process_get_keys_0(
         )
 
         log.info(log_t)
-        # future = ()
-
-        # async with lock:
-        #     async with asynccacher.connected() as conn:
-
-        # # Get keys from the cache.
-        # try:
-        #     log.info(log_t[:-1] + " [child_process_get_keys_0]: Before lookup the keys of cache.")
-        #     print(
-        #         "\n[child_process_get_keys_0]: DEBUG Before lookup the keys of cache."
-        #     )
-        #     # Get the cache's data by the keys.
-        #     queue.put_nowait(conn.keys(key_pattern))
-        #     log.info(log_t[:-1] + "[child_process_get_keys_0]: Data was cached successfully!")
-        #     print("[child_process_get_keys_0]: DEBUG Data was cached successfully!")
-        #
-        # except queue.Full as e:
-        #     log.warning(log_t[:-1] + "[child_process_get_keys_0]: %s" % str(e))
-        #     print("[child_process_get_keys_0]: DEBUG %s" % str(e))
-        #     queue.put(conn.keys(key_pattern))
-        # except Exception as e:
-        #     log.error(log_t[:-1] + "[child_process_get_keys_0]: %s" % str(e))
-        #     print("[child_process_get_keys_0] DEBUG %s" % str(e))
-        #     return False
-        # log.info(log_t[:-1] + "[child_process_get_keys_0]: all successfully was saved in the queue.")
-        # print("[child_process_get_keys_0]: all successfully was saved in the queue.")
 
     except Exception as e:
         error_t = log_t[:-1] + "[child_process_get_keys_0] ERORR_TEXT: %s" % str(e)
@@ -132,122 +98,109 @@ async def child_process_get_keys_0(
     return True
 
 
-def child_process_send_letter_to_user_email_2():
-    from django.template.loader import render_to_string
-    from wagtail.admin.mail import send_mail
+# ============================================
+# 2. LETTER FOR USER (don't a working)
+# ============================================
+def child_process_send_letter_to_user_email_2(*args, **kwargs) -> bool:
+    # from django.template.loader import render_to_string
+    # from wagtail.admin.mail import send_mail
+    # from persons import EnumEmailLetter
+    log_t = f"[{child_process_send_letter_to_user_email_2.__name__}]:"
 
-    pass
-    # log.info("DEBUG CHECK THE PATH TO THE LETTER %s" % args[0])
-    # try:
-    #     # ============================================
-    #     # LETTER TO THE USER'S EMAIL
-    #     # ============================================
-    #     text_context = render_to_string(
-    #         EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value
-    #     )
-    #
-    #     subject = "Test Email message"
-    #     send_mail(subject, text_context, [to_email], APP_DEFAULT_FROM_EMAIL, )
-    # except Exception as e:
-    #     error_t = " ".join([log_t, f" TEXT_ERROR: {e.args[0] if e.args else str(e)}"])
-    #     log.error(error_t)
-    # return get_data_of_cache[0]
+    log.info("DEBUG CHECK THE PATH TO THE LETTER %s" % args[0])
+    try:
+        log.info(
+            log_t
+            + """\n
+# ============================================
+# LETTER FOR THE USER'S EMAIL
+# ============================================
+        """
+        )
+
+        # text_context = render_to_string(
+        #     EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value
+        # )
+        pass
+        # subject = "Test Email message"
+        # send_mail(subject, text_context, [to_email], APP_DEFAULT_FROM_EMAIL, )
+    except Exception as e:
+        error_t = " ".join([log_t, f" TEXT_ERROR: {e.args[0] if e.args else str(e)}"])
+        log.error(error_t)
+        return False
+    return True
 
 
-async def send_letter_to_user_email(*args, **kwargs) -> list:
+async def send_letter_to_user_email(*args, **kwargs) -> bool:
     log_t = f"[task {send_letter_to_user_email.__name__}]:"
-    from concurrent.futures import ThreadPoolExecutor
-    from threading import Semaphore
-
-    from persons import EnumEmailLetter, EnumTemplatesKeysCache
+    import asyncio
 
     keys_queue = queue.Queue(2000)
-    # semaphore = Semaphore(4)
-    # lock = asyncio.Lock()
+
+    lock = asyncio.Lock()
     list_of_results = []
+    result_bool = False
     try:
-        # while keys_queue.qsize() > 0:
-        # keys = keys_queue.get()
-        # with semaphore:
-        # for key in keys:
         args_str: str = args[0]
         log.info(
             log_t
-            + " \n----------------- child_process_get_keys_0  process --------------------"
+            + """ \n
+----------------- child_process_get_keys_0  process --------------------"""
         )
-        result_bool = await child_process_get_keys_0(
-            key_pattern=args_str % "*", queue=keys_queue, log_t=log_t
+        async with lock:
+            result_bool = await child_process_get_keys_0(
+                key_pattern=args_str % "*", queue=keys_queue, log_t=log_t
+            )
+        log.info(
+            log_t
+            + """ \n
+------------------ /child_process_get_keys_0 process -------------------"""
         )
         log.info(
             log_t
-            + " \n------------------ /child_process_get_keys_0 process -------------------"
+            + """ \n
+------------------ Result -------------------"""
         )
-        log.info(log_t + " \n------------------ Result -------------------")
+        log.info(
+            log_t
+            + """\n
+We have the DATA in QUEUES (the JSON format). These data we above received.
+Below we need t get the token. Then insert in letter and send.
+        """
+        )
         qsize = keys_queue.qsize()
+        byte_code = json_code = None
         if result_bool and qsize:
             try:
                 while not keys_queue.empty():
                     byte_code = keys_queue.get_nowait()
                     json_code = json.loads(byte_code.decode("utf-8"))
                     list_of_results.append(json_code)
-            except queue.Empty as e:
-                list_of_results.append(None)
-                log.warning(log_t + "WARNING QUEUE EMPTY TEXT => %s" % str(e))
-            log.info(log_t + " \n------------------ /Result -------------------")
 
-            log.info(log_t + "RESULT BOOL => %s" % str(result_bool))
-            log.info(log_t + "RESULT DATA SIZE QUEUE=> %s" % str(qsize))
-            log.info(log_t + "RESULT DATA QUEUE => %s" % str(list_of_results))
+            except queue.Empty as e:
+                log.warning(log_t + "WARNING QUEUE EMPTY TEXT => %s" % str(e))
+                list_of_results.append(None)
+        # The clean storage
+        del [qsize, byte_code, json_code]
+        if list_of_results[0] is not None:
+            new_results_list = [
+                item_json for item_json in list_of_results if item_json is not None
+            ]
+            list_of_results.clear()
+            list_of_results.extend(new_results_list[:])
+            # the clea storage
+            del new_results_list
+
+            log.info(
+                log_t
+                + """ \n
+------------------ /Result -------------------"""
+            )
     except Exception as e:
         log.error(log_t + "ERROR TEXT => %s" % str(e))
-        return []
+        return False
 
-    return list_of_results
-    # # ============================================
-    # # 2. GET DATA BY KEYS FROM THE CACHE
-    # # ============================================
-    # async def parent_process_get_data_of_user(*args) -> list | tuple:
-    #
-    #     data_of_cache = []
-    #     controller = True
-    #     with ThreadPoolExecutor(max_workers=4) as executor:
-    #         log.info(
-    #             "[task cache_user_data]: TEST DEBUG Before loop. ARGS: %s" % str(args)
-    #         )
-    #         print(
-    #             "\n[task cache_user_data]: TEST DEBUG Before loop. ARGS: %s" % str(args)
-    #         )
-    #         while controller:
-    #             result_list: list | tuple = args[:]
-    #             for pattern in result_list:
-    #                 if type(pattern) is list:
-    #                     (args.insert(len(args), pattern),)
-    #                     continue
-    #                 elif type(pattern) is tuple:
-    #                     args += pattern
-    #                     continue
-    #                 else:
-    #                     controller = False
-    #                 log.info(
-    #                     "[task cache_user_data]: TEST DEBUG pattern: %s" % str(pattern)
-    #                 )
-    #                 print(
-    #                     "[task cache_user_data]: TEST DEBUG pattern: %s" % str(pattern)
-    #                 )
-    #                 if pattern:
-    #                     data_of_cache.append(
-    #                         {pattern: executor.submit(child_process, pattern)}
-    #                     )
-    #         if len(data_of_cache) == 0:
-    #             log.warning(f"{log_t} No patterns provided")
-    #             print(f"{log_t} No patterns provided")
-    #             return [2]
-    #         return data_of_cache
-    #
-    # get_data_of_cache = await parent_process_get_data_of_user(args[0])
-    #
-
-    # child_process_send_letter_to_user_email_2()
+    return True
 
 
 @shared_task(
