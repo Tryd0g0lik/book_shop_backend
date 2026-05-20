@@ -16,7 +16,8 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_GET, require_POST
 
 from persons import EnumTemplatesKeysCache
-from persons.apps import personmanager
+
+# from persons.apps import personmanager
 from persons.forms import UsersRegistrationForm
 from persons.tasks.tasks_celery.task_send_letter_to_user_email import task_postman
 from project.settings_conf.settings_env import CATEGORY_STATUS

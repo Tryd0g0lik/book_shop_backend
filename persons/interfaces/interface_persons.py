@@ -6,7 +6,7 @@ This a content will use for how auxiliary classes for data typing.
 from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from persons.interfaces.interface_emailStr import EmailString
 
@@ -31,8 +31,7 @@ class UsersPydantic(BaseModel):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
     def clean(self):
         """Clean the user's data."""

@@ -30,75 +30,15 @@ async def cache_user_data(*args, **kwargs) -> None:
     from persons.apps import cachemanager
 
     log_t = "[task cache_user_data]:"
+    k = args[0]
 
-    def child_process():
-        log.info(
-            " ".join(
-                [
-                    log_t[:-1],
-                    "[child_process]:",
-                    """\n
-        # ============================================
-        # CACHE SERVER
-        # ============================================
-        """,
-                ]
-            )
+    task = asyncio.create_task(
+        cachemanager.asave(
+            k=str(k),
+            ttl=300,
+            default=json.dumps(kwargs, ensure_ascii=False).encode("utf-8"),
         )
-
-        connected = cachemanager.cacher.connected
-        log.info(" ".join([log_t[:-1], "[child_process]:", "# Checking of connection"]))
-        if not cachemanager.cacher.is_connected:
-            error_t = " ".join(
-                [
-                    log_t[:-1],
-                    "[child_process]:",
-                    " Connecting to the cache server has not exists.",
-                ]
-            )
-            log.error(error_t)
-            return
-        log.info(
-            " ".join(
-                [
-                    log_t[:-1],
-                    "[child_process]:",
-                    """
-        # Here we make caching of data.
-        # ============================================
-        # SAVING DATA BEFORE REGISTRATION
-        # ============================================
-        """,
-                ]
-            )
-        )
-        try:
-
-            with connected() as conn:
-                log.info(
-                    " ".join(
-                        [log_t[:-1], "[child_process]:", "Before caching the new data"]
-                    )
-                )
-                k = args[0]
-                conn.setex(
-                    str(k), 300, json.dumps(kwargs, ensure_ascii=False).encode("utf-8")
-                )
-                log.info(
-                    " ".join(
-                        [
-                            log_t[:-1],
-                            "[child_process]:",
-                            "Data was cached successfully!",
-                        ]
-                    )
-                )
-
-        except Exception as e:
-            log.error(e)
-            return
-
-    task = asyncio.create_task(asyncio.to_thread(child_process))
+    )
     try:
         await asyncio.wait_for(task, timeout=60)
     except asyncio.TimeoutError as e:

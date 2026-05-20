@@ -44,7 +44,7 @@ class TestCacheManagerSaving:
     @pytest.mark.parametrize(
         "key_tuple, value_dict, expected",
         [
-            (("user:pending:%s",), {}, False),
+            (("user:pending:%s",), {}, True),
         ],
     )
     async def test_send_to_user_email(
@@ -81,7 +81,7 @@ class TestCacheManagerSaving:
         # assert type(result_future) == dict
         # log.info(f"4. {log_t} Тип result_future: {type(result_future)}")
         assert result_future is not None
-        assert result_future
+        assert result_future is expected
 
         # log.info(f"5. {log_t} Length result_future: {len(result_future)}")
         # k = list(result_future.keys())[0]

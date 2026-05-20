@@ -9,8 +9,6 @@ import queue
 import re
 from typing import Optional
 
-from redis import ConnectionError
-
 from persons.adapters import AsyncCacherAdapterMixin, CacherAdapterMixin
 
 log = logging.getLogger(__name__)
@@ -96,6 +94,38 @@ class CacheManager:
             log.error(log_t)
             raise ValueError(log_t)
         return True
+
+    def save(
+        self, key: str, default: Optional[dict | list | tuple] = None, ttl: int = 300
+    ) -> bool:
+        """
+        :return: bool
+        :param key: This is a key of caching. That we use to get the data.
+        :param default:
+        :param ttl:  This is a time of caching. That is the cache time of life.
+        :return: bool
+        """
+        from persons.services import CustomizationSyncAsyncLoop
+
+        try:
+            loop_async_sync = CustomizationSyncAsyncLoop(
+                *[], **{"key": key, "default": default, "ttl": ttl}
+            )
+            loop_async_sync.get_new_function = self.asave
+            if loop_async_sync.is_async:
+                loop_async_save = loop_async_sync.get_new_loop()
+                return loop_async_save()
+            log_t = " ".join(
+                [
+                    self.log_t[:-1] + "[save]:",
+                    "Check a new loop. THe ASAVE method don't run in the sync loop.",
+                ]
+            )
+            log.error(log_t)
+            raise ValueError(log_t)
+        except Exception as e:
+            log.error(e.args if e.args else str(e))
+            raise e
 
     async def aget(
         self,
@@ -391,3 +421,62 @@ class CacheManager:
             log.error(log_t)
             raise ValueError(log_t)
         return True
+
+    def get(
+        self,
+        queue_collection: Optional[queue.Queue] = None,
+        collection: Optional[list | tuple] = None,
+        key_pattern: Optional[str] = None,
+        key: Optional[str] = None,
+        ex: Optional[int] = None,
+        px: Optional[int] = None,
+        exat: Optional[int] = None,
+        persist=None,
+    ):
+        """
+        You choose where could will saving data. It is the queue or the simple list
+        :param str key_pattern: This is the template of key. Default value is None. Example 'user:pending:*'
+        :param str key: This is the one key.Key which get the data from the cache serve. Default value is None.
+            Example: 'user:pending:< user email has hot containing '.' & '@' characters >'
+        :param queue.Queue queue_collection: This is a queue for collecting data from the cache server. Default value is None.
+        :param list|tuple collection: This is a list of tuple  for collecting  data from the cache server. Default value is None.
+        :param int ex: (PX milliseconds ) This is a time of caching. That is the cache time of life. At getex
+        :param int px: milliseconds  This is a time of caching. That is the cache time of life At getex
+        :param exat: Timestamp=seconds. Set the specified Unix time in seconds, Default value is None
+        :param persist: Remove the existing timeout on key, turning the key, Default value is None
+        :return:
+        """
+        try:
+            from redis import ConnectionError
+
+            from persons.services import CustomizationSyncAsyncLoop
+
+            loop_async_sync = CustomizationSyncAsyncLoop(
+                *[],
+                **{
+                    "queue_collection": queue_collection,
+                    "collection": collection,
+                    "key_pattern": key_pattern,
+                    "key": key,
+                    "ex": ex,
+                    "px": px,
+                    "exat": exat,
+                    "persist": persist,
+                }
+            )
+            loop_async_sync.get_new_function = self.asave
+            if loop_async_sync.is_async:
+                loop_async_get = loop_async_sync.get_new_loop()
+                return loop_async_get()
+            log_t = " ".join(
+                [
+                    self.log_t[:-1] + "[save]:",
+                    "Check a new loop. THe AGET method don't run in the sync loop.",
+                ]
+            )
+
+            log.error(log_t)
+            raise ValueError(log_t)
+        except Exception as e:
+            log.error(e.args if e.args else str(e))
+            raise e

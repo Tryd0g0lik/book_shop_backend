@@ -10,7 +10,6 @@ from django.core.mail import send_mail
 
 from persons.exceptions import PersonErrorImproperlyConfigured
 from persons.interfaces import EmailString, UsersPydantic
-from persons.models import Users
 
 # from allauth.account.internal.userkit import user_email
 
@@ -20,6 +19,8 @@ class PersonServiceAdapter:
     @staticmethod
     def get_user_by_id(user_id: Optional[int] = None) -> Optional[UsersPydantic]:
         """GEt user from the database and conversion through the Pydantic"""
+        from persons.models import Users
+
         try:
             if user_id is not None and isinstance(user_id, int):
                 user = Users.objects.get(id=user_id)
@@ -34,6 +35,8 @@ class PersonServiceAdapter:
         user_email: Optional[EmailString] = None,
     ) -> Optional[UsersPydantic]:
         """GEt user from the database and conversion through the Pydantic"""
+        from persons.models import Users
+
         try:
             if user_email is not None and isinstance(user_email, EmailString):
                 user = Users.objects.get(email=user_email)
@@ -47,6 +50,8 @@ class PersonServiceAdapter:
     @staticmethod
     def search_by_email(email_pattern: str) -> list[UsersPydantic]:
         """Search users by email"""
+        from persons.models import Users
+
         try:
             users = Users.objects.filter(email__icontains=email_pattern)
             return [UsersPydantic.model_validate(u) for u in users]
@@ -54,10 +59,26 @@ class PersonServiceAdapter:
             raise PersonErrorImproperlyConfigured(e.args[0] if e.args else str(e))
 
     @staticmethod
-    def send_email_to_user(user_id: int, subject: str, message: str):
+    def send_email_to_user(
+        subject: str,
+        message: str,
+        user_id: Optional[int],
+        user_email: Optional[EmailString] = None,
+    ) -> None:
         """Send email (in the database Person)"""
+        if user_id is None and user_email is None:
+            raise PersonErrorImproperlyConfigured()
         try:
-            user = Users.objects.get(id=user_id)
+            # ============================================
+            # SEND EMAIL BY the user id or user email
+            # ============================================
+            from persons.models import Users
+
+            user = (
+                Users.objects.get(id=user_id)
+                if user_id is not None
+                else Users.objects.get(email=user_email)
+            )
             send_mail(subject, message, None, [user.email])
         except Exception as e:
             raise PersonErrorImproperlyConfigured(e.args[0] if e.args else str(e))
@@ -79,6 +100,8 @@ class PersonServiceAdapter:
         Returns:
             Updated user as Pydantic model
         """
+        from persons.models import Users
+
         get_person_model_old: Optional[UsersPydantic] = None
 
         try:

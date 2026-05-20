@@ -4,7 +4,8 @@ from django.apps import AppConfig
 from django.dispatch import Signal
 
 from persons.services import CacheManager
-from persons.services.person_manager import PersonManager
+
+# from persons.services.person_manager import PersonManager
 
 # from pathlib import Path
 
@@ -15,7 +16,7 @@ from persons.services.person_manager import PersonManager
 IS_DEBUG = os.getenv("IS_DEBUG", "1")
 DEBUG = True if int(IS_DEBUG) == 1 else False
 
-personmanager = PersonManager()
+# personmanager = PersonManager()
 cachemanager = CacheManager()
 new_person_signal = Signal(use_caching=False)
 

@@ -169,7 +169,8 @@ Below we need t get the token. Then insert in letter and send.
         """
         )
         qsize = keys_queue.qsize()
-        byte_code = json_code = None
+        byte_code = None
+        json_code = None
         if result_bool and qsize:
             try:
                 while not keys_queue.empty():
@@ -181,7 +182,7 @@ Below we need t get the token. Then insert in letter and send.
                 log.warning(log_t + "WARNING QUEUE EMPTY TEXT => %s" % str(e))
                 list_of_results.append(None)
         # The clean storage
-        del [qsize, byte_code, json_code]
+        del qsize, byte_code, json_code
         if list_of_results[0] is not None:
             new_results_list = [
                 item_json for item_json in list_of_results if item_json is not None
