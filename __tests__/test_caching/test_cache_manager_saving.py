@@ -5,7 +5,10 @@ __test__/test_caching/test_cache_manager_saving.py:1
 import logging
 
 import pytest
-from __test__.fixtures.fixture_django import django_setup
+from pydantic import EmailStr
+
+from __tests__.fixtures.fixture_django import django_setup, mock_pydantic_user
+from persons.interfaces import EmailString
 
 log = logging.getLogger(__name__)
 
