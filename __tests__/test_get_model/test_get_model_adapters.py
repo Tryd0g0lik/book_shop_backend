@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 class TestSubPostmanAdapter:
 
 
-    async def test_subPerson_get_model(self, mock_cacher_adapter_mixin, mock_subPerson_class):
+    async def test_subPerson_get_model(self, mock_cacher_adapter_mixin,mock_user_django, mock_subPerson_class):
         from asyncio import Lock
         log.info("""\n
         # ============================================
