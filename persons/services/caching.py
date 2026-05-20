@@ -10,13 +10,14 @@ import re
 from typing import Optional
 
 from persons.adapters import AsyncCacherAdapterMixin, CacherAdapterMixin
+from project.settings_conf.settings_env import REDIS_DB
 
 log = logging.getLogger(__name__)
 
 
 class CacheManager:
-    cacher = CacherAdapterMixin(db=1)
-    asynccacher = AsyncCacherAdapterMixin(db=1)
+    cacher = CacherAdapterMixin(db=int(REDIS_DB))
+    asynccacher = AsyncCacherAdapterMixin(db=int(REDIS_DB))
 
     def __init__(
         self,
@@ -464,7 +465,7 @@ class CacheManager:
                     "persist": persist,
                 }
             )
-            loop_async_sync.get_new_function = self.asave
+            loop_async_sync.get_new_function = self.aget
             if loop_async_sync.is_async:
                 loop_async_get = loop_async_sync.get_new_loop()
                 return loop_async_get()

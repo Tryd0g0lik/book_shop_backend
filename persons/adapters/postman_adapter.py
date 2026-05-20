@@ -153,32 +153,43 @@ class PostmanAdapter(
             )
             PostmanAdapter.get_key_cache = key_cache
 
-            data_from_cache_server: dict | None = self.__get_cache(key_cache)
-            if isinstance(data_from_cache_server, dict):
-                UsersPydantic.model_validate(**data_from_cache_server)
-                self.database_service.update_user_in_database(
-                    data_from_cache_server,
-                )
-                self.get_person_model = {**data_from_cache_server}
-                return self.get_person_model
+            data_from_cache_server_list: list | None = self.__get_cache(key_cache)
+            for data_from_cache_server in data_from_cache_server_list:
+                if isinstance(data_from_cache_server, dict):
+                    UsersPydantic.model_validate(**data_from_cache_server)
+                    self.database_service.update_user_in_database(
+                        data_from_cache_server,
+                    )
+                    self.get_person_model = {**data_from_cache_server}
+                    return self.get_person_model
             return None
 
         @staticmethod
         def __get_cache(value: str) -> dict | list | None:
+            from persons.apps import cachemanager
 
-            value_of_cache: Optional[bytes] = None
+            # value_of_cache: Optional[bytes] = None
+            value_of_cache: Optional[list | dict] = []
             # ============================================
             # CONNECT TO THE CACHE SERVER
             # ============================================
-            related_bool = PostmanAdapter.related()
-            if related_bool:
-                with PostmanAdapter.connected() as conn:
-
-                    try:
-                        value_of_cache: bytes | None = conn.getex(value, exat=86400)
-                    except Exception as e:
-                        raise e
-                if value_of_cache is None:
-                    return None
-                return json.loads(value_of_cache.encode("utf-8"))
-            return None
+            try:
+                cachemanager.get(key=value, collection=value_of_cache, exat=86400)
+                return value_of_cache
+            except Exception as e:
+                log.error(
+                    f"[SubPerson][__get_cache]: {e.args[0] if e.args else str(e)}"
+                )
+                raise e
+            # related_bool = PostmanAdapter.related()
+            # if related_bool:
+            #     with PostmanAdapter.connected() as conn:
+            #
+            #         try:
+            #             value_of_cache: bytes | None = conn.getex(value, exat=86400)
+            #         except Exception as e:
+            #             raise e
+            #     if value_of_cache is None:
+            #         return None
+            #     return json.loads(value_of_cache.encode("utf-8"))
+            # return None
