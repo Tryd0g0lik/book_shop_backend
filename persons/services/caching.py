@@ -1,5 +1,5 @@
 """
-persons/adapters/caching.py:2
+persons/services/caching.py:4
 """
 
 import asyncio
@@ -7,6 +7,7 @@ import json
 import logging
 import queue
 import re
+import threading
 from typing import Optional
 
 from persons.adapters import AsyncCacherAdapterMixin, CacherAdapterMixin
@@ -22,7 +23,7 @@ class CacheManager:
     def __init__(
         self,
     ):
-        self.log_t = "[CacheManager]:"
+        self.log_t = f"{__name__.split("/")[-1]}" + "[CacheManager]:"
 
     async def asave(
         self, key: str, default: Optional[dict | list | tuple] = None, ttl: int = 300
@@ -37,7 +38,7 @@ class CacheManager:
         log.info(
             """\n
 # ============================================
-# CACHE SERVER
+# CACHE SERVER ASAVE
 # ============================================
 # Checking of connection
             """
@@ -108,14 +109,28 @@ class CacheManager:
         """
         from persons.services import CustomizationSyncAsyncLoop
 
+        log.info(
+            self.log_t[:-1]
+            + "[aget]:"
+            + """\n
+        # ============================================
+        # CACHE SERVER SAVE
+        # ============================================
+        # Checking of connection
+                    """
+        )
         try:
             loop_async_sync = CustomizationSyncAsyncLoop(
                 *[], **{"key": key, "default": default, "ttl": ttl}
             )
             loop_async_sync.get_new_function = self.asave
+            loop_async_sync.is_async = True
+            log.info("DEBUG VALUE BOOL  before coroutine")
             if loop_async_sync.is_async:
-                loop_async_save = loop_async_sync.get_new_loop()
-                return loop_async_save()
+                coroutine_in_new_loop = loop_async_sync.get_new_loop()
+                value_bool = coroutine_in_new_loop()
+                log.info("DEBUG VALUE BOOL  from coroutine: %s " % value_bool)
+
             log_t = " ".join(
                 [
                     self.log_t[:-1] + "[save]:",
@@ -157,7 +172,7 @@ class CacheManager:
             + "[aget]:"
             + """\n
 # ============================================
-# CACHE SERVER
+# CACHE SERVER AGET
 # ============================================
 # Checking of connection
             """
@@ -298,8 +313,13 @@ class CacheManager:
                             + "[aget]:"
                             + "# WORKING WITH A LIST OR TUPLE"
                         )
+                        log.info(
+                            self.log_t[:-1]
+                            + "[aget]:"
+                            + "DEBUG: %s & Key: %s" % (str(key_pattern), str(key))
+                        )
                         if (
-                            key_pattern is None
+                            key_pattern is not None
                             or isinstance(key_pattern, str)
                             and re.search(r"[\w:]{1,50}", key_pattern, flags=re.ASCII)
                         ):
@@ -316,7 +336,7 @@ class CacheManager:
                                 + str(collection)
                             )
                         elif (
-                            key is None
+                            key is not None
                             or isinstance(key, str)
                             and re.search(r"[\w:]{1,50}", key, flags=re.ASCII)
                         ):
@@ -359,7 +379,19 @@ class CacheManager:
                                     + "[aget]:"
                                     + " SIMPLE GET THE CACHE PER A SINGLE KEY"
                                 )
+                                log.info(
+                                    self.log_t[:-1]
+                                    + "[aget]:"
+                                    + " DEBUG BEFORE GET THE CACHE PER A SINGLE KEY: %s "
+                                    % (str(key),)
+                                )
                                 value = await conn.get(key)
+                                log.info(
+                                    self.log_t[:-1]
+                                    + "[aget]:"
+                                    + " DEBUG GET THE CACHE PER A SINGLE KEY. value: %s "
+                                    % (str(value),)
+                                )
                                 if value:
                                     collection.append(value)
                                     log.info(
@@ -447,28 +479,45 @@ class CacheManager:
         :param persist: Remove the existing timeout on key, turning the key, Default value is None
         :return:
         """
+        log.info(
+            self.log_t[:-1]
+            + "[aget]:"
+            + """\n
+        # ============================================
+        # CACHE SERVER GET
+        # ============================================
+        # Checking of connection
+    """
+        )
         try:
             from redis import ConnectionError
 
             from persons.services import CustomizationSyncAsyncLoop
 
-            loop_async_sync = CustomizationSyncAsyncLoop(
-                *[],
-                **{
-                    "queue_collection": queue_collection,
-                    "collection": collection,
-                    "key_pattern": key_pattern,
-                    "key": key,
-                    "ex": ex,
-                    "px": px,
-                    "exat": exat,
-                    "persist": persist,
-                }
-            )
+            args = []
+            qwargs = {
+                "queue_collection": queue_collection,
+                "collection": collection,
+                "key_pattern": key_pattern,
+                "key": key,
+                "ex": ex,
+                "px": px,
+                "exat": exat,
+                "persist": persist,
+            }
+            loop_async_sync = CustomizationSyncAsyncLoop(*args, **qwargs)
             loop_async_sync.get_new_function = self.aget
+            loop_async_sync.is_async = True
             if loop_async_sync.is_async:
                 loop_async_get = loop_async_sync.get_new_loop()
-                return loop_async_get()
+
+                t = threading.Thread(
+                    target=loop_async_get,
+                    daemon=True,
+                )
+                t.start()
+                t.join(timeout=10)
+                return loop_async_get
             log_t = " ".join(
                 [
                     self.log_t[:-1] + "[save]:",
