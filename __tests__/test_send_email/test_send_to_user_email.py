@@ -1,81 +1,33 @@
-# """
-# __test__/test_send_email/test_send_to_user_email.py:1
-# """
-#
-# # import asyncio
-# import logging
-#
-# import pytest
-#
-# # from isort.profiles import django
-# #
-# # from project import settings
-#
-# # from persons import EnumTemplatesKeysCache
-#
-#
-# log = logging.getLogger(__name__)
-#
-#
-# @pytest.mark.parametrize(
-#     "key_tuple, value_dict, expected",
-#     [
-#         (("user:pending:%s",), {}, False),
-#     ],
-# )
-# @pytest.mark.order(2)
-# async def test_send_to_user_email(
-#     key_tuple,
-#     value_dict,
-#     expected,
-# ):
-#     import os
-#
-#     from persons.tasks.tasks_celery.task_send_letter_to_user_email import (
-#         send_letter_to_user_email,
-#     )
-#     from project import settings
-#
-#     log_t = f"[{test_send_to_user_email.__name__}]:"
-#     # if not settings.configured:
-#     # if not settings:
-#     #     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "project.settings")
-#     #     django.setup()
-#     # caplog.set_level(logging.INFO)
-#     log.info(
-#         "[test test_send_to_user_email]: Key: %s & Value: %s"
-#         % (str(key_tuple[0] % "test_emailhoastru"), str(value_dict))
-#     )
-#     print(
-#         "0. [test test_send_to_user_email]: Key: %s & Value: %s"
-#         % (str(key_tuple[0] % "test_emailhoastru"), str(value_dict))
-#     )
-#     # for key in key_tuple:
-#     result_future = await send_letter_to_user_email(key_tuple[0], **value_dict)
-#
-#     log.warning(
-#         f"\n1. [test test_send_to_user_email]: Result type: {type(result_future)}"
-#     )
-#     # print(f"2. [test test_send_to_user_email]:Result length: {len(result_future)}")
-#     log.info(
-#         "[test test_send_to_user_email]: Context of result_list: %s"
-#         % str(result_future)
-#     )
-#     print(
-#         "3. [test test_send_to_user_email]: Context of result_list: %s"
-#         % str(result_future)
-#     )
-#     assert type(result_future) == dict
-#     print(f"4. {log_t} Тип result_future: {type(result_future)}")
-#     assert len(result_future) > 0
-#     print(f"5. {log_t} Length result_future: {len(result_future)}")
-#     k = list(result_future.keys())[0]
-#     v = result_future.get(k)
-#     log_t = (
-#         "[test test_send_to_user_email]: DEBUG  Key: %s Type KEY: %s Value: %s TYPE VALUE: %s"
-#         % (k, type(k), v, type(v))
-#     )
-#     log.info(log_t)
-#     print("6. " + log_t)
-#     assert "<Future" in str(v) and "list>" in str(v)
-#     print("7. [test test_send_to_user_email]: DEBUG RESULT: %s" % v.result())
+# __tests__/test_send_email/test_send_to_user_email.py:1
+
+import logging
+from typing import Optional
+from unittest.mock import Mock
+
+import pytest
+from django.db.models.expressions import result
+
+from __tests__.fixtures.fixture_django import pytest_generate_tests
+from __tests__.fixtures.fixture_mock_patch import mock_database_get_user_model
+from persons import EnumEmailLetter
+from persons.adapters import PostmanAdapter
+
+log = logging.getLogger(__name__)
+
+class TestSendToUserEmail:
+
+    def test_send_to_user_email(self,   mock_database_get_user_model):
+
+        mock_user = mock_database_get_user_model
+
+        # assert int(mock_user.email) in [4, 5, 7, 8, 10]
+        if mock_user.id  in [4, 5, 7, 8, 10]:
+            log.info(f"\n===================== Check ID == {mock_user.id} ============")
+            log.info("item.id " + str(mock_user.id))
+            result = PostmanAdapter.send_email_to_user(
+                subject_="First Test letter by the CONFIRM_EMAIL_Letter_0 template %s" % mock_user.email,
+                message_=EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value,
+                user_id_=mock_user.id,
+                user_email_=mock_user.email,
+            )
+            assert result is True, "Email should be sent successfully"

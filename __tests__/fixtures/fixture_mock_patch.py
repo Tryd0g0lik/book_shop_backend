@@ -1,10 +1,10 @@
 # __tests__/fixtures/fixture_mock_patch.py:1
 import logging
-from typing import Optional
+from unittest.mock import MagicMock, Mock
 
 import pytest
 
-from __tests__.fixtures.fixture_django import mock_user_django
+from __tests__.fixtures.fixture_django import generate_users, mock_user_django
 from __tests__.fixtures.fixture_pydantic import mock_pydantic_user
 
 log = logging.getLogger(__name__)
@@ -81,7 +81,6 @@ def mock_subPerson_class(mock_mixin_method, mock_person_service_adapter,
     """)
     email: str = mock_user_django.__getattribute__("email")
     key = "user:pending:letter_1:%s" % email.replace("@", "").replace(".", "")
-    # email = mock_user_django.__getattribute__("email")
 
     mock__get_cache =  mocker.patch.object(PostmanAdapter.SubPerson, "_SubPerson__get_cache", )
     mock__get_cache.return_value =  __get_cache_staticmethod(key)
@@ -91,7 +90,6 @@ def mock_subPerson_class(mock_mixin_method, mock_person_service_adapter,
     # ============================================
     """)
     mock_subPerson = PostmanAdapter.SubPerson(person_email=email, person_index=None)
-    # mock_subPerson.__init__ = mocker.Mock(return_value=None)
     mock_subPerson.database_service = mock_person_service_adapter
     mock_subPerson.log_t = "[Mock SubPerson]"
     mock_subPerson.person_index = None
@@ -100,10 +98,26 @@ def mock_subPerson_class(mock_mixin_method, mock_person_service_adapter,
     mock_subPerson._is_person = mocker.Mock(side_effect=is_person_velidator(mock_pydantic_user))
 
 
-
-
-    # mock_subPerson.__get_cache = lambda : __get_cache_staticmethod(value=key)
-    # mock_subPerson.__get_cache = mocker.Mock(side_effect=lambda : __get_cache_staticmethod(value=key))
-    # mock_subPerson._get_data = mocker.Mock(return_value=mock_pydantic_user.__getattribute__('email'))
-
     return  mock_subPerson
+
+@pytest.fixture
+def mock_database_get_user_model(mocker, users_model_data):
+    from persons.models import Users
+
+
+    log.info("""
+    # ============================================
+    # CREATE Object of the Users model
+    # ============================================
+    """)
+    mock_user = Mock(spec=[
+        'id', 'username', 'email', 'password', 'first_name', 'last_name',
+        'last_login', 'is_active', 'is_staff', 'is_superuser', 'is_sent',
+        'is_verified', 'category', 'balance', 'verification_code',
+        'created_at', 'updated_at', 'date_joined'
+    ])
+    mock_user.configure_mock(**users_model_data)
+    mock_users_model = mocker.patch.object(Users.objects, "get",return_value=mock_user )
+    mock_users_model.object.get.return_value = mock_user
+    mocker.patch("persons.models.models_persons.Users")
+    return mock_user

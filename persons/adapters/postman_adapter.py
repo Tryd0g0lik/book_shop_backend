@@ -15,14 +15,8 @@ from .. import EnumTemplatesKeysCache, EnumTemplatesREGEX
 from ..exceptions import PersonErrorImproperlyConfigured
 from ..interfaces import EmailString
 from . import CacherAdapterMixin
-
-# from .cache_base import CacherBaseMixin
 from .person_base import PersonBasisMixin
 from .person_service_adapter import PersonServiceAdapter
-
-# from django.db.models.expressions import result
-# from watchfiles import awatch
-
 
 log = logging.getLogger(__name__)
 
@@ -105,8 +99,8 @@ class PostmanAdapter(
                     get_person_model = self.get_person_model
                     if (
                         get_person_model is None
-                        and get_email is not None
-                        and get_index is not None
+                        and get_email is None
+                        and get_index is None
                     ):
                         raise PersonErrorImproperlyConfigured()
                     # ====== Take the old model of user/person. Find data in the cache
@@ -144,6 +138,7 @@ class PostmanAdapter(
                     return None
             except Exception as e:
                 log.warning(" ".join([self.log_t, e.args[0] if e.args else str(e)]))
+                return None
 
         def _get_data(self, email: str) -> Optional[dict]:
             """
@@ -220,3 +215,41 @@ class PostmanAdapter(
             #         return None
             #     return json.loads(value_of_cache.encode("utf-8"))
             # return None
+
+    @staticmethod
+    def send_email_to_user(
+        subject_: str,
+        message_: str,
+        user_id_: Optional[int],
+        user_email_: Optional[str] = None,
+    ) -> bool:
+        from wagtail.admin.mail import send_mail
+
+        from ..models import Users
+
+        """Send email (in the database Person)"""
+        if user_id_ is None and user_email_ is None:
+            raise PersonErrorImproperlyConfigured()
+        log.info("TEST DEBUG EMAIL")
+        try:
+            # ============================================
+            # SEND EMAIL BY the user id or user email
+            # ============================================
+            log.info("TEST DEBUG BEFORE sending email")
+            user = (
+                Users.objects.get(id=user_id_)
+                if user_id_ is not None
+                else Users.objects.get(email=user_email_)
+            )
+            log.info(f"TEST DEBUG USER EMAIL: {user.email}")
+            send_mail(
+                subject=subject_,
+                message=message_,
+                recipient_list=[user.email],
+                from_email="host_test@email.ru",
+            )
+            log.info("TEST DEBUG AFTER sending email")
+
+        except Exception as e:
+            raise PersonErrorImproperlyConfigured(e.args[0] if e.args else str(e))
+        return True

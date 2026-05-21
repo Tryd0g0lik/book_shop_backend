@@ -59,31 +59,6 @@ class PersonServiceAdapter:
             raise PersonErrorImproperlyConfigured(e.args[0] if e.args else str(e))
 
     @staticmethod
-    def send_email_to_user(
-        subject: str,
-        message: str,
-        user_id: Optional[int],
-        user_email: Optional[str] = None,
-    ) -> None:
-        """Send email (in the database Person)"""
-        if user_id is None and user_email is None:
-            raise PersonErrorImproperlyConfigured()
-        try:
-            # ============================================
-            # SEND EMAIL BY the user id or user email
-            # ============================================
-            from persons.models import Users
-
-            user = (
-                Users.objects.get(id=user_id)
-                if user_id is not None
-                else Users.objects.get(email=user_email)
-            )
-            send_mail(subject, message, None, [user.email])
-        except Exception as e:
-            raise PersonErrorImproperlyConfigured(e.args[0] if e.args else str(e))
-
-    @staticmethod
     def update_user_in_database(
         user_data: dict,
         user_id: Optional[int] = None,

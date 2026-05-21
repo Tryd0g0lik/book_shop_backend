@@ -32,6 +32,7 @@ async def child_process_get_keys_0(
 
     from persons.apps import cachemanager
 
+    keys: list = []
     try:
         log.info(
             log_t[:-1]
@@ -41,7 +42,7 @@ async def child_process_get_keys_0(
 # REDIS CACHE SERVER - GET THE COLLECTION of KEYS
 # ============================================"""
         )
-        keys: list = []
+
         result_bool: bool = await cachemanager.aget(
             key_pattern=key_pattern,
             collection=keys,
@@ -141,6 +142,7 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
     log_t = f"[task {send_letter_to_user_email.__name__}]:"
     import asyncio
 
+    log.info(f"DEBUG args: {args}")
     keys_queue = queue.Queue(2000)
 
     lock = asyncio.Lock()
@@ -185,24 +187,23 @@ Below we need t get the token. Then insert in letter and send.
                     list_of_results.append(json_code)
 
             except queue.Empty as e:
-                log.warning(log_t + "WARNING QUEUE EMPTY TEXT => %s" % str(e))
-                list_of_results.append(None)
+                log.warning(log_t + "Warning queue empty text => %s" % str(e))
         # The clean storage
         del qsize, byte_code, json_code
-        if list_of_results[0] is not None:
-            new_results_list = [
-                item_json for item_json in list_of_results if item_json is not None
-            ]
-            list_of_results.clear()
-            list_of_results.extend(new_results_list[:])
-            # the clea storage
-            del new_results_list
-
-            log.info(
+        if list_of_results[0] is None:
+            log.warning(
                 log_t
-                + """ \n
------------------- /Result -------------------"""
+                + "Queue empty. Maybe what wrong! Length of list: %s "
+                % len(list_of_results)
             )
+            return False
+        list_of_results
+
+        log.info(
+            log_t
+            + """ \n
+------------------ /Result -------------------"""
+        )
     except Exception as e:
         log.error(log_t + "ERROR TEXT => %s" % str(e))
         return False
@@ -238,7 +239,7 @@ def task_postman(self, *args: tuple | list, **kwargs: dict) -> None:
     if args_len > 0 and kwargs_len > 0:
         print(log_t + " START TASK POSTMAN ====.")
         log.info(log_t + "*ARGS: %s & **KWARGS: %s" % (str(args), str(kwargs)))
-        custom_loop = CustomizationSyncAsyncLoop(args, kwargs)
+        custom_loop = CustomizationSyncAsyncLoop(*args, **kwargs)
         custom_loop.get_new_function = send_letter_to_user_email
         wrapper = custom_loop.get_new_loop()
         Thread(target=wrapper).start()

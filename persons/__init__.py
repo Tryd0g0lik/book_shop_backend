@@ -40,7 +40,7 @@ class EnumTemplatesREGEX(Enum):
         r"""^(
             (?P<name_expanded>user:pending:(login|letter_1):[a-zA-Z0-9_]{1,24}[a-zA-Z0-9])|
             (?P<name>user:pending:[a-zA-Z0-9_]{1,24}[a-zA-Z0-9])|
-            (?P<name_all>user:pending:*)
+            (?P<name_all>user:pending:\*)
             )$""",
         re.VERBOSE | re.I,
     )

@@ -19,7 +19,7 @@ log = logging.getLogger(__name__)
 task_id = uuid4()
 
 
-async def cache_user_data(*args, **kwargs) -> None:
+async def cache_user_data(*args, **kwargs) -> bool:
     """
     :param list or tuple args: This is argument a key of cache.
     :param dict kwargs: This is argument a value of cache.
@@ -27,20 +27,41 @@ async def cache_user_data(*args, **kwargs) -> None:
     """
     import asyncio
 
+    from persons import EnumTemplatesREGEX
     from persons.apps import cachemanager
 
+    PERSON_KEYS_OF_CACHE_IN_REGEX = (
+        EnumTemplatesREGEX.PERSON_KEYS_OF_CACHE_IN_REGEX.value
+    )
     log_t = "[task cache_user_data]:"
     k = args[0]
+    log.info(
+        log_t + f"TEST DEBUG k: {str(k)} & args: {str(args)} & kwargs: {str(kwargs)} "
+    )
+    if not PERSON_KEYS_OF_CACHE_IN_REGEX.search(k):
+        log.error(
+            " ".join(
+                [
+                    log_t[:-1],
+                    "[child_process]:",
+                    "Attribute 'args' is invalid",
+                ]
+            )
+        )
+
+        return False
 
     task = asyncio.create_task(
         cachemanager.asave(
-            k=str(k),
+            key=str(k),
             ttl=300,
-            default=json.dumps(kwargs, ensure_ascii=False).encode("utf-8"),
+            default=kwargs,
+            # default=json.dumps(kwargs, ensure_ascii=False).encode("utf-8"),
         )
     )
     try:
         await asyncio.wait_for(task, timeout=60)
+        return True
     except asyncio.TimeoutError as e:
         log.warning(
             " ".join(
@@ -75,6 +96,7 @@ async def cache_user_data(*args, **kwargs) -> None:
             )
         )
         task.cancel()
+    return False
 
 
 @shared_task(
@@ -101,6 +123,7 @@ def task_of_cache(self, *args, **kwargs) -> None:
         print(log_t + " START TASK TASK OF CACHE ====.")
         custom_loop = CustomizationSyncAsyncLoop(*args, **kwargs)
         custom_loop.get_new_function = cache_user_data
+        custom_loop.is_async = True
         wrapper = custom_loop.get_new_loop()
         Thread(target=wrapper).start()
         print("[task postman]: TEST DEBUG TASK OF CACHE ====.")

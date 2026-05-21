@@ -21,10 +21,5 @@ class TestCacheUserData:
     ])
     async def test_cache_user_data(self, args, qwargs, expected):
         from persons.tasks.tasks_celery.task_set_cache import cache_user_data
-
-        # value = qwargs.__getitem__('to_email')
-        # value = args[0]
-        # args = ('user:pending:%s' % value.replace('@', '').replace('.', ''),)
         result_bool = await cache_user_data(*args, **qwargs)
         assert result_bool == expected
-        # assert True
