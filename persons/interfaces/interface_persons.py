@@ -18,7 +18,7 @@ class UsersPydantic(BaseModel):
     username: str
     first_name: str
     last_name: str
-    email: EmailString
+    email: str
     is_staff: bool
     is_active: bool
     date_joined: datetime

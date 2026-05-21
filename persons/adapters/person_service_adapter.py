@@ -32,13 +32,13 @@ class PersonServiceAdapter:
 
     @staticmethod
     def get_user_by_email(
-        user_email: Optional[EmailString] = None,
+        user_email: Optional[str] = None,
     ) -> Optional[UsersPydantic]:
         """GEt user from the database and conversion through the Pydantic"""
         from persons.models import Users
 
         try:
-            if user_email is not None and isinstance(user_email, EmailString):
+            if user_email is not None and isinstance(user_email, str):
                 user = Users.objects.get(email=user_email)
                 return UsersPydantic.model_validate(user)
         except Users.DoesNotExist:
@@ -63,7 +63,7 @@ class PersonServiceAdapter:
         subject: str,
         message: str,
         user_id: Optional[int],
-        user_email: Optional[EmailString] = None,
+        user_email: Optional[str] = None,
     ) -> None:
         """Send email (in the database Person)"""
         if user_id is None and user_email is None:
@@ -87,7 +87,7 @@ class PersonServiceAdapter:
     def update_user_in_database(
         user_data: dict,
         user_id: Optional[int] = None,
-        user_email: Optional[EmailString] = None,
+        user_email: Optional[str] = None,
     ) -> UsersPydantic:
         """
         Update user in database using Pydantic for validation

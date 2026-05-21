@@ -5,13 +5,16 @@ __test__/test_caching/test_cache_manager_saving.py:1
 import logging
 
 import pytest
-from pydantic import EmailStr
 
-from __tests__.fixtures.fixture_django import django_setup, mock_pydantic_user
-from persons.interfaces import EmailString
+from __tests__.fixtures.fixture_django import django_setup
+from __tests__.fixtures.fixture_pydantic import mock_pydantic_user
 
 log = logging.getLogger(__name__)
-
+log.info("""
+# ============================================
+# __test__/test_caching/test_cache_manager_saving.py:1
+# ============================================
+""")
 
 @pytest.mark.usefixtures("django_setup")
 class TestCacheManagerSaving:

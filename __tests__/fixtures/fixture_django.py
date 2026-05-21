@@ -26,19 +26,6 @@ def mock_user_django():
     # FIXTURE TEST"S MOCK
     # ============================================
     """)
-    # mock_user = Mock()
-    # mock_user.id = 1
-    # mock_user.email = "test_2_mail@host.ru"
-    # mock_user.username = "TestUsername"
-    # mock_user.first_name = "TestFirstName"
-    # mock_user.last_name = "TestLastName"
-    # mock_user.is_active = True
-    # mock_user.is_staff = True
-    # mock_user.is_superuser = True
-    # mock_user.category = "BASE"
-    # mock_user.created_at = datetime.now()
-    # mock_user.updated_at = datetime.now()
-    # mock_user.date_joined = datetime.now()
     mock_user = Mock()
 
     # Обязательные поля

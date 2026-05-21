@@ -104,6 +104,10 @@ def check_log_file(
                             len(lines),
                             max_lines,
                         )
+                        return True
+                    else:
+                        pass
+
         except Exception as e:
             logging.error("Error checking log file: %s", str(e), exc_info=True)
 

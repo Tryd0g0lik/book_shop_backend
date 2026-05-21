@@ -132,6 +132,12 @@ def child_process_send_letter_to_user_email_2(*args, **kwargs) -> bool:
 
 
 async def send_letter_to_user_email(*args, **kwargs) -> bool:
+    """
+    TODO SEND the letter to user
+    :param args:
+    :param kwargs:
+    :return:
+    """
     log_t = f"[task {send_letter_to_user_email.__name__}]:"
     import asyncio
 

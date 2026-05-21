@@ -4,12 +4,13 @@ persons/adapters/person_base.py:1
 
 from typing import Optional
 
-from pydantic import EmailStr
-
-from persons.interfaces import EmailString, UsersPydantic
+from persons.interfaces import UsersPydantic
 
 # from persons.exceptions import PersonErrorImproperlyConfigured
 from ..exceptions.error_postman import PostmanRequiredModelError
+
+# from pydantic import EmailStr
+
 
 # from wagtail.compat import AUTH_USER_MODEL
 
@@ -19,10 +20,10 @@ class PersonBasisMixin:
         self,
         log_t: str,
         person_index: Optional[int] = None,
-        person_email: Optional[EmailString] = None,
+        person_email: Optional[str] = None,
     ):
         self.__person_index: Optional[int] = person_index
-        self.__person_email: Optional[EmailString] = person_email
+        self.__person_email: Optional[str] = person_email
         self.__person_model: Optional[UsersPydantic] = None
         self.__key_of_cache: Optional[str] = None
         self.log_t: str = log_t[:-1] + f"[{self.__class__.__name__}]:"
@@ -37,12 +38,12 @@ class PersonBasisMixin:
         self.__person_model = value
 
     @property
-    def get_email(self) -> EmailString:
+    def get_email(self) -> str:
         return self.__person_email
 
     @get_email.setter
     def get_email(
-        self, email: Optional[EmailString] = None, value: Optional[UsersPydantic] = None
+        self, email: Optional[str] = None, value: Optional[UsersPydantic] = None
     ) -> None:
         if email is None and value is None:
             raise PostmanRequiredModelError(

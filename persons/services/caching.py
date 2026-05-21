@@ -346,14 +346,10 @@ class CacheManager:
                                 + " Before WORKING WITH A COLLECTION & KEY & GETEX"
                             )
                             if (
-                                ex is not None
-                                and isinstance(ex, int)
-                                or px is not None
-                                and isinstance(ex, int)
-                                or exat is not None
-                                and isinstance(ex, int)
-                                or persist is not None
-                                and isinstance(ex, int)
+                                (ex is not None and isinstance(ex, int))
+                                or (px is not None and isinstance(ex, int))
+                                or (exat is not None and isinstance(ex, int))
+                                or (persist is not None and isinstance(ex, int))
                             ):
                                 log.info(
                                     self.log_t[:-1]
@@ -379,19 +375,8 @@ class CacheManager:
                                     + "[aget]:"
                                     + " SIMPLE GET THE CACHE PER A SINGLE KEY"
                                 )
-                                log.info(
-                                    self.log_t[:-1]
-                                    + "[aget]:"
-                                    + " DEBUG BEFORE GET THE CACHE PER A SINGLE KEY: %s "
-                                    % (str(key),)
-                                )
+
                                 value = await conn.get(key)
-                                log.info(
-                                    self.log_t[:-1]
-                                    + "[aget]:"
-                                    + " DEBUG GET THE CACHE PER A SINGLE KEY. value: %s "
-                                    % (str(value),)
-                                )
                                 if value:
                                     collection.append(value)
                                     log.info(

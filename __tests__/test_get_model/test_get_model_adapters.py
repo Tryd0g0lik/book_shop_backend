@@ -19,10 +19,19 @@ from __tests__.fixtures.fixture_mock_patch import (
 
 log = logging.getLogger(__name__)
 
+
 class TestSubPostmanAdapter:
 
 
-    async def test_subPerson_get_model(self, mock_cacher_adapter_mixin,mock_user_django, mock_subPerson_class):
+
+    async def test_subPerson_get_model(self, mock_cacher_adapter_mixin,mock_user_django, mock_subPerson_class) -> None:
+        """
+        This is test 'persons.adapters.postman_adapter.PostmanAdapter.SubPerson.get_model' method
+        :param mock_cacher_adapter_mixin: Fixture. This Mocks is the 'persons.adapters.cache_adapter.CacherAdapterMixin'  class
+        :param mock_user_django: Fixture. This Mock-s  properties for the one person.
+        :param mock_subPerson_class: Fixture. This Mock-s for the 'persons.adapters.postman_adapter.PostmanAdapter.SubPerson' subclass.
+        :return: None or UsersPydantic/
+        """
         from asyncio import Lock
         log.info("""\n
         # ============================================

@@ -1,4 +1,6 @@
+import logging
 import os
+import sys
 
 from django.apps import AppConfig
 from django.dispatch import Signal
@@ -19,6 +21,14 @@ DEBUG = True if int(IS_DEBUG) == 1 else False
 # personmanager = PersonManager()
 cachemanager = CacheManager()
 new_person_signal = Signal(use_caching=False)
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="[%(asctime)s.%(msecs)03d] %(levelname)s - %(name)s:%(lineno)d -  [%(filename)s:%(lineno)d] - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+    stream=sys.stdout,
+)
 
 
 class PersonsConfig(AppConfig):

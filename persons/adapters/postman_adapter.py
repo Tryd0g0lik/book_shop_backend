@@ -135,16 +135,7 @@ class PostmanAdapter(
                     elif get_email is not None and isinstance(get_email, str):
                         # ====== Take the user's email, lookup the old user's model. Then is finding the user's data in
                         # the cache how above.
-                        log.info(
-                            f"[SubPerson][get_model]: TEST DEBUG BEFORE database_service.get_user_by_email &  get_email: {get_email}"
-                        )
-                        log.info(
-                            "[SubPerson][get_model]: TEST DEBUG # ====== Take the user's email, lookup the old user's model. Then is finding the user's data in"
-                        )
                         user_old = self.database_service.get_user_by_email(get_email)
-                        log.info(
-                            f"[SubPerson][get_model]: TEST DEBUG AFTER received the user_old data in the get_email: {str(user_old)}"
-                        )
                         if user_old is None:
                             return None
                         self.get_person_model = user_old
@@ -152,11 +143,7 @@ class PostmanAdapter(
 
                     return None
             except Exception as e:
-                # from django.apps import apps
-                # from wagtail.compat import AUTH_USER_MODEL
-
                 log.warning(" ".join([self.log_t, e.args[0] if e.args else str(e)]))
-                # persons = apps.get_model(AUTH_USER_MODEL)
 
         def _get_data(self, email: str) -> Optional[dict]:
             """
@@ -185,22 +172,16 @@ class PostmanAdapter(
                     data_from_cache_server_bytes.decode()
                 )
                 if isinstance(data_from_cache_server, dict):
-                    print("TEST DATABASE BEFORE receiving data")
                     try:
                         user_from_database = self.database_service.get_user_by_email(
                             data_from_cache_server["email"]
                         )
-                        print("TEST DATABASE: " + str(user_from_database))
-
                         [
                             setattr(user_from_database, k, v)
                             for k, v in data_from_cache_server.items()
                         ]
                         self.database_service.update_user_in_database(
                             dict(user_from_database),
-                        )
-                        log.info(
-                            f"[SubPerson][_get_data]: TEST DEBUG AFTER get 'self.get_person_model:' {self.get_person_model}"
                         )
                         return self.get_person_model
                     except Exception as e:

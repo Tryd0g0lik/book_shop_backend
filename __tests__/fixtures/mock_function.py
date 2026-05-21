@@ -19,7 +19,7 @@ def __get_cache_staticmethod(value: str = None):
     # value_of_cache: Optional[bytes] = None
     value_of_cache: Optional[list | dict] = []
     log.info(f"[Mock __get_cache.CacheManager ]: Before Value: {str(value)}")
-    cachemanager_test.get(key=value, collection=value_of_cache)
+    cachemanager_test.get(key=value, collection=value_of_cache, exat=86400)
 
     log.info(f"[Mock __get_cache.CacheManager ]: After result {str(value_of_cache)}")
     return value_of_cache

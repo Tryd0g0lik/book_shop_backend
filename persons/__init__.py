@@ -32,7 +32,7 @@ class EnumTemplatesKeysCache(Enum):
 class EnumTemplatesREGEX(Enum):
     """
     :param PERSON_KEYS_OF_CACHE_IN_REGEX: This is templates of regex.
-            Default belong the three expressions. Example this one from other: "r'(?P<name_all>user:pending:\*)'".
+            Default belong the three expressions. Example this one from other: "r'(?P<name_all>user:pending:*)'".
 
     """
 
@@ -40,7 +40,7 @@ class EnumTemplatesREGEX(Enum):
         r"""^(
             (?P<name_expanded>user:pending:(login|letter_1):[a-zA-Z0-9_]{1,24}[a-zA-Z0-9])|
             (?P<name>user:pending:[a-zA-Z0-9_]{1,24}[a-zA-Z0-9])|
-            (?P<name_all>user:pending:\*)
+            (?P<name_all>user:pending:*)
             )$""",
         re.VERBOSE | re.I,
     )
