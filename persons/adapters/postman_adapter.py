@@ -79,11 +79,13 @@ class PostmanAdapter(
         def __init__(
             self,
             person_index: Optional[int] = None,
-            person_email: Optional[EmailStr] = None,
+            person_email: Optional[str] = None,
         ) -> None:
             self.log_t = "[%s]:" % self.__class__.__name__
             super().__init__(self.log_t, person_index, person_email)
-
+            log.info(
+                f"\n[SubPerson][get_model]: TEST DEBUG __INIT__ person_email: {person_email} & get_email: {self.get_email}"
+            )
             self.database_service = PersonServiceAdapter()
 
         async def get_model(self, lock: asyncio.Lock) -> UsersPydantic | None:
@@ -97,6 +99,9 @@ class PostmanAdapter(
                 async with lock:
                     get_index = self.get_index
                     get_email = self.get_email
+                    log.info(
+                        f"[SubPerson][get_model]: TEST DEBUG get_email: {get_email}"
+                    )
                     get_person_model = self.get_person_model
                     if (
                         get_person_model is None
@@ -110,21 +115,36 @@ class PostmanAdapter(
                     if get_person_model is not None and isinstance(
                         get_person_model, UsersPydantic
                     ):
-                        email_fra: EmailString = get_person_model.__getattr__("email")
+                        log.info(
+                            "[SubPerson][get_model]: # ====== Take the old model of user/person. Find data in the cache"
+                        )
+                        email_fra: str = get_person_model.__getattr__("email")
                         return self._get_data(email_fra)
                     elif get_index is not None and isinstance(get_index, int):
                         # ====== Take the user's index, lookup the old user's model. Then is finding the user's data in
                         # the cache how above.
+                        log.info(
+                            "[SubPerson][get_model]: TEST DEBUG # ====== Take the user's index, lookup the old user's model. Then is finding the user's data in"
+                        )
                         user_old = self.database_service.get_user_by_id(get_index)
                         if user_old is None:
                             return None
                         self.get_person_model = user_old
-                        email_fra: EmailString = user_old.__getattr__("email")
+                        email_fra: str = user_old.__getattr__("email")
                         return self._get_data(email_fra)
-                    elif get_email is not None and isinstance(get_email, EmailString):
+                    elif get_email is not None and isinstance(get_email, str):
                         # ====== Take the user's email, lookup the old user's model. Then is finding the user's data in
                         # the cache how above.
+                        log.info(
+                            f"[SubPerson][get_model]: TEST DEBUG BEFORE database_service.get_user_by_email &  get_email: {get_email}"
+                        )
+                        log.info(
+                            "[SubPerson][get_model]: TEST DEBUG # ====== Take the user's email, lookup the old user's model. Then is finding the user's data in"
+                        )
                         user_old = self.database_service.get_user_by_email(get_email)
+                        log.info(
+                            f"[SubPerson][get_model]: TEST DEBUG AFTER received the user_old data in the get_email: {str(user_old)}"
+                        )
                         if user_old is None:
                             return None
                         self.get_person_model = user_old
@@ -132,13 +152,13 @@ class PostmanAdapter(
 
                     return None
             except Exception as e:
-                from django.apps import apps
-                from wagtail.compat import AUTH_USER_MODEL
+                # from django.apps import apps
+                # from wagtail.compat import AUTH_USER_MODEL
 
                 log.warning(" ".join([self.log_t, e.args[0] if e.args else str(e)]))
                 # persons = apps.get_model(AUTH_USER_MODEL)
 
-        def _get_data(self, email) -> Optional[dict]:
+        def _get_data(self, email: str) -> Optional[dict]:
             """
             On the entrypoint we are receiving the user's 'email'. This email it is a sub-text (prefix) for a key of cache.
             After we received the cache's key (it is template "user:pending:login:%s") next we request to the redis cache server.
@@ -154,20 +174,46 @@ class PostmanAdapter(
             PostmanAdapter.get_key_cache = key_cache
 
             data_from_cache_server_list: list | None = self.__get_cache(key_cache)
-            for data_from_cache_server in data_from_cache_server_list:
+            log.info(
+                f"[SubPerson][_get_data]: TEST DEBUG BEFORE received the data_from_cache_server_list Type: {type(data_from_cache_server_list)}"
+            )
+            log.info(
+                f"[SubPerson][_get_data]: TEST DEBUG BEFORE received the data_from_cache_server_list: {str(data_from_cache_server_list)}"
+            )
+            for data_from_cache_server_bytes in data_from_cache_server_list:
+                data_from_cache_server = json.loads(
+                    data_from_cache_server_bytes.decode()
+                )
                 if isinstance(data_from_cache_server, dict):
-                    UsersPydantic.model_validate(**data_from_cache_server)
-                    self.database_service.update_user_in_database(
-                        data_from_cache_server,
-                    )
-                    self.get_person_model = {**data_from_cache_server}
-                    return self.get_person_model
+                    print("TEST DATABASE BEFORE receiving data")
+                    try:
+                        user_from_database = self.database_service.get_user_by_email(
+                            data_from_cache_server["email"]
+                        )
+                        print("TEST DATABASE: " + str(user_from_database))
+
+                        [
+                            setattr(user_from_database, k, v)
+                            for k, v in data_from_cache_server.items()
+                        ]
+                        self.database_service.update_user_in_database(
+                            dict(user_from_database),
+                        )
+                        log.info(
+                            f"[SubPerson][_get_data]: TEST DEBUG AFTER get 'self.get_person_model:' {self.get_person_model}"
+                        )
+                        return self.get_person_model
+                    except Exception as e:
+                        raise ValueError(
+                            self.log_t[:-1] + f"[{self._get_data.__name__}]: " + str(e)
+                        )
             return None
 
         @staticmethod
         def __get_cache(value: str) -> dict | list | None:
             from persons.apps import cachemanager
 
+            log.info(f"[SubPerson][__get_cache]: DEBUG {value}")
             # value_of_cache: Optional[bytes] = None
             value_of_cache: Optional[list | dict] = []
             # ============================================
