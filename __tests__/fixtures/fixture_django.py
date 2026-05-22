@@ -22,6 +22,7 @@ def django_setup():
 
 @pytest.fixture
 def mock_user_django():
+    # from django.contrib.auth.models import AbstractUser
     log.info("""
     # ============================================
     # FIXTURE TEST"S MOCK
@@ -57,6 +58,8 @@ def mock_user_django():
     mock_user.created_at = now
     mock_user.updated_at = now
     mock_user.date_joined = now
+
+    # "django.contrib.auth.models"
     return mock_user
 
 def pytest_generate_tests(metafunc):

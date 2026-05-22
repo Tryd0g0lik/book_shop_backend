@@ -102,22 +102,30 @@ def mock_subPerson_class(mock_mixin_method, mock_person_service_adapter,
 
 @pytest.fixture
 def mock_database_get_user_model(mocker, users_model_data):
-    from persons.models import Users
+    from django.contrib.auth.models import AbstractUser
+    from django.core.mail import send_mail
 
+    from persons.models import Users
 
     log.info("""
     # ============================================
     # CREATE Object of the Users model
     # ============================================
     """)
-    mock_user = Mock(spec=[
+    MockUserClass = Mock(spec=[
         'id', 'username', 'email', 'password', 'first_name', 'last_name',
         'last_login', 'is_active', 'is_staff', 'is_superuser', 'is_sent',
         'is_verified', 'category', 'balance', 'verification_code',
         'created_at', 'updated_at', 'date_joined'
     ])
+
+    # MockUserClass.email_user = AbstractUser.email_user
+    MockUserClass.email_user = lambda subject, message, recipient_list, from_email=None, **kwargs: send_mail(subject, message, recipient_list, from_email, **kwargs)
+    mock_user = MockUserClass()
+    # mock_user.setattrr(tarfile=Users.email_user, name="email_user", value=AbstractUser.email_user)
     mock_user.configure_mock(**users_model_data)
     mock_users_model = mocker.patch.object(Users.objects, "get",return_value=mock_user )
+    # mock_users_model.setattrr(tarfile=Users.email_user, name="email_user", value=AbstractUser.email_user)
     mock_users_model.object.get.return_value = mock_user
     mocker.patch("persons.models.models_persons.Users")
     return mock_user

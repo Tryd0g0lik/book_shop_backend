@@ -223,32 +223,26 @@ class PostmanAdapter(
         user_id_: Optional[int],
         user_email_: Optional[str] = None,
     ) -> bool:
-        from wagtail.admin.mail import send_mail
-
+        """Returning the True ok mistake"""
         from ..models import Users
 
         """Send email (in the database Person)"""
         if user_id_ is None and user_email_ is None:
             raise PersonErrorImproperlyConfigured()
-        log.info("TEST DEBUG EMAIL")
         try:
             # ============================================
             # SEND EMAIL BY the user id or user email
             # ============================================
-            log.info("TEST DEBUG BEFORE sending email")
             user = (
                 Users.objects.get(id=user_id_)
                 if user_id_ is not None
                 else Users.objects.get(email=user_email_)
             )
-            log.info(f"TEST DEBUG USER EMAIL: {user.email}")
-            send_mail(
+            user.email_user(
                 subject=subject_,
                 message=message_,
-                recipient_list=[user.email],
                 from_email="host_test@email.ru",
             )
-            log.info("TEST DEBUG AFTER sending email")
 
         except Exception as e:
             raise PersonErrorImproperlyConfigured(e.args[0] if e.args else str(e))
