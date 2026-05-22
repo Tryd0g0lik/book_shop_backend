@@ -6,6 +6,7 @@ import pytest
 
 from __tests__.fixtures.fixture_django import generate_users, mock_user_django
 from __tests__.fixtures.fixture_pydantic import mock_pydantic_user
+from persons.adapters import PersonServiceAdapter
 
 log = logging.getLogger(__name__)
 
@@ -29,8 +30,8 @@ def mock_mixin_method(mock_pydantic_user, mock_user_django, mocker):
     mock_personBasisMixin.log_t = "[Mock PersonBasisMixin]"
     mock_personBasisMixin.person_index = None
     mock_personBasisMixin.person_email = mock_user_django.__getattribute__("email")  # "test_2_mail@host.ru"
-    mock_personBasisMixin.get_email = mocker.Mock(return_value=mock_user_django.__getattribute__("email"))
-    mock_personBasisMixin.get_person_model = mocker.MagicMock(return_value=None)
+    mock_personBasisMixin.get_email = MagicMock(return_value=mock_user_django.__getattribute__("email"))
+    mock_personBasisMixin.get_person_model = MagicMock(return_value=mock_user_django)
     yield mock_mixin_class
 
 @pytest.fixture
@@ -51,17 +52,21 @@ def mock_cacher_adapter_mixin(mocker):
 
 @pytest.fixture
 def mock_person_service_adapter(mock_pydantic_user,  mocker):
-    from __tests__.fixtures.mock_function import database_service_get_user_by_email
+    from __tests__.fixtures.mock_function import (
+        database_service_get_user_by_email,
+        database_service_get_user_by_id,
+    )
     log.info("""\n
     # ============================================
     # FIXTURE PersonServiceAdapter
     # ============================================
     """)
     mock_adapter_class = mocker.patch("persons.adapters.person_service_adapter.PersonServiceAdapter")
-    mock_adapter_class.get_user_by_id = mocker.Mock(return_value=mock_pydantic_user)
+    # mock_adapter_class.get_user_by_id = mocker.Mock(side_effect=database_service_get_user_by_id(mock_pydantic_user))
+    mock_adapter_class.get_user_by_id.return_value = database_service_get_user_by_id(mock_pydantic_user)
 
-
-    mock_adapter_class.get_user_by_email = mocker.Mock(side_effect=database_service_get_user_by_email(mock_pydantic_user))
+    # mock_adapter_class.get_user_by_email = mocker.Mock(side_effect=database_service_get_user_by_email(mock_pydantic_user))
+    mock_adapter_class.get_user_by_email.return_value = database_service_get_user_by_email(mock_pydantic_user)
     mock_adapter_class.search_by_email = mocker.Mock(return_value=[mock_pydantic_user])
 
     yield mock_adapter_class
@@ -80,25 +85,27 @@ def mock_subPerson_class(mock_mixin_method, mock_person_service_adapter,
     # ============================================
     """)
     email: str = mock_user_django.__getattribute__("email")
+    index: int = mock_user_django.__getattribute__("id")
     key = "user:pending:letter_1:%s" % email.replace("@", "").replace(".", "")
 
     mock__get_cache =  mocker.patch.object(PostmanAdapter.SubPerson, "_SubPerson__get_cache", )
     mock__get_cache.return_value =  __get_cache_staticmethod(key)
-    log.info("""
-    # ============================================
-    # Mock SubPerson
-    # ============================================
-    """)
-    mock_subPerson = PostmanAdapter.SubPerson(person_email=email, person_index=None)
-    mock_subPerson.database_service = mock_person_service_adapter
-    mock_subPerson.log_t = "[Mock SubPerson]"
-    mock_subPerson.person_index = None
+    # log.info("""
+    # # ============================================
+    # # Mock SubPerson
+    # # ============================================
+    # """)
+    # mock_subPerson = PostmanAdapter.SubPerson(person_email=email, person_index=index)
+    # mock_subPerson.database_service = mock_person_service_adapter
+    # mock_subPerson.log_t = "[Mock SubPerson]"
+    # mock_subPerson.person_index = mock_user_django.__getattribute__("id")
+    #
+    # mock_subPerson.person_email = mock_user_django.__getattribute__("email") # "test_2_mail@host.ru"
+    # mock_subPerson._is_person = mocker.Mock(side_effect=is_person_velidator(mock_pydantic_user))
+    #
 
-    mock_subPerson.person_email = mock_user_django.__getattribute__("email") # "test_2_mail@host.ru"
-    mock_subPerson._is_person = mocker.Mock(side_effect=is_person_velidator(mock_pydantic_user))
-
-
-    return  mock_subPerson
+    # return  mock_subPerson
+    return  mock__get_cache
 
 @pytest.fixture
 def mock_database_get_user_model(mocker, users_model_data):

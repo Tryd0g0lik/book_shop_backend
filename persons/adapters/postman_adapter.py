@@ -78,11 +78,11 @@ class PostmanAdapter(
             self.log_t = "[%s]:" % self.__class__.__name__
             super().__init__(self.log_t, person_index, person_email)
             log.info(
-                f"\n[SubPerson][get_model]: TEST DEBUG __INIT__ person_email: {person_email} & get_email: {self.get_email}"
+                f"\n[SubPerson][get_model]: TEST DEBUG person_index: {self.get_index} & get_email: {self.get_email}"
             )
             self.database_service = PersonServiceAdapter()
 
-        async def get_model(self, lock: asyncio.Lock) -> UsersPydantic | None:
+        async def get_model(self, lock: asyncio.Lock) -> Optional[dict] | None:
             """
             # First - Check the cache server. Here we will look the similar state.
             # If we could be not find the similar data then we will be looking to the relation database.
@@ -94,7 +94,7 @@ class PostmanAdapter(
                     get_index = self.get_index
                     get_email = self.get_email
                     log.info(
-                        f"[SubPerson][get_model]: TEST DEBUG get_email: {get_email}"
+                        f"[SubPerson][get_model]: TEST DEBUG get_email: {get_email} & get_index {get_index}"
                     )
                     get_person_model = self.get_person_model
                     if (
@@ -103,36 +103,46 @@ class PostmanAdapter(
                         and get_index is None
                     ):
                         raise PersonErrorImproperlyConfigured()
+                    log.info("TEST DEBUG 0")
                     # ====== Take the old model of user/person. Find data in the cache
                     # per template "user:pending:login:%s". If we got the data means, next we will be
                     # updating the model (contain the old tada).
                     if get_person_model is not None and isinstance(
                         get_person_model, UsersPydantic
                     ):
+                        log.info("TEST DEBUG 1")
                         log.info(
                             "[SubPerson][get_model]: # ====== Take the old model of user/person. Find data in the cache"
                         )
-                        email_fra: str = get_person_model.__getattr__("email")
+                        email_fra: str = get_person_model.__getattribute__("email")
                         return self._get_data(email_fra)
                     elif get_index is not None and isinstance(get_index, int):
                         # ====== Take the user's index, lookup the old user's model. Then is finding the user's data in
                         # the cache how above.
+                        log.info("TEST DEBUG 2")
                         log.info(
                             "[SubPerson][get_model]: TEST DEBUG # ====== Take the user's index, lookup the old user's model. Then is finding the user's data in"
                         )
                         user_old = self.database_service.get_user_by_id(get_index)
                         if user_old is None:
                             return None
-                        self.get_person_model = user_old
-                        email_fra: str = user_old.__getattr__("email")
+                        # self.get_person_model = user_old
+                        log.info(
+                            f"TEST DEBUG FROM 2: TYPE: {type(user_old)} % EMAIL {str(user_old)} "
+                        )
+                        email_fra: str = user_old.__getattribute__("email")
+                        log.info("TEST DEBUG FROM 2: EMAIL " + email_fra)
                         return self._get_data(email_fra)
                     elif get_email is not None and isinstance(get_email, str):
+                        log.info("TEST DEBUG 3")
                         # ====== Take the user's email, lookup the old user's model. Then is finding the user's data in
                         # the cache how above.
-                        user_old = self.database_service.get_user_by_email(get_email)
-                        if user_old is None:
-                            return None
-                        self.get_person_model = user_old
+
+                        # user_old = self.database_service.get_user_by_email(get_email)
+                        # if user_old is None:
+                        #     return None
+                        log.info("TEST DEBUG FROM 3: EMAIL " + get_email)
+                        # self.get_person_model = user_old
                         return self._get_data(get_email)
 
                     return None
@@ -166,19 +176,31 @@ class PostmanAdapter(
                 data_from_cache_server = json.loads(
                     data_from_cache_server_bytes.decode()
                 )
-                if isinstance(data_from_cache_server, dict):
+                result_bool = isinstance(data_from_cache_server, dict)
+
+                if result_bool:
                     try:
+                        log.info("TEST DEBUG before user_from_database")
                         user_from_database = self.database_service.get_user_by_email(
                             data_from_cache_server["email"]
                         )
-                        [
-                            setattr(user_from_database, k, v)
-                            for k, v in data_from_cache_server.items()
-                        ]
-                        self.database_service.update_user_in_database(
-                            dict(user_from_database),
+                        log.info("TEST DEBUG after user_from_database")
+                        user_from_database_json = user_from_database.model_dump_json()
+                        log.info(
+                            f"[SubPerson][_get_data]: TEST DEBUG after user_from_database: TYPE: {type(json.loads(user_from_database_json))} & {str(user_from_database_json)}"
                         )
-                        return self.get_person_model
+                        ud = json.loads(user_from_database_json)
+                        [
+                            setattr(ud, k, v)
+                            for k, v in data_from_cache_server.items()
+                            if hasattr(ud, k)
+                        ]
+                        log.info("TEST DEBUG after setattr(ud)")
+                        self.database_service.update_user_in_database(user_data=ud)
+                        log.info(
+                            "TEST DEBUG after database_service.update_user_in_database"
+                        )
+                        return ud
                     except Exception as e:
                         raise ValueError(
                             self.log_t[:-1] + f"[{self._get_data.__name__}]: " + str(e)

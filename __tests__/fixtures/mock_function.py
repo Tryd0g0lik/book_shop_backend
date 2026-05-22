@@ -51,4 +51,15 @@ def database_service_get_user_by_email(mock_pydantic_user):
             # ============================================
             """)
         return mock_pydantic_user
-    return wrapper
+    return wrapper()
+
+def database_service_get_user_by_id(mock_pydantic_user):
+    def wrapper(user_id=None):
+        log.info(
+            """
+            # ============================================
+            # Mock database_service_get_user_by_id vs PersonServiceAdapter.get_user_by_id
+            # ============================================
+            """)
+        return mock_pydantic_user
+    return wrapper()
