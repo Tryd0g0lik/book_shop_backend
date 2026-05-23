@@ -10,6 +10,7 @@ from celery import Celery, group
 from celery.schedules import crontab
 from kombu import Exchange, Queue
 
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "project.settings")
 celery_app = Celery(
     "person",
     group="signup",

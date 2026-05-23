@@ -10,6 +10,11 @@ import time
 
 from celery import shared_task
 
+from persons import EnumTemplatesKeysCache
+from persons.tasks.sub_tascs_celery.sub_task_get_send_letter import (
+    task_child_process_letter_Thanks_for_your_account,
+)
+
 log = logging.getLogger(__name__)
 
 
@@ -71,6 +76,10 @@ async def child_process_get_keys_0(
                 )
             await asyncio.gather(*tasks, return_exceptions=True)
 
+        log.info(
+            log_t[:-1]
+            + f"[{child_process_get_keys_0.__name__}]: ====================== DEBUG Review ======================"
+        )
         end_time = datetime.now()
         passed_time: datetime.now = end_time - start_time
         log.info(
@@ -90,44 +99,15 @@ async def child_process_get_keys_0(
         )
 
         log.info(log_t)
+        log.info(
+            log_t[:-1]
+            + f"[{child_process_get_keys_0.__name__}]: ====================== /DEBUG Review ======================"
+        )
 
     except Exception as e:
         error_t = log_t[:-1] + "[child_process_get_keys_0] ERORR_TEXT: %s" % str(e)
         log.error(error_t)
         print(error_t)
-        return False
-    return True
-
-
-# ============================================
-# 2. LETTER FOR USER (don't a working)
-# ============================================
-def child_process_send_letter_to_user_email_2(*args, **kwargs) -> bool:
-    # from django.template.loader import render_to_string
-    # from wagtail.admin.mail import send_mail
-    # from persons import EnumEmailLetter
-    log_t = f"[{child_process_send_letter_to_user_email_2.__name__}]:"
-
-    log.info("DEBUG CHECK THE PATH TO THE LETTER %s" % args[0])
-    try:
-        log.info(
-            log_t
-            + """\n
-# ============================================
-# LETTER FOR THE USER'S EMAIL
-# ============================================
-        """
-        )
-
-        # text_context = render_to_string(
-        #     EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value
-        # )
-        pass
-        # subject = "Test Email message"
-        # send_mail(subject, text_context, [to_email], APP_DEFAULT_FROM_EMAIL, )
-    except Exception as e:
-        error_t = " ".join([log_t, f" TEXT_ERROR: {e.args[0] if e.args else str(e)}"])
-        log.error(error_t)
         return False
     return True
 
@@ -149,61 +129,65 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
     list_of_results = []
     result_bool = False
     try:
-        args_str: str = args[0]
-        log.info(
-            log_t
-            + """ \n
------------------ child_process_get_keys_0  process --------------------"""
-        )
-        async with lock:
-            result_bool = await child_process_get_keys_0(
-                key_pattern=args_str % "*", queue=keys_queue, log_t=log_t
-            )
-        log.info(
-            log_t
-            + """ \n
------------------- /child_process_get_keys_0 process -------------------"""
-        )
-        log.info(
-            log_t
-            + """ \n
------------------- Result -------------------"""
-        )
-        log.info(
-            log_t
-            + """\n
-We have the DATA in QUEUES (the JSON format). These data we above received.
-Below we need t get the token. Then insert in letter and send.
-        """
-        )
-        qsize = keys_queue.qsize()
-        byte_code = None
-        json_code = None
-        if result_bool and qsize:
-            try:
-                while not keys_queue.empty():
-                    byte_code = keys_queue.get_nowait()
-                    json_code = json.loads(byte_code.decode("utf-8"))
-                    list_of_results.append(json_code)
-
-            except queue.Empty as e:
-                log.warning(log_t + "Warning queue empty text => %s" % str(e))
-        # The clean storage
-        del qsize, byte_code, json_code
-        if list_of_results[0] is None:
-            log.warning(
+        for args_str in args:
+            log.info(
                 log_t
-                + "Queue empty. Maybe what wrong! Length of list: %s "
-                % len(list_of_results)
+                + """ \n
+    ----------------- child_process_get_keys_0  process --------------------"""
             )
-            return False
-        list_of_results
+            async with lock:
+                result_bool = await child_process_get_keys_0(
+                    key_pattern=EnumTemplatesKeysCache.USER_PENDING_0.value % "*",
+                    queue=keys_queue,
+                    log_t=log_t,
+                )
+            log.info(
+                log_t
+                + """ \n
+    ------------------ /child_process_get_keys_0 process -------------------"""
+            )
+            log.info(
+                log_t
+                + """ \n
+    ------------------ Result -------------------"""
+            )
+            log.info(
+                log_t
+                + """\n
+    We have the DATA in QUEUES (the JSON format). These data we above received.
+    Below we need t get the token. Then insert in letter and send.
+            """
+            )
+            qsize = keys_queue.qsize()
+            byte_code = None
+            json_code = None
+            if result_bool and qsize:
+                try:
+                    while not keys_queue.empty():
+                        byte_code = keys_queue.get_nowait()
+                        json_code = json.loads(byte_code.decode("utf-8"))
+                        list_of_results.append(json_code)
 
-        log.info(
-            log_t
-            + """ \n
------------------- /Result -------------------"""
-        )
+                except queue.Empty as e:
+                    log.warning(log_t + "Warning queue empty text => %s" % str(e))
+            # The clean storage
+            del qsize, byte_code, json_code
+            if len(list_of_results) == 0:
+                log.warning(
+                    log_t
+                    + "Queue empty. Maybe what wrong! Length of list: %s "
+                    % len(list_of_results)
+                )
+                return False
+
+            task_child_process_letter_Thanks_for_your_account.delay(
+                *(list_of_results,), {}
+            )
+            log.info(
+                log_t
+                + """ \n
+    ------------------ /Result -------------------"""
+            )
     except Exception as e:
         log.error(log_t + "ERROR TEXT => %s" % str(e))
         return False
@@ -220,7 +204,7 @@ Below we need t get the token. Then insert in letter and send.
     max_retries=3,
     retry_backoff_max=30,
 )
-def task_postman(self, *args: tuple | list, **kwargs: dict) -> None:
+def task_postman(self, *args, **kwargs) -> None:
     """
     This is a task, from the Celery of Postman.
     Here these tasks are sending letters to the user's emails.
@@ -234,17 +218,24 @@ def task_postman(self, *args: tuple | list, **kwargs: dict) -> None:
     from persons.services import CustomizationSyncAsyncLoop
 
     log_t = "[task_postman]:"
-    args_len = len(args)
-    kwargs_len = len(kwargs) if kwargs is not None else 0
-    if args_len > 0 and kwargs_len > 0:
-        print(log_t + " START TASK POSTMAN ====.")
-        log.info(log_t + "*ARGS: %s & **KWARGS: %s" % (str(args), str(kwargs)))
-        custom_loop = CustomizationSyncAsyncLoop(*args, **kwargs)
-        custom_loop.get_new_function = send_letter_to_user_email
-        wrapper = custom_loop.get_new_loop()
-        Thread(target=wrapper).start()
+    try:
 
-        print("[task postman]: TEST DEBUG TASK POSTMAN ====.")
-    else:
-        time.sleep(3)
-    return
+        args_len = len(args)
+        kwargs_len = len(kwargs) if kwargs is not None else 0
+        if args_len > 0 and kwargs_len > 0:
+            log.info(
+                log_t + "DEBUG *ARGS: %s & **KWARGS: %s" % (str(args), str(kwargs))
+            )
+            custom_loop = CustomizationSyncAsyncLoop(*args, **kwargs)
+            custom_loop.get_new_function = send_letter_to_user_email
+            wrapper = custom_loop.get_new_loop()
+            log.info(
+                log_t + " After opening a new loop. & Before run the threading.Thread."
+            )
+            Thread(target=wrapper).start()
+        else:
+            time.sleep(3)
+        return
+    except Exception as e:
+        log.info(log_t + str(e))
+        raise e

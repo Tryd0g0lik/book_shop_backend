@@ -1,0 +1,79 @@
+# persons/tasks/sub_tascs_celery/sub_task_get_send_letter.py:1
+
+import logging
+
+from celery import shared_task
+
+from persons import EnuSubjectOfLetter
+
+log = logging.getLogger(__name__)
+
+
+# ============================================
+# SUB PROCES FOR THE SENDING OF LETTER
+# ============================================
+@shared_task(
+    name="sub_task_get_send_letter",
+    bind=True,
+    ignore_result=True,
+    autoretry_for=(TimeoutError, ConnectionError, OSError),
+    retry_backoff=True,
+    max_retries=3,
+    retry_backoff_max=30,
+)
+def task_child_process_letter_Thanks_for_your_account(self, *args, **kwargs) -> bool:
+    # from django.template.loader import render_to_string
+    # from wagtail.admin.mail import send_mail
+    # from persons import EnumEmailLetter
+    from django.core.mail import send_mail
+    from django.template.loader import render_to_string
+
+    from persons import EnumEmailLetter
+    from project.settings_conf.settings_env import APP_DEFAULT_FROM_EMAIL, APP_NAME
+
+    log_t = f"[{task_child_process_letter_Thanks_for_your_account.__name__}]:"
+    recipient_list_: list[str] = []
+    try:
+        log.info(
+            log_t
+            + """\n
+# ============================================
+# LETTER FOR THE USER'S EMAIL
+# ============================================
+        """
+        )
+        # That is context to the body of letter
+        text_context = render_to_string(EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value)
+        # Theme/Subject to the letter
+        subject_ = EnuSubjectOfLetter.SUB_TASK_GET_SEND_LETTER_0.value
+        log.info(log_t + " DEBUG Before the cycl (the for)")
+
+        for one_list in args:
+            log.info(
+                log_t
+                + " DEBUG In the cycl (the for) got the one_list: "
+                + str(one_list)
+            )
+            for u in one_list:
+                log.info(log_t + " DEBUG In the cycl (the for) got the u: " + str(u))
+                em = u.__getitem__("to_email")
+                log.info(log_t + " DEBUG After getting the em: " + str(em))
+                recipient_list_.append(em)
+
+        if len(recipient_list_) > 0:
+            send_mail(
+                subject=subject_,
+                message=text_context,
+                recipient_list=recipient_list_,
+                from_email=APP_DEFAULT_FROM_EMAIL,
+            )
+    except Exception as e:
+        error_t = " ".join([log_t, f" TEXT_ERROR: {e.args[0] if e.args else str(e)}"])
+        log.error(error_t)
+        raise self.retry(exc=e, countdown=30)
+    log.info(
+        log_t
+        + " The 'EnumEmailLetter.CONFIRM_EMAIL_Letter_0' was sent to the %s recipient(s)."
+        + str(len(recipient_list_))
+    )
+    return True

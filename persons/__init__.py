@@ -5,6 +5,8 @@ persons/__init__.py:1
 import re
 from enum import Enum
 
+from project.settings_conf.settings_env import APP_NAME
+
 
 class EnumEmailLetter(Enum):
     CONFIRM_EMAIL_Letter_0 = "account/email/email_confirmation_subject.txt"
@@ -44,3 +46,12 @@ class EnumTemplatesREGEX(Enum):
             )$""",
         re.VERBOSE | re.I,
     )
+
+
+class EnuSubjectOfLetter(Enum):
+    """
+    This is Subject/Theme for Letters.
+    < Name of task >_< Index of key>. Example: @shared_task['name'] = 'sub_task_get_send_letter' & 0 that is the index.
+    """
+
+    SUB_TASK_GET_SEND_LETTER_0 = APP_NAME + " Thanks for your account"

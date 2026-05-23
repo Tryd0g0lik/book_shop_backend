@@ -14,6 +14,7 @@ dotenv.load_dotenv()
 DJANGO_ENV = os.getenv("DJANGO_ENV", "development")
 
 # APP
+APP_NAME = os.getenv("APP_NAME", "BookShop")
 APP_PROTOCOL = os.getenv("APP_PROTOCOL", "http")
 APP_HOST = os.getenv("APP_HOST", "127.0.0.1")
 APP_PORT = os.getenv("APP_PORT", "8003")

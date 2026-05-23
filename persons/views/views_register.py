@@ -119,10 +119,6 @@ class UsersRegistrationView(AllauthSignupView):
 
             if result_list[0] is not None:
                 super().post(request, *args, **kwargs)
-
-                # return redirect("login")
-                log.info("[UsersRegistrationView]: TEST DEBUG POST")
-                # return render(response, "auth/login.html", status=201)
                 return render(request, "auth/register.html", status=201)
                 # return response
                 # context = {

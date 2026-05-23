@@ -4,7 +4,9 @@ __test__/test_caching/test_cache_manager_saving.py:1
 
 import logging
 
+import django
 import pytest
+from django.conf import settings
 
 from __tests__.fixtures.fixture_django import django_setup
 from __tests__.fixtures.fixture_pydantic import mock_pydantic_user
@@ -64,9 +66,9 @@ class TestCacheManagerSaving:
         )
 
         log_t = "[test_send_to_user_email]:"
-        # if not settings.configured:
+        if not settings.configured:
 
-        #     django.setup()
+            django.setup()
         # caplog.set_level(logging.INFO)
         log.info(
             log_t

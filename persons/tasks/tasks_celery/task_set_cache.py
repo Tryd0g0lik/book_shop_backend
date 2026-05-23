@@ -120,13 +120,14 @@ def task_of_cache(self, *args, **kwargs) -> None:
     args_len = len(args)
     kwargs_len = len(kwargs) if kwargs is not None else 0
     if args_len > 0 and kwargs_len > 0:
-        print(log_t + " START TASK TASK OF CACHE ====.")
         custom_loop = CustomizationSyncAsyncLoop(*args, **kwargs)
         custom_loop.get_new_function = cache_user_data
         custom_loop.is_async = True
         wrapper = custom_loop.get_new_loop()
+        log.info(
+            log_t + " After opening a new loop. & Before run the threading.Thread."
+        )
         Thread(target=wrapper).start()
-        print("[task postman]: TEST DEBUG TASK OF CACHE ====.")
     else:
         time.sleep(3)
     return

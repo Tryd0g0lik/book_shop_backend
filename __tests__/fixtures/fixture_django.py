@@ -18,7 +18,7 @@ def django_setup():
     import django
 
     """Однократная настройка Django для всех тестов"""
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "project.settings")
+    # os.environ.setdefault("DJANGO_SETTINGS_MODULE", "project.settings")
     django.setup()
     return True
 
