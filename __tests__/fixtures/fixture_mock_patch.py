@@ -62,10 +62,7 @@ def mock_person_service_adapter(mock_pydantic_user,  mocker):
     # ============================================
     """)
     mock_adapter_class = mocker.patch("persons.adapters.person_service_adapter.PersonServiceAdapter")
-    # mock_adapter_class.get_user_by_id = mocker.Mock(side_effect=database_service_get_user_by_id(mock_pydantic_user))
     mock_adapter_class.get_user_by_id.return_value = database_service_get_user_by_id(mock_pydantic_user)
-
-    # mock_adapter_class.get_user_by_email = mocker.Mock(side_effect=database_service_get_user_by_email(mock_pydantic_user))
     mock_adapter_class.get_user_by_email.return_value = database_service_get_user_by_email(mock_pydantic_user)
     mock_adapter_class.search_by_email = mocker.Mock(return_value=[mock_pydantic_user])
 
@@ -90,21 +87,6 @@ def mock_subPerson_class(mock_mixin_method, mock_person_service_adapter,
 
     mock__get_cache =  mocker.patch.object(PostmanAdapter.SubPerson, "_SubPerson__get_cache", )
     mock__get_cache.return_value =  __get_cache_staticmethod(key)
-    # log.info("""
-    # # ============================================
-    # # Mock SubPerson
-    # # ============================================
-    # """)
-    # mock_subPerson = PostmanAdapter.SubPerson(person_email=email, person_index=index)
-    # mock_subPerson.database_service = mock_person_service_adapter
-    # mock_subPerson.log_t = "[Mock SubPerson]"
-    # mock_subPerson.person_index = mock_user_django.__getattribute__("id")
-    #
-    # mock_subPerson.person_email = mock_user_django.__getattribute__("email") # "test_2_mail@host.ru"
-    # mock_subPerson._is_person = mocker.Mock(side_effect=is_person_velidator(mock_pydantic_user))
-    #
-
-    # return  mock_subPerson
     return  mock__get_cache
 
 @pytest.fixture
@@ -125,14 +107,10 @@ def mock_database_get_user_model(mocker, users_model_data):
         'is_verified', 'category', 'balance', 'verification_code',
         'created_at', 'updated_at', 'date_joined'
     ])
-
-    # MockUserClass.email_user = AbstractUser.email_user
     MockUserClass.email_user = lambda subject, message, recipient_list, from_email=None, **kwargs: send_mail(subject, message, recipient_list, from_email, **kwargs)
     mock_user = MockUserClass()
-    # mock_user.setattrr(tarfile=Users.email_user, name="email_user", value=AbstractUser.email_user)
     mock_user.configure_mock(**users_model_data)
     mock_users_model = mocker.patch.object(Users.objects, "get",return_value=mock_user )
-    # mock_users_model.setattrr(tarfile=Users.email_user, name="email_user", value=AbstractUser.email_user)
     mock_users_model.object.get.return_value = mock_user
     mocker.patch("persons.models.models_persons.Users")
     return mock_user

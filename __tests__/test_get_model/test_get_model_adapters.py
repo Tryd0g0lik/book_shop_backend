@@ -56,7 +56,6 @@ class TestSubPostmanAdapter:
         :return: None or UsersPydantic/
         """
         from persons.adapters import PostmanAdapter
-        from persons.interfaces import UsersPydantic
         log.info("""
             # ============================================
             # Mock SubPerson
@@ -69,26 +68,17 @@ class TestSubPostmanAdapter:
             TEST DEBUG mock_user_django TYPE: {type(mock_user_django)} & EMAIL STR: {str(mock_user_django.__getattribute__("email"))} & ID STR: {str(mock_user_django.__getattribute__("id"))}
         """)
         mock_subPerson.person_index = mock_user_django.__getattribute__("id")
+        mock_subPerson.person_email = mock_user_django.__getattribute__("email")
 
-        mock_subPerson.person_email = mock_user_django.__getattribute__("email")  # "test_2_mail@host.ru"
-        # mock_subPerson._is_person = mock_test
-
-        # setattr(mock_subPerson_class, "person_email", person_em)
-        # setattr(mock_subPerson_class, "person_index", person_id)
-        # mock_subPerson_class.id = person_id
         log.info("""\n
         # ============================================
         # TEST test_get_new_model_data
         # ============================================
         """)
         lock = Lock()
-        # mock_subPerson_class.get_person_model = None
         mock_subPerson_class.get_person_model = mock_mixin_method.get_person_model
         result_test: dict|None = await mock_subPerson.get_model(lock)
-        # mock_subPerson.database_service.email = "test_2_mail@host.ru"
-        # mock_subPerson.database_service.id =1
         assert mock_subPerson_class.get_person_model is not None
         assert result_test is not None
         assert isinstance(result_test, dict)
-        # result_test_json = json.loads(result_test.model_dump_json())
         assert len(list(result_test.keys())) > 10

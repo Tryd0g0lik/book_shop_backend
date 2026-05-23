@@ -138,11 +138,11 @@ class PostmanAdapter(
                         # ====== Take the user's email, lookup the old user's model. Then is finding the user's data in
                         # the cache how above.
 
-                        # user_old = self.database_service.get_user_by_email(get_email)
-                        # if user_old is None:
-                        #     return None
+                        user_old = self.database_service.get_user_by_email(get_email)
+                        if user_old is not None:
+                            self.get_person_model = user_old
                         log.info("TEST DEBUG FROM 3: EMAIL " + get_email)
-                        # self.get_person_model = user_old
+
                         return self._get_data(get_email)
 
                     return None

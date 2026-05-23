@@ -8,6 +8,8 @@ from uuid import uuid4
 
 import pytest
 
+from persons.views import UsersRegistrationView
+
 log = logging.getLogger(__name__)
 @pytest.fixture(scope="session")
 def django_setup():
@@ -20,15 +22,20 @@ def django_setup():
     django.setup()
     return True
 
+# ============================================
+# BELOW ARE DJNAGO's AUTH MODEL OF ABSTRACT USERS
+# ============================================
 @pytest.fixture
 def mock_user_django():
     # from django.contrib.auth.models import AbstractUser
+    from persons.models import Users
     log.info("""
     # ============================================
-    # FIXTURE TEST"S MOCK
+    # FIXTURE TEST"S MOCK - ONE DJNAGO's AUTH MODEL OF ABSTRACT USER
     # ============================================
     """)
-    mock_user = Mock()
+
+    mock_user = Mock(spec=Users)
 
     # Обязательные поля
     mock_user.id = 1
@@ -45,7 +52,7 @@ def mock_user_django():
     mock_user.is_active = True
     mock_user.is_staff = True
     mock_user.is_superuser = True
-    mock_user.is_sent = False  # ← добавить!
+    mock_user.is_sent = False
     mock_user.is_verified = False  # ← добавить!
 
     # Другие поля
@@ -58,10 +65,9 @@ def mock_user_django():
     mock_user.created_at = now
     mock_user.updated_at = now
     mock_user.date_joined = now
-
-    # "django.contrib.auth.models"
     return mock_user
 
+# ELSE
 def pytest_generate_tests(metafunc):
     if "users_model_data" in metafunc.fixturenames:
         generate_users(metafunc)
