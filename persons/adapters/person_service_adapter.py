@@ -6,12 +6,8 @@ This is service for a work only with a business logic for the Users (Persons)
 
 from typing import Optional
 
-from django.core.mail import send_mail
-
 from persons.exceptions import PersonErrorImproperlyConfigured
-from persons.interfaces import EmailString, UsersPydantic
-
-# from allauth.account.internal.userkit import user_email
+from persons.interfaces import UsersPydantic
 
 
 class PersonServiceAdapter:
@@ -48,12 +44,12 @@ class PersonServiceAdapter:
         return None
 
     @staticmethod
-    def search_by_email(email_pattern: str) -> list[UsersPydantic]:
+    def search_by_email(user_email: str) -> list[UsersPydantic]:
         """Search users by email"""
         from persons.models import Users
 
         try:
-            users = Users.objects.filter(email__icontains=email_pattern)
+            users = Users.objects.filter(email__icontains=user_email)
             return [UsersPydantic.model_validate(u) for u in users]
         except Exception as e:
             raise PersonErrorImproperlyConfigured(e.args[0] if e.args else str(e))

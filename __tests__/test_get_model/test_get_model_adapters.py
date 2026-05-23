@@ -25,13 +25,6 @@ log = logging.getLogger(__name__)
 
 class TestSubPostmanAdapter:
 
-    # async def test_subPerson_get_model__get_index(self, mock_cacher_adapter_mixin,mock_user_django, mock_subPerson_class) -> None:
-    #     """
-    #     Here chek the get_index conditions from the SubPerson.get_model of method.
-    #     :return:
-    #     """
-    #     lock = Lock()
-    #     mock_subPerson_class.get_person_model = None
     @pytest.fixture
     def mock_test(self,mock_pydantic_user, mocker):
         from __tests__.fixtures.mock_function import (
@@ -55,8 +48,9 @@ class TestSubPostmanAdapter:
         :param mock_subPerson_class: Fixture. This Mock-s for the 'persons.adapters.postman_adapter.PostmanAdapter.SubPerson' subclass.
         :return: None or UsersPydantic/
         """
+        log_t = f"[{self.__class__.__name__}][{self.test_subPerson_get_model.__name__}]: "
         from persons.adapters import PostmanAdapter
-        log.info("""
+        log.info(log_t + """\n
             # ============================================
             # Mock SubPerson
             # ============================================
@@ -70,7 +64,7 @@ class TestSubPostmanAdapter:
         mock_subPerson.person_index = mock_user_django.__getattribute__("id")
         mock_subPerson.person_email = mock_user_django.__getattribute__("email")
 
-        log.info("""\n
+        log.info(log_t + """\n
         # ============================================
         # TEST test_get_new_model_data
         # ============================================
