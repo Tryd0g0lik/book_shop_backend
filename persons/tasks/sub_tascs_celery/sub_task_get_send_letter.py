@@ -22,9 +22,6 @@ log = logging.getLogger(__name__)
     retry_backoff_max=30,
 )
 def task_child_process_letter_Thanks_for_your_account(self, *args, **kwargs) -> bool:
-    # from django.template.loader import render_to_string
-    # from wagtail.admin.mail import send_mail
-    # from persons import EnumEmailLetter
     from django.core.mail import send_mail
     from django.template.loader import render_to_string
 
@@ -46,18 +43,9 @@ def task_child_process_letter_Thanks_for_your_account(self, *args, **kwargs) -> 
         text_context = render_to_string(EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value)
         # Theme/Subject to the letter
         subject_ = EnuSubjectOfLetter.SUB_TASK_GET_SEND_LETTER_0.value
-        log.info(log_t + " DEBUG Before the cycl (the for)")
-
         for one_list in args:
-            log.info(
-                log_t
-                + " DEBUG In the cycl (the for) got the one_list: "
-                + str(one_list)
-            )
             for u in one_list:
-                log.info(log_t + " DEBUG In the cycl (the for) got the u: " + str(u))
                 em = u.__getitem__("to_email")
-                log.info(log_t + " DEBUG After getting the em: " + str(em))
                 recipient_list_.append(em)
 
         if len(recipient_list_) > 0:
