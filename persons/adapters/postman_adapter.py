@@ -196,9 +196,9 @@ class PostmanAdapter(
                             if hasattr(ud, k)
                         ]
                         log.info("TEST DEBUG after setattr(ud)")
-                        self.database_service.update_user_in_database(user_data=ud)
+                        self.database_service.create_or_update_in_database(user_data=ud)
                         log.info(
-                            "TEST DEBUG after database_service.update_user_in_database"
+                            "TEST DEBUG after database_service.create_or_update_in_database"
                         )
                         return ud
                     except Exception as e:

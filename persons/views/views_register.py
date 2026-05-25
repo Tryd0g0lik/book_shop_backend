@@ -117,7 +117,8 @@ class UsersRegistrationView(AllauthSignupView):
                 if item in url_parent or re.search(r"/register/$", url_parent)
             ]
 
-            if result_list[0] is not None:
+            if len(result_list) > 0:
+
                 super().post(request, *args, **kwargs)
                 return render(request, "auth/register.html", status=201)
                 # return response
@@ -174,9 +175,7 @@ class UsersRegistrationView(AllauthSignupView):
             % to_email.replace("@", "").replace(".", ""),
         )
         try:
-
-            # super().form_valid(form)
-
+            # ------------------------------------
             kwargs = {"username": username, "to_email": to_email}
             task_of_cache.delay(*args, **kwargs)
             message = _("Registration is almost complete! Check your email.")

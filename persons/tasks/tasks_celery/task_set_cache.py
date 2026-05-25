@@ -119,27 +119,18 @@ def task_of_cache(self, *args, **kwargs) -> None:
     log_t = "[task_of_cache]:"
     args_len = len(args)
     kwargs_len = len(kwargs) if kwargs is not None else 0
-    if args_len > 0 and kwargs_len > 0:
-        custom_loop = CustomizationSyncAsyncLoop(*args, **kwargs)
-        custom_loop.get_new_function = cache_user_data
-        custom_loop.is_async = True
-        wrapper = custom_loop.get_new_loop()
-        log.info(
-            log_t + " After opening a new loop. & Before run the threading.Thread."
-        )
-        Thread(target=wrapper).start()
-    else:
-        time.sleep(3)
-    return
-    # loop = asyncio.get_event_loop()
-    # # run_asyncio_debug(loop)
-    # try:
-    #     asyncio.set_event_loop(loop)
-    #     task = asyncio.to_thread(cache_user_data, *args, **kwargs)
-    #     loop.run_until_complete(task)
-    #
-    # except Exception as e:
-    #     loop.close()
-    #     log.error(
-    #         f"""[task_scraper_company_page]: {e.args[0] if e.args else str(e)} \n"""
-    #     )
+    try:
+        if args_len > 0 and kwargs_len > 0:
+            custom_loop = CustomizationSyncAsyncLoop(*args, **kwargs)
+            custom_loop.get_new_function = cache_user_data
+            custom_loop.is_async = True
+            wrapper = custom_loop.get_new_loop()
+            log.info(
+                log_t + " After opening a new loop. & Before run the threading.Thread."
+            )
+            Thread(target=wrapper).start()
+        else:
+            time.sleep(3)
+        return
+    except Exception as e:
+        raise self.retry(exc=e, countdown=30)

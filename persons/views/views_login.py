@@ -81,10 +81,9 @@ class UserLoginView(AllauthLoginView):
 
             if is_valid:
                 user = Users.objects.get(email=form.cleaned_data.get("email"))
-                if not user.is_staff:
+                if user.is_anonymous:
                     try:
 
-                        user.is_staff = True
                         user.is_active = True
                         dtime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         user.date_joined = dtime

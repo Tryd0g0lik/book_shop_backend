@@ -1,4 +1,5 @@
 # __tests__/fixtures/fixture_mock_patch.py:1
+import json
 import logging
 from unittest.mock import MagicMock, Mock
 
@@ -6,6 +7,7 @@ import pytest
 
 from __tests__.fixtures.fixture_django import generate_users, mock_user_django
 from __tests__.fixtures.fixture_pydantic import mock_pydantic_user
+from __tests__.fixtures.mock_function import get_file, save_one_user
 from persons.adapters import PersonServiceAdapter
 
 log = logging.getLogger(__name__)
@@ -112,5 +114,53 @@ def mock_database_get_user_model(mocker, users_model_data):
     mock_user.configure_mock(**users_model_data)
     mock_users_model = mocker.patch.object(Users.objects, "get",return_value=mock_user )
     mock_users_model.object.get.return_value = mock_user
-    mocker.patch("persons.models.models_persons.Users")
+    mocker.patch("persons.models.Users")
     return mock_user
+
+# ============================================
+# MOCK DATABASE Users
+# ============================================
+
+
+
+@pytest.fixture
+def mock_users_database(mocker):
+    from __tests__.fixtures.mock_function import get_one_user
+
+    # -------------------- Users()
+    file_of_db = get_file()
+
+    file_of_db = json.loads(file_of_db)
+    assert isinstance(file_of_db, list)
+    assert type(file_of_db[0]) is dict
+
+    def side_affect_fun(**kwargs):
+        email = kwargs.get("email")
+        print(f"TEST DEBUG side_affect_fun: {str(email)}")
+        return get_one_user(email, database=file_of_db)
+
+    # -------------------- Users()
+    # mock_users_class = MagicMock(name=Users)
+    mock_method_Users = mocker.patch("persons.models.Users")
+    mock_method_Users.reset_mock()
+    mock_method_get = mock_method_Users.objects.get
+    mock_method_get.side_effect = side_affect_fun
+
+    # mock_method_create = mocker.patch("persons.models.models_persons.Users")
+    mock_method_create = mock_method_Users.objects.create
+    mock_method_create.side_effect = \
+        lambda **kwargs: save_one_user(file_of_db, **kwargs)
+
+    yield mock_method_Users
+    print(f"\tTEST DEBUG call_args args: {mock_method_get.call_args.args}")
+    print(f"TEST DEBUG call_args kwargs: {mock_method_get.call_args.kwargs}")
+    print(f"TEST DEBUG call_args_list: {mock_method_get.call_args_list}")
+    print(f"TEST DEBUG method_calls: {mock_method_get.method_calls}")
+# yield {
+#         "users": mock_users_class, # ... = Users()
+#         "objects": mock_users_object, # Users.objects
+#         "get": mock_method_get, # Users.objects.get
+#         "create": mock_method_create, # Users.objects.
+#     }
+#
+#     mock_db.close_file()

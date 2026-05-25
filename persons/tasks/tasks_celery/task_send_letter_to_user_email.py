@@ -11,7 +11,7 @@ import time
 from celery import shared_task
 
 from persons import EnumTemplatesKeysCache
-from persons.tasks.sub_tascs_celery.sub_task_get_send_letter import (
+from persons.tasks.sub_tasks_celery.sub_task_get_send_letter import (
     task_child_process_letter_Thanks_for_your_account,
 )
 
@@ -238,4 +238,4 @@ def task_postman(self, *args, **kwargs) -> None:
         return
     except Exception as e:
         log.info(log_t + str(e))
-        raise e
+        raise self.retry(exc=e, countdown=30)
