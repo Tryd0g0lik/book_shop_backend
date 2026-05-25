@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from typing import Optional
 from uuid import uuid4
 
+from persons.interfaces import UsersPydantic
 from project.settings_conf.settings_db import DATABASES
 
 base_time = datetime.now()
@@ -340,7 +341,7 @@ def get_one_user(*args, **kwargs) -> Optional[dict]:
         return user_lis[0]
     else: raise ValueError("EMail not found")
 
-def save_one_user(*args: list[dict], **kwargs: dict) -> list[dict] :
+def save_one_user(*args: list[dict], **kwargs: dict) -> UsersPydantic :
     """
 
     :param (list[dict],) args: This is a list old the database's data
@@ -354,10 +355,10 @@ def save_one_user(*args: list[dict], **kwargs: dict) -> list[dict] :
     user_dict: dict = kwargs
     get_list: list[dict] = []
     for one_list in args:
-        get_list.insert(len(get_list), one_list)
+        get_list.extend( one_list)
 
     template_new_user: dict = {
-                "id": 0,
+                "id": len(get_list) + 1,
                 "last_login": None,
                 "is_superuser": False,
                 "username": "test_user_10",
@@ -379,6 +380,17 @@ def save_one_user(*args: list[dict], **kwargs: dict) -> list[dict] :
     # Create a new user
     template_keys = list(template_new_user.keys())
     [template_new_user.__setitem__(k, v) for k,v in user_dict.items() if k in template_keys]
+
     # Returning the update database
     get_list.append(template_new_user)
-    return get_list
+    new_user = UsersPydantic(**template_new_user)
+    log.info(f"""\n
+       # ============================================
+       # TEST DEBUG FIXTURE save_one_user CREATING OF USER
+       # - template_keys LEN: {len(template_keys)}
+       # - template_new_user NEW: {str(template_new_user)}
+       # - get_list ( mock db) LEN: {len(get_list)}
+       # - get_list ( mock db) TYPE: {type(get_list)}
+       # ============================================
+       """)
+    return new_user

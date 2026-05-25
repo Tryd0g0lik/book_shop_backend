@@ -5,13 +5,15 @@ This is service for a work only with a business logic for the Users (Persons)
 """
 
 import json
+import logging
 from typing import Optional
 
-from django.db.models.expressions import result
 from django.utils.hashable import make_hashable
 
 from persons.exceptions import PersonErrorImproperlyConfigured
 from persons.interfaces import UsersPydantic
+
+log = logging.getLogger(__name__)
 
 
 class PersonServiceAdapter:
@@ -124,7 +126,6 @@ class PersonServiceAdapter:
         get_person_model_old: Optional[UsersPydantic] = None
         em: Optional[str] = user_data.__getitem__("email")
 
-        print(f"TEST DEBUG BEFORE cycle. em:  {str(em)} ")
         if user_id is not None:
             # ============================================
             # UPDATE USER FROM  DATABASE BY user_id
@@ -176,9 +177,20 @@ Change the email address."
                     # HASHING A USER'S PASSWORD
                     # ============================================
                     password_hashed = make_hashable(password_str)
-                    setattr(user_data, "password", password_hashed)
+                    log.info(
+                        f"""\n\t
+                    # ============================================
+                    # TEST DEBUG create_or_update_in_database
+                    # That is user_data: {str(user_data)}
+                    # That is the type of user_data: {type(user_data)}
+                    # ============================================
+                    """
+                    )
+                    user_data.__setitem__("password", password_hashed)
                     del password_hashed, password_str
-                    del user_data["password1"]
+                    password1 = user_data.get("password1")
+                    if password1:
+                        del user_data["password1"]
                 except TypeError as e:
                     raise TypeError(
                         "Password should be a hashable object. " + str(e)
