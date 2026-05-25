@@ -7,7 +7,7 @@ import json
 import logging
 from typing import Optional
 
-from pydantic import EmailStr
+from django.core.mail import send_mail
 
 from persons.interfaces import UsersPydantic
 
@@ -246,25 +246,48 @@ class PostmanAdapter(
         user_email_: Optional[str] = None,
     ) -> bool:
         """Returning the True ok mistake"""
-        from ..models import Users
+        from persons.models import Users
 
         """Send email (in the database Person)"""
         if user_id_ is None and user_email_ is None:
             raise PersonErrorImproperlyConfigured()
         try:
+            log.info(
+                f"""\n
+            # PostmanAdapter.send_email_to_user
             # ============================================
             # SEND EMAIL BY the user id or user email
             # ============================================
-            user = (
-                Users.objects.get(id=user_id_)
-                if user_id_ is not None
-                else Users.objects.get(email=user_email_)
+            # user_id_: {str(user_id_)}
+            # user_email_: {str(user_email_)}
+            # subject_: {str(subject_)}
+            # message_: {str(message_)}
+            """
             )
-            user.email_user(
+            user = (
+                Users.objects.get(email=user_email_)
+                if user_id_ is not None
+                else Users.objects.get(id=user_id_)
+            )
+            log.info(
+                f"""\n
+                # ============================================
+                # SEND EMAIL AFTER  SEARCH BY user_id_ or user_email_
+                # ============================================
+                # user: {str(user)}
+                """
+            )
+            send_mail(
                 subject=subject_,
                 message=message_,
+                recipient_list=[user.email],
                 from_email="host_test@email.ru",
             )
+            # user.email_user(
+            #     subject=subject_,
+            #     message=message_,
+            #     from_email="host_test@email.ru",
+            # )
 
         except Exception as e:
             raise PersonErrorImproperlyConfigured(e.args[0] if e.args else str(e))

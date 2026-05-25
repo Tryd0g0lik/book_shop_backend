@@ -5,10 +5,15 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 
-from __tests__.fixtures.fixture_django import generate_users, mock_user_django
+from __tests__.fixtures.fixture_django import (
+    generate_users,
+    mock_user_django,
+    pytest_generate_tests,
+)
 from __tests__.fixtures.fixture_pydantic import mock_pydantic_user
 from __tests__.fixtures.mock_function import get_file, save_one_user
 from persons.adapters import PersonServiceAdapter
+from persons.interfaces import UsersPydantic
 
 log = logging.getLogger(__name__)
 
@@ -92,7 +97,39 @@ def mock_subPerson_class(mock_mixin_method, mock_person_service_adapter,
     return  mock__get_cache
 
 @pytest.fixture
+def mock_database_get_user_model_2(mocker,users_model_data):
+    log.info("""\n
+        # ============================================
+        # FIXTURE BEFORE BEFORE CREATE THE MOCK FOR THEM:
+        # - persons.models.Users
+        # - persons.models.Users.objects.get
+        # ============================================
+        """)
+    mock_users = mocker.patch("persons.models.Users")
+    log.info(f"""\n
+    # ============================================
+    #  TESST DEBUG users_model_data: {str(users_model_data)}
+    # ============================================
+    """)
+    mockUsersObject = UsersPydantic(**users_model_data)
+
+    mock_users_object_get = mock_users.objects.get
+    mock_users_object_get.return_value = mockUsersObject
+    yield mock_users
+    log.info(f"\n\tTEST DEBUG call_args args: {mock_users_object_get.call_args}")
+    log.info(f"TEST DEBUG call_args_list: {mock_users_object_get.call_args_list}")
+    # log.info(f"TEST DEBUG method_calls: {mock_users_object_get.method_calls}")
+    # print(mock_users.email_user.call_args)
+
+@pytest.fixture
 def mock_database_get_user_model(mocker, users_model_data):
+    """
+    TODO: Пересмотреть логику.
+    Пересмотреть
+    :param mocker:
+    :param users_model_data:
+    :return:
+    """
     from django.contrib.auth.models import AbstractUser
     from django.core.mail import send_mail
 
@@ -115,7 +152,17 @@ def mock_database_get_user_model(mocker, users_model_data):
     mock_users_model = mocker.patch.object(Users.objects, "get",return_value=mock_user )
     mock_users_model.object.get.return_value = mock_user
     mocker.patch("persons.models.Users")
-    return mock_user
+    yield mock_user
+    sub = "First Test letter by the CONFIRM_EMAIL_Letter_0 template %s" % mock_user.email
+    em = "host_test@email.ru"
+    # log.info(f"\tTEST DEBUG call_args args: {mock_users_model.object.get.call_args.args}")
+    # log.info(f"TEST DEBUG call_args kwargs: {mock_users_model.object.get.call_args.kwargs}")
+    # log.info(f"TEST DEBUG call_args_list: {mock_users_model.object.get.call_args_list}")
+    # log.info(f"TEST DEBUG method_calls: {mock_users_model.object.get.method_calls}")
+    # mock_users_model.object.get.assert_called_with
+    # mock_users_model.object.get.assert_called_once_with(subject=sub,
+    #                                              message='account/email/email_confirmation_subject.txt',
+    #                                              from_email=em)
 
 # ============================================
 # MOCK DATABASE Users TO THE TestUserServiceAdapter TEST
@@ -160,7 +207,7 @@ def mock_users_database(mocker):
     mock_method_create = mock_method_Users.objects.create
     mock_method_create.side_effect = \
         lambda **kwargs: save_one_user(file_of_db, **kwargs)
-    mock_method_create = mock_method_Users.objects.all
+
     yield mock_method_Users
 
     log.info("""\n

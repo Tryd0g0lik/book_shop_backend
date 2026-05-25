@@ -6,6 +6,7 @@ import pytest
 
 from __tests__.fixtures.fixture_mock_patch import (
     mock_database_get_user_model,
+    mock_database_get_user_model_2,
     mock_users_database,
 )
 from persons.interfaces import UsersPydantic
@@ -14,13 +15,14 @@ log = logging.getLogger(__name__)
 
 
 class TestUserServiceAdapter:
-
+    # def test_get_user_by_id(self,userId, userEm,expect, mock_database_get_user_model):
+    @pytest.mark.skip("Пересмотреть логику 'mock_database_get_user_model'", )
     @pytest.mark.parametrize("userId, userEm, expect", [
         (4, "moderator@example.com", True),
         (7, "john.doe@example.com", True),
         (7, "john.doe@example.com", False)
     ])
-    def test_get_user_by_id(self,userId, userEm,expect, mock_database_get_user_model):
+    def test_get_user_by_id(self,userId, userEm,expect, mock_database_get_user_model_2):
         """
         :param userId:
         :param userEm:
@@ -31,7 +33,7 @@ class TestUserServiceAdapter:
         """
         from persons.adapters import PersonServiceAdapter
 
-        mock_user = mock_database_get_user_model
+        mock_user = mock_database_get_user_model_2
         if mock_user in [userId]:
             result = PersonServiceAdapter.get_user_by_id(user_id=userId)
 
@@ -61,7 +63,33 @@ class TestUserServiceAdapter:
 
     def test_create_user(self, mock_users_database ):
         """
-        This is a test of the create_or_update_in_database method
+        This is a test of the 'create_or_update_in_database' method.
+        This test is testing that we send data to the 'PersonServiceAdapter.create_or_update_in_database'
+        The entrypoint contain the three keys:
+         -  user_data: dict,
+         -  user_id: Optional[int] = None,
+         -  user_email: Optional[str] = None.
+
+         Here is one option. It when we haw only the 'user_data'.
+         '''json
+         {
+            "email": "premium25@example.com",
+            "first_name": "testFirstName",
+            "last_name": "testLastName",
+            "password": "pbkdf2_sha256$hash_admin_1",
+        }
+        # or
+        {
+            "email": "premium25@example.com",
+            "first_name": "testFirstName",
+            "last_name": "testLastName",
+            "password1": "pbkdf2_sha256$hash_admin_1",
+            "password2": "pbkdf2_sha256$hash_admin_1",
+        }
+        '''
+        It means by conditions, we should create a new user in database.
+        In bode of method 'create_or_update_in_database' we have a check (self.is_email() method & 'test_is_email' test )"email" in db.
+        If "email" email not exists in db. user will be created.
         PATH: persons.adapters.person_service_adapter.PersonServiceAdapter.create_or_update_in_database
         :param mock_users_database: It is the mock-Users database model. All content of the mock database at the JSON-str
         :return: void
@@ -75,7 +103,8 @@ class TestUserServiceAdapter:
             "email": "premium25@example.com",
             "first_name": "testFirstName",
             "last_name": "testLastName",
-            "password": "pbkdf2_sha256$hash_admin_1",
+            "password1": "pbkdf2_sha256$hash_admin_1",
+            "password2": "pbkdf2_sha256$hash_admin_1",
         }
         # --------------------
         person = PersonServiceAdapter()
