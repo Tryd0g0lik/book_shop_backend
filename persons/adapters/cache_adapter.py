@@ -52,6 +52,10 @@ class CacherAdapterMixin(CacherBaseMixin):
                         health_check_interval=self.health_check_interval,
                     )
                     log.info(self.log_t + " Redis Connection pool initialized.")
+        except ConnectionError as e:
+            log_t = self.log_t + " %s" % str(e)
+            raise ConnectionError(log_t) from e
+
         except Exception as e:
             log_t = self.log_t + " %s" % str(e)
             raise ValueError(log_t)

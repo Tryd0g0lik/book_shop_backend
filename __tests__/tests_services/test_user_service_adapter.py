@@ -1,9 +1,19 @@
+"""
 # __tests__/tests_services/test_user_service_adapter.py:1
+This is a test for the PersonServiceAdapter methods.
+Our goal, here is testing a logic of the body get_user_by_id (and some) and will get the data one person (from mock-database).
+The data of person from the mock database.
+THe method itself doesn't  check the incoming content. All checks should be above entrypoint.
+THe all methods, from the PersonServiceAdapter, have a direct work wits a database (a mock database).
+NOTE: THe direct work with real database is currently missing.
+"""
+
 import json
 import logging
 
 import pytest
 
+from __tests__.fixtures.fixture_django import pytest_generate_tests
 from __tests__.fixtures.fixture_mock_patch import (
     mock_database_get_user_model,
     mock_database_get_user_model_2,
@@ -16,38 +26,50 @@ log = logging.getLogger(__name__)
 
 class TestUserServiceAdapter:
     # def test_get_user_by_id(self,userId, userEm,expect, mock_database_get_user_model):
-    @pytest.mark.skip("Пересмотреть логику 'mock_database_get_user_model'", )
+    # @pytest.mark.skip("Пересмотреть логику 'mock_database_get_user_model'", )
     @pytest.mark.parametrize("userId, userEm, expect", [
-        (4, "moderator@example.com", True),
-        (7, "john.doe@example.com", True),
-        (7, "john.doe@example.com", False)
+        (4, "new@example.com", True),
     ])
-    def test_get_user_by_id(self,userId, userEm,expect, mock_database_get_user_model_2):
+    def test_get_user_by_id(self,userId, userEm,expect, users_model_data, mock_database_get_user_model_2):
         """
-        :param userId:
+
+        :param int userId: Index of mock person
         :param userEm:
         :param expect:
-        :param mock_database_get_user_model: This is the mock-Users database model. All content  of the mock database
-            to the '__tests__.fixtures.fixture_django.pytest_generate_tests'
+        :param mock_database_get_user_model_2: This is the mock-Users.users.get database model.
+        All content  of the mock database to the '__tests__.fixtures.fixture_django.pytest_generate_tests'
         :return:
         """
         from persons.adapters import PersonServiceAdapter
 
-        mock_user = mock_database_get_user_model_2
-        if mock_user in [userId]:
-            result = PersonServiceAdapter.get_user_by_id(user_id=userId)
-
-            assert result is not None if expect else result is None
-            if expect and result is not None:
-                result_json: dict = json.loads(result.model_dump_json())
-                assert type(result_json) == dict
-                em = result_json.__getitem__("email")
-                ind = result_json.__getitem__("id")
-                assert em is not None
-                assert ind is not None
-                print("TEST DEBUG test_get_user_by_id Type:%s & STR: %s" % (type(result_json), str(result_json)[:25]))
-                assert ind == userId
-                assert em == userEm
+        mock_user = users_model_data
+        if mock_user["id"] in [4, 7]:
+            log.info(f"""\n\t
+            # ============================================
+            # TEST DEBUG test_get_user_by_id BEFORE FIRST CONDITIONS:
+            # - mock_user: {str(mock_user)[:10]}
+            # - userId (of entrypoint): {str(userId)}
+            # ============================================
+            """)
+            if mock_user['id'] in [userId]:
+                result = PersonServiceAdapter.get_user_by_id(user_id=userId)
+                log.info(f"""\n\t
+                # ============================================
+                # TEST DEBUG test_get_user_by_id AFTER RESULT:
+                # - result (of .get_user_by_id): {str(result)[:10]}
+                # ============================================
+                """)
+                assert result is not None if expect else result is None
+                if expect and result is not None:
+                    result_json: dict = json.loads(result.model_dump_json())
+                    assert type(result_json) == dict
+                    em = result_json.__getitem__("email")
+                    ind = result_json.__getitem__("id")
+                    assert em is not None
+                    assert ind is not None
+                    print("TEST DEBUG test_get_user_by_id Type:%s & STR: %s" % (type(result_json), str(result_json)[:25]))
+                    assert ind == userId
+                    assert em == userEm
 
     def test_is_email(self, mock_users_database ):
         # PATH: persons.adapters.person_service_adapter.PersonServiceAdapter.is_email
@@ -121,10 +143,10 @@ class TestUserServiceAdapter:
 
         mock_db_json_list: list[dict] = json.loads(mock_db_json_str)
         log.info(f"""\n
-            # ============================================
-            # TEST DEBUG THAT IS mock_db_json_list LENGTH (total moc database): {len(mock_db_json_list)}
-            # THAT IS mock_db_json_list TYPE (total moc database): {type(mock_db_json_list)}
-            # THAT IS mock_user_new_json (received a new single user) TYPE: {type(mock_user_new_json)}
-            # THAT IS mock_user_new_json (received a new single user): {str(mock_user_new_json)}
-            # ============================================
-            """)
+        # ============================================
+        # TEST DEBUG THAT IS mock_db_json_list LENGTH (total moc database): {len(mock_db_json_list)}
+        # THAT IS mock_db_json_list TYPE (total moc database): {type(mock_db_json_list)}
+        # THAT IS mock_user_new_json (received a new single user) TYPE: {type(mock_user_new_json)}
+        # THAT IS mock_user_new_json (received a new single user): {str(mock_user_new_json)}
+        # ============================================
+        """)

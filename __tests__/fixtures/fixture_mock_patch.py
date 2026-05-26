@@ -99,12 +99,12 @@ def mock_subPerson_class(mock_mixin_method, mock_person_service_adapter,
 @pytest.fixture
 def mock_database_get_user_model_2(mocker,users_model_data):
     log.info("""\n
-        # ============================================
-        # FIXTURE BEFORE BEFORE CREATE THE MOCK FOR THEM:
-        # - persons.models.Users
-        # - persons.models.Users.objects.get
-        # ============================================
-        """)
+    # ============================================
+    # FIXTURE BEFORE BEFORE CREATE THE MOCK FOR THEM:
+    # - persons.models.Users
+    # - persons.models.Users.objects.get
+    # ============================================
+    """)
     mock_users = mocker.patch("persons.models.Users")
     log.info(f"""\n
     # ============================================
@@ -118,8 +118,6 @@ def mock_database_get_user_model_2(mocker,users_model_data):
     yield mock_users
     log.info(f"\n\tTEST DEBUG call_args args: {mock_users_object_get.call_args}")
     log.info(f"TEST DEBUG call_args_list: {mock_users_object_get.call_args_list}")
-    # log.info(f"TEST DEBUG method_calls: {mock_users_object_get.method_calls}")
-    # print(mock_users.email_user.call_args)
 
 @pytest.fixture
 def mock_database_get_user_model(mocker, users_model_data):
@@ -130,7 +128,6 @@ def mock_database_get_user_model(mocker, users_model_data):
     :param users_model_data:
     :return:
     """
-    from django.contrib.auth.models import AbstractUser
     from django.core.mail import send_mail
 
     from persons.models import Users
