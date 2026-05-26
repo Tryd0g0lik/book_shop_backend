@@ -31,8 +31,7 @@ def mock_mixin_method(mock_pydantic_user, mock_user_django, mocker):
     # FIXTURE PersonBasisMixin
     # ============================================
     """)
-    mock_mixin_class =  mocker.patch("persons.adapters.person_base.PersonBasisMixin"
-                             )
+    mock_mixin_class =  mocker.patch("persons.adapters.person_base.PersonBasisMixin")
     mock_personBasisMixin = mock_mixin_class.return_value
     mock_personBasisMixin.log_t = "[Mock PersonBasisMixin]"
     mock_personBasisMixin.person_index = None
@@ -52,7 +51,7 @@ def mock_cacher_adapter_mixin(mocker):
     mock_cacherAdapterMixin = mock_mixin_class.return_value
     mock_cacherAdapterMixin.log_t = "[Mock CacherAdapterMixin]:"
     mock_cacherAdapterMixin._pool = None
-    mock_cacherAdapterMixin.__pool_lock = None
+    mock_cacherAdapterMixin._pool_lock = None
     mock_cacherAdapterMixin._init_pool = mocker.Mock(return_value=None)
     mock_cacherAdapterMixin.get_person_model = mocker.Mock(return_value=None)
     return mock_mixin_class

@@ -18,10 +18,10 @@ log = logging.getLogger(__name__)
 
 class CacherAdapterMixin(CacherBaseMixin):
     _pool = None
-    __pool_lock = threading.Lock()
+    _pool_lock = threading.Lock()
 
     def __new__(cls, *args, **kwargs):
-        cls.log_t = "[%s]:" % CacherAdapterMixin.__class__.__name__
+        cls.log_t = "[CacherAdapterMixin]:"
         return super().__new__(cls)
 
     def _init_pool(self) -> None:
@@ -37,7 +37,7 @@ class CacherAdapterMixin(CacherBaseMixin):
                 redis_database = self.redis_database
                 redis_master_name = self.redis_master_name
                 redis_password = self.redis_password
-                with CacherAdapterMixin.__pool_lock:
+                with CacherAdapterMixin._pool_lock:
                     CacherAdapterMixin._pool = ConnectionPool(
                         host=REDIS_HOST,
                         port=int(REDIS_PORT),
@@ -120,7 +120,7 @@ class CacherAdapterMixin(CacherBaseMixin):
             pass
 
     def _recreated_pool(self):
-        with CacherAdapterMixin.__pool_lock:
+        with CacherAdapterMixin._pool_lock:
             if CacherAdapterMixin._pool:
                 CacherAdapterMixin._pool.disconnect()
                 CacherAdapterMixin._pool = None
@@ -133,6 +133,7 @@ class CacherAdapterMixin(CacherBaseMixin):
         is_connected = self.is_connected
         if is_connected:
             self.server_client = None
+            CacherAdapterMixin._pool.close()
             CacherAdapterMixin._pool = None
 
     @property
