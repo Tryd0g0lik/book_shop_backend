@@ -134,7 +134,7 @@ class UsersRegistrationView(AllauthSignupView):
                     "register",
                     kwargs={
                         "detail": """Something what wrong with the var.'category.\n
-    It is from a registration form by url %s"""
+    It is form of registration by the url %s"""
                         % (pathname,)
                     },
                 ),

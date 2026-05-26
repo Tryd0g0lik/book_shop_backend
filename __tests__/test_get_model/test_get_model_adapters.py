@@ -1,10 +1,10 @@
 """
 PostmanAdapter.SubPerson
         ├── PersonBasisMixin (parent)
-        ├── PersonServiceAdapter (database_service)
         └── CacherAdapterMixin (caching)
 
 """
+import asyncio
 import json
 import logging
 from asyncio import Lock
@@ -49,7 +49,9 @@ class TestSubPostmanAdapter:
         :return: None or UsersPydantic/
         """
         log_t = f"[{self.__class__.__name__}][{self.test_subPerson_get_model.__name__}]: "
-        from persons.adapters import PostmanAdapter
+        from persons.adapters import PersonServiceAdapter, PostmanAdapter
+
+        # database_service = PersonServiceAdapter()
         log.info(log_t + """\n
             # ============================================
             # Mock SubPerson
@@ -71,7 +73,7 @@ class TestSubPostmanAdapter:
         """)
         lock = Lock()
         mock_subPerson_class.get_person_model = mock_mixin_method.get_person_model
-        result_test: dict|None = await mock_subPerson.get_model(lock)
+        result_test: dict|None = await mock_subPerson.get_model(lock, mock_person_service_adapter)
         assert mock_subPerson_class.get_person_model is not None
         assert result_test is not None
         assert isinstance(result_test, dict)

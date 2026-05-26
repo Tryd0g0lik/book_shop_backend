@@ -41,7 +41,7 @@ class UsersLoginForm(forms.Form):
             )
         except Exception as e:
             raise forms.ValidationError(
-                _("Form 'UsersLoginForm' is invalid. Error: %s") % str(e),
+                _("Data 'UsersLoginForm' is invalid from form. Error: %s") % str(e),
                 code="invalid_form",
             )
         return self.cleaned_data

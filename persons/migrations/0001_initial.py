@@ -115,7 +115,7 @@ class Migration(migrations.Migration):
                     "is_sent",
                     models.BooleanField(
                         default=False,
-                        help_text="Part is registration of new user.It is message sending to user's email. User indicates his email at the registrations moment.",
+                        help_text="It is registration of new user.It is message sending to the user's email. User indicates his email at the registrations moment.",
                         verbose_name="Message was sent",
                     ),
                 ),

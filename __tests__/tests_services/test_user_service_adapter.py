@@ -92,7 +92,7 @@ class TestUserServiceAdapter:
          -  user_id: Optional[int] = None,
          -  user_email: Optional[str] = None.
 
-         Here is one option. It when we haw only the 'user_data'.
+         Here is one option. It's when we have only the 'user_data'.
          '''json
          {
             "email": "premium25@example.com",

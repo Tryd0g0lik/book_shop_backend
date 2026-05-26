@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 # ============================================
 # CORS
 # ============================================
-# False - this value is default and it's means what the server don't accept from other sources.
+# False - this is the default value which means that the server doesn't accept data from other sources.
 CORS_ORIGIN_ALLOW_ALL = False
 # Here, we allow the URL list for publicated
 CORS_ALLOWED_ORIGINS = [

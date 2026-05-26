@@ -19,9 +19,13 @@ class TestSendToUserEmail:
 
     def test_send_to_user_email_no_valid(self):
         """Send Email (to the database User), here is returning True or mistake/"""
+        from persons.adapters import PersonServiceAdapter
+        database_service_ = PersonServiceAdapter()
         result_bool = False
+        lock = PostmanAdapter.lock
         try:
-            result_bool = PostmanAdapter.send_email_to_user(
+            result_bool = PostmanAdapter.send_email_to_user(lock,
+                database_service=database_service_,
                 subject_="First Test letter by the CONFIRM_EMAIL_Letter_0 template " ,
                 message_=EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value,
                 user_id_=None,
@@ -32,7 +36,9 @@ class TestSendToUserEmail:
         assert result_bool is not True, "User's Email or user's index must not be None."
 
     def test_send_to_user_email(self,users_model_data,  mock_database_get_user_model_2):
-        """HEre, us need a check what the user_id_, subject_, user_email_ data is: Yes - They are called"""
+        """Here us need to check the user_id_, subject_, user_email_. These data are: 'Yes - They are called'"""
+        from persons.adapters import PersonServiceAdapter
+        database_service_ = PersonServiceAdapter()
         mock_user = users_model_data
         mock_user_id = mock_user.get("id")
         log.info(f"\nMock user ID: {str(mock_user_id)}")
@@ -46,7 +52,9 @@ class TestSendToUserEmail:
                 # mock_user.email: {str(mock_user_email)}
                 """)
             # The database and the < model >.email_user were mock.
-            result_bool = PostmanAdapter.send_email_to_user(
+            lock = PostmanAdapter.lock
+            result_bool = PostmanAdapter.send_email_to_user(lock,
+                database_service=database_service_,
                 subject_="First Test letter by the CONFIRM_EMAIL_Letter_0 template %s" % mock_user_email,
                 message_=EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value,
                 user_id_=mock_user_id,

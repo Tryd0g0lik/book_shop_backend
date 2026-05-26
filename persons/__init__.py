@@ -15,7 +15,7 @@ class EnumEmailLetter(Enum):
 
 class EnumTemplatesKeysCache(Enum):
     """
-    The '< email >' at the end of line has it from the 'test_address@mail.ru' in the 'test_addressmailru' view.
+    The '< email >' at the end of line has it is from the 'test_address@mail.ru' in the 'test_addressmailru' view.
     :param 'user:pending:< email >' First letter of email/ Here we tell to
         the user  EnumEmailLetter.CONFIRM_EMAIL_Letter_0. TIme live 5 minutes.
     :param 'user:pending:letter_1:< email >' Message contain a secret code. Code to the verification email.

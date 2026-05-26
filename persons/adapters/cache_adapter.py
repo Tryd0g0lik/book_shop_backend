@@ -133,7 +133,6 @@ class CacherAdapterMixin(CacherBaseMixin):
         is_connected = self.is_connected
         if is_connected:
             self.server_client = None
-            CacherAdapterMixin._pool.close()
             CacherAdapterMixin._pool = None
 
     @property

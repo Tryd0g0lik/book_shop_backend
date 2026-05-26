@@ -79,7 +79,7 @@ class PersonBasisMixin:
     def _is_person(value=None) -> bool:
         """
         :param value: The value this is variable must be belonging to the Users model.
-        :return bool: The 'True' it if all Ok or return mistake 'PostmanRequiredModelError'
+        :return bool: The 'True' it's if all Ok or return mistake 'PostmanRequiredModelError'
         """
         from persons.exceptions.error_postman import PostmanRequiredModelError
 
@@ -117,8 +117,8 @@ object person) - Check. Do not belonging to the Users's model."
         - 'user:pending:letter_1:< email >';
         - 'user:pending:login: < email >';
         - 'user:pending:*'.
-        If the value has the emil mean the '< email >' at the end of line has it from the 'test_address@mail.ru' in
-            the 'test_addressmailru' view.
+        If it is an email's value that mean the '< email >' at end of line. It ('test_address@mail.ru') is from
+            our line - the 'test_addressmailru'.
             Or. The value has '*' (means the all email). That could be the 'test_address@mail.ru' or
             'testemail@rambler.ru' and more.
         :param str value:
@@ -166,7 +166,7 @@ object person) - Check. Do not belonging to the Users's model."
         if val not in keys:
             raise PostmanRequiredModelError(
                 self.log_t
-                + ": The template of value it is one from list - Check. \
+                + ": The template is one from the all list - Check. \
                     The required name of key is not found at the common list of template of keys ."
             )
         return True

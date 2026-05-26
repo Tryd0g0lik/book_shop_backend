@@ -12,11 +12,12 @@ from django.utils.hashable import make_hashable
 
 from persons.exceptions import PersonErrorImproperlyConfigured
 from persons.interfaces import UsersPydantic
+from persons.interfaces.interface_dataservice import PersonServiceInitialize
 
 log = logging.getLogger(__name__)
 
 
-class PersonServiceAdapter:
+class PersonServiceAdapter(PersonServiceInitialize):
 
     @staticmethod
     def get_user_by_id(user_id: Optional[int] = None) -> Optional[UsersPydantic]:
