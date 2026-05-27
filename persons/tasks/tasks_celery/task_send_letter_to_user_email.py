@@ -23,13 +23,21 @@ log = logging.getLogger(__name__)
 # 1. GET ARRAY OF KEYS FROM THE CACHE
 # ============================================
 async def child_process_get_keys_0(
+    lock: asyncio.Lock,
     key_pattern: str,
     log_t: str,
     queue: queue.Queue,
 ) -> bool:
     """
+    TODO: Можно получить из кеша, можно сохранить в кеше, продлить срок жизни ключа .
+        В строке 'queue_collection=queue, key=key.decode("utf-8")' передаём очередь.
+        В эту очередь добавляем рузельтат отработанных данных из keys.
+        Надо вставить логику которая будет отслеживать - какие данные из keys успел отработать (до того как queue получила
+        максимальную длину) а какие ключи не спела. Иначе потеляю данные и BACKOFF просто начнёт работу заного с теми
+        же ключами и в том же количестве.
     Here we are creating a queue of tasks. Everyone task it is a request to the cache Radis's server.
     We collect all the result in the queue.
+    :param asyncio.Lock lock: It is beholder.
     :param str key_pattern: This is a pattern of the cache's key
     :param str log_t: This is simple the prefix text (subtext) for a log row/line.
     :param queue.Queue queue: This is the queue.Queue object.
@@ -49,34 +57,36 @@ async def child_process_get_keys_0(
         # REDIS CACHE SERVER - GET THE COLLECTION of KEYS
         # ============================================"""
         )
+        async with lock:
+            result_bool: bool = await cachemanager.aget(
+                key_pattern=key_pattern,
+                collection=keys,
+            )
+            log.warning(
+                log_t[:-1]
+                + f"[{child_process_get_keys_0.__name__}]:"
+                + " DEBUG \nReceived key_pattern %s \n & LIST LENGTH: %s & LIST: %s \n  RESULT_BOOL: %s "
+                % (key_pattern, str(len(keys)), str(keys), str(result_bool))
+            )
+            start_time = datetime.now()
+            if result_bool:
+                tasks = []
 
-        result_bool: bool = await cachemanager.aget(
-            key_pattern=key_pattern,
-            collection=keys,
-        )
-        log.warning(
-            log_t[:-1]
-            + f"[{child_process_get_keys_0.__name__}]:"
-            + " DEBUG \nReceived key_pattern %s \n & LIST LENGTH: %s & LIST: %s \n  RESULT_BOOL: %s "
-            % (key_pattern, str(len(keys)), str(keys), str(result_bool))
-        )
-        start_time = datetime.now()
-        if result_bool:
-            tasks = []
-            for key in keys:
-                log.warning(
-                    log_t[:-1]
-                    + f"[{child_process_get_keys_0.__name__}]:"
-                    + " DEBUG THe KEY: %s RUN TO THE LOOP " % (key.decode("utf-8"),),
-                )
-                tasks.append(
-                    asyncio.create_task(
-                        cachemanager.aget(
-                            queue_collection=queue, key=key.decode("utf-8")
+                for key in keys:
+                    log.warning(
+                        log_t[:-1]
+                        + f"[{child_process_get_keys_0.__name__}]:"
+                        + " DEBUG THe KEY: %s RUN TO THE LOOP "
+                        % (key.decode("utf-8"),),
+                    )
+                    tasks.append(
+                        asyncio.create_task(
+                            cachemanager.aget(
+                                queue_collection=queue, key=key.decode("utf-8")
+                            )
                         )
                     )
-                )
-            await asyncio.gather(*tasks, return_exceptions=True)
+                await asyncio.gather(*tasks, return_exceptions=True)
 
         log.info(
             log_t[:-1]
@@ -109,8 +119,7 @@ async def child_process_get_keys_0(
     except Exception as e:
         error_t = log_t[:-1] + "[child_process_get_keys_0] ERORR_TEXT: %s" % str(e)
         log.error(error_t)
-        print(error_t)
-        return False
+        raise e
     return True
 
 
@@ -121,14 +130,11 @@ def sub_function(keys_queue, log_t, result_bool):
     list_of_results = []
     qsize = keys_queue.qsize()
     if result_bool and qsize:
-        try:
-            while not keys_queue.empty():
-                byte_code = keys_queue.get_nowait()
-                json_code = json.loads(byte_code.decode("utf-8"))
-                list_of_results.append(json_code)
+        while not keys_queue.empty():
+            byte_code = keys_queue.get_nowait()
+            json_code = json.loads(byte_code.decode("utf-8"))
+            list_of_results.append(json_code)
 
-        except queue.Empty as e:
-            log.warning(log_t + "Warning queue empty text => %s" % str(e))
     # The clean storage
     del qsize
     if len(list_of_results) == 0:
@@ -166,6 +172,7 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
             log.info(log_t + """ \n BEFORE IS RUNNING THE child_process_get_keys_0""")
             async with lock:
                 result_bool = await child_process_get_keys_0(
+                    lock,
                     key_pattern=EnumTemplatesKeysCache.USER_PENDING_0.value % "*",
                     queue=keys_queue,
                     log_t=log_t,
@@ -181,10 +188,11 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
             sub_function(keys_queue, log_t, result_bool)
     except queue.Full:
         sub_function(keys_queue, log_t, result_bool)
+        raise
 
     except Exception as e:
         log.error(log_t + "ERROR TEXT => %s" % str(e))
-        return False
+        raise e
 
     return True
 

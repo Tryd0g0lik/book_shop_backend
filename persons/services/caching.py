@@ -181,7 +181,6 @@ class CacheManager:
         is_connected = await self.asynccacher.is_connected()
         if is_connected is None or not is_connected:
             await self.asynccacher.related()
-        print(self.log_t[:-1] + "[aget]:" + "DEBUG WAS CONNECTED: %s" % is_connected)
         log.info(self.log_t[:-1] + "[aget]:" + "DEBUG WAS CONNECTED: %s" % is_connected)
         log.info(
             self.log_t[:-1]
@@ -416,18 +415,6 @@ class CacheManager:
                     + "[aget]:"
                     + " all successfully was saved in the queue."
                 )
-                if (
-                    queue_collection is not None
-                    and type(queue_collection) == asyncio.Queue
-                ):
-                    qsize = queue_collection.qsize()
-                    log.info(self.log_t[:-1] + "[aget]:" + " Queue size: " + str(qsize))
-
-                elif collection is not None and type(collection) == list | tuple:
-                    size = len(collection)
-                    log.info(
-                        self.log_t[:-1] + "[aget]:" + " Storage size: " + str(size)
-                    )
         except Exception as e:
             log_t = " ".join(
                 [
