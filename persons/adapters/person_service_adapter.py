@@ -11,8 +11,7 @@ from typing import Optional
 from django.utils.hashable import make_hashable
 
 from persons.exceptions import PersonErrorImproperlyConfigured
-from persons.interfaces import UsersPydantic
-from persons.interfaces.interface_dataservice import PersonServiceInitialize
+from persons.interfaces import PersonServiceInitialize, UsersPydantic
 
 log = logging.getLogger(__name__)
 

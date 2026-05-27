@@ -163,6 +163,7 @@ class UsersRegistrationView(AllauthSignupView):
             task_of_cache,
         )
 
+        super().form_valid(form)
         username = form.cleaned_data.get("username")
         to_email = form.cleaned_data.get("email")
         if (username is None) or (
@@ -174,9 +175,9 @@ class UsersRegistrationView(AllauthSignupView):
             EnumTemplatesKeysCache.USER_PENDING_0.value
             % to_email.replace("@", "").replace(".", ""),
         )
+        # ------------------------------------
+        kwargs = {"username": username, "to_email": to_email}
         try:
-            # ------------------------------------
-            kwargs = {"username": username, "to_email": to_email}
             task_of_cache.delay(*args, **kwargs)
             message = _("Registration is almost complete! Check your email.")
         except Exception as e:

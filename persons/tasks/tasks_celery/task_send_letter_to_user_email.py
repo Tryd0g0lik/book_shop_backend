@@ -28,6 +28,8 @@ async def child_process_get_keys_0(
     queue: queue.Queue,
 ) -> bool:
     """
+    Here we are creating a queue of tasks. Everyone task it is a request to the cache Radis's server.
+    We collect all the result in the queue.
     :param str key_pattern: This is a pattern of the cache's key
     :param str log_t: This is simple the prefix text (subtext) for a log row/line.
     :param queue.Queue queue: This is the queue.Queue object.
@@ -43,9 +45,9 @@ async def child_process_get_keys_0(
             log_t[:-1]
             + f"[{child_process_get_keys_0.__name__}]:"
             + """\n
-# ============================================
-# REDIS CACHE SERVER - GET THE COLLECTION of KEYS
-# ============================================"""
+        # ============================================
+        # REDIS CACHE SERVER - GET THE COLLECTION of KEYS
+        # ============================================"""
         )
 
         result_bool: bool = await cachemanager.aget(
@@ -112,9 +114,40 @@ async def child_process_get_keys_0(
     return True
 
 
+# ============================================
+# THE SUB FUNCTION IS TO AVOID A CODE DUPLICATION, below/
+# ============================================
+def sub_function(keys_queue, log_t, result_bool):
+    list_of_results = []
+    qsize = keys_queue.qsize()
+    if result_bool and qsize:
+        try:
+            while not keys_queue.empty():
+                byte_code = keys_queue.get_nowait()
+                json_code = json.loads(byte_code.decode("utf-8"))
+                list_of_results.append(json_code)
+
+        except queue.Empty as e:
+            log.warning(log_t + "Warning queue empty text => %s" % str(e))
+    # The clean storage
+    del qsize
+    if len(list_of_results) == 0:
+        log.warning(
+            log_t
+            + "Queue empty. Maybe what wrong! Length of list: %s "
+            % len(list_of_results)
+        )
+        return False
+
+    task_child_process_letter_Thanks_for_your_account.delay(*(list_of_results,), {})
+    return True
+
+
 async def send_letter_to_user_email(*args, **kwargs) -> bool:
     """
-    TODO SEND the letter to user
+    First - we should send q queue in side the child_process_get_keys_0 of sub-function.
+    This sub-function should return the full queue. This queue should contain tha cache's data of JSON-str.
+    The MAX length of queue - 2000 items,
     :param args:
     :param kwargs:
     :return:
@@ -126,15 +159,11 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
     keys_queue = queue.Queue(2000)
 
     lock = asyncio.Lock()
-    list_of_results = []
     result_bool = False
+
     try:
         for args_str in args:
-            log.info(
-                log_t
-                + """ \n
-    ----------------- child_process_get_keys_0  process --------------------"""
-            )
+            log.info(log_t + """ \n BEFORE IS RUNNING THE child_process_get_keys_0""")
             async with lock:
                 result_bool = await child_process_get_keys_0(
                     key_pattern=EnumTemplatesKeysCache.USER_PENDING_0.value % "*",
@@ -143,51 +172,16 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
                 )
             log.info(
                 log_t
-                + """ \n
-    ------------------ /child_process_get_keys_0 process -------------------"""
-            )
-            log.info(
-                log_t
-                + """ \n
-    ------------------ Result -------------------"""
-            )
-            log.info(
-                log_t
                 + """\n
     We have the DATA in QUEUES (the JSON format). These data we above received.
     Below we need t get the token. Then insert in letter and send.
             """
             )
-            qsize = keys_queue.qsize()
-            byte_code = None
-            json_code = None
-            if result_bool and qsize:
-                try:
-                    while not keys_queue.empty():
-                        byte_code = keys_queue.get_nowait()
-                        json_code = json.loads(byte_code.decode("utf-8"))
-                        list_of_results.append(json_code)
 
-                except queue.Empty as e:
-                    log.warning(log_t + "Warning queue empty text => %s" % str(e))
-            # The clean storage
-            del qsize, byte_code, json_code
-            if len(list_of_results) == 0:
-                log.warning(
-                    log_t
-                    + "Queue empty. Maybe what wrong! Length of list: %s "
-                    % len(list_of_results)
-                )
-                return False
+            sub_function(keys_queue, log_t, result_bool)
+    except queue.Full:
+        sub_function(keys_queue, log_t, result_bool)
 
-            task_child_process_letter_Thanks_for_your_account.delay(
-                *(list_of_results,), {}
-            )
-            log.info(
-                log_t
-                + """ \n
-    ------------------ /Result -------------------"""
-            )
     except Exception as e:
         log.error(log_t + "ERROR TEXT => %s" % str(e))
         return False

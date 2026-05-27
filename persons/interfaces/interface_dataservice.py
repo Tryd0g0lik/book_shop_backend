@@ -1,6 +1,6 @@
 from typing import Optional
 
-from persons.interfaces import UsersPydantic
+from .interface_persons import UsersPydantic
 
 
 class PersonServiceInitialize:

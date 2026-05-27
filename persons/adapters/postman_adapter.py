@@ -9,8 +9,7 @@ from typing import Optional
 
 from django.core.mail import send_mail
 
-from persons.interfaces import UsersPydantic
-from persons.interfaces.interface_dataservice import PersonServiceInitialize
+from persons.interfaces import PersonServiceInitialize, UsersPydantic
 
 from .. import EnumTemplatesKeysCache, EnumTemplatesREGEX
 from ..exceptions import PersonErrorImproperlyConfigured

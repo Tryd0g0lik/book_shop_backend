@@ -5,8 +5,6 @@ import logging
 
 from celery import shared_task
 
-from persons.adapters.person_service_adapter import PersonServiceAdapter
-
 
 @shared_task(
     name="task_user_registration_in_database",
@@ -34,6 +32,7 @@ def task_user_registration_in_database(self, args, kwargs):
         ```
     :return:
     """
+    # from persons.adapters import PersonServiceAdapter
     try:
         # personservice = PersonServiceAdapter
         for k, v in kwargs.items():
