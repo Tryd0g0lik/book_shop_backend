@@ -1,5 +1,5 @@
 """
-persons/adapters/postman_adpter.py:1
+persons/adapters/postman_adapter.py:1
 """
 
 import asyncio
@@ -16,6 +16,9 @@ from ..exceptions import PersonErrorImproperlyConfigured
 from ..interfaces import EmailString
 from . import CacherAdapterMixin
 from .person_base import PersonBasisMixin
+
+#
+
 
 log = logging.getLogger(__name__)
 
@@ -36,7 +39,15 @@ class PostmanAdapter(
         health_check_interval: int = 30,
     ):
         """
-        This is the Postman. The work with a cache-server and the SubPerson
+        The Postman. It is a builder. It contains the:
+            - interface of cache-server through the 'persons.apps.cachemanager';
+            - account service/manager. It is for a work through email. It is sending a secret token or the integer code
+              fnd more it is for account actions. 'persons.apps.accountmanager';
+            - emailing. It is a simply sending a message/email to the user's email address
+                through 'PostmanAdapter.send_email_to_user';
+            - service of database. It is a work with a searching, getting of user by email or id, checking of
+                email address, password in relation database (It not Redis) - 'database_service = PersonServiceAdapter'.
+
         :param db:
         :param max_connections:
         :param decode_responses:
@@ -63,12 +74,17 @@ class PostmanAdapter(
         :param list | tuple args:
         :param dict kwargs:
         """
-        cls.log_t: str = "[%s]" % cls.__class__.__name__
-        cls.KEY_OF_CACHE_REGEX = EnumTemplatesREGEX.PERSON_KEYS_OF_CACHE_IN_REGEX.value
+        from . import PersonServiceAdapter
 
-        return super().__new__(cls)
+        cls.KEY_OF_CACHE_REGEX = EnumTemplatesREGEX.PERSON_KEYS_OF_CACHE_IN_REGEX.value
+        cls.log_t: str = "[%s]" % cls.__class__.__name__
+        initialization = super().__new__(cls, *args, **kwargs)
+        initialization.database_service = PersonServiceAdapter()
+
+        return initialization
 
     class SubPerson(PersonBasisMixin):
+
         def __init__(
             self,
             person_index: Optional[int] = None,
@@ -81,7 +97,7 @@ class PostmanAdapter(
             )
 
         async def get_model(
-            self, lock: asyncio.Lock, database_service: PersonServiceInitialize
+            self, database_service: PersonServiceInitialize
         ) -> Optional[dict] | None:
             """
             # First - Check (lock up) in cache server. Here we will look the similar state.
@@ -120,7 +136,7 @@ class PostmanAdapter(
                         "[SubPerson][get_model]: TEST DEBUG # ====== Take the user's index, lookup the old user's model. Then is finding the user's data in"
                     )
 
-                    async with lock:
+                    async with PostmanAdapter.lock:
                         user_old = database_service.get_user_by_id(get_index)
 
                     if user_old is None:
@@ -136,8 +152,20 @@ class PostmanAdapter(
                     log.info("TEST DEBUG 3")
                     # ====== Take the user's email, lookup the old user's model. Then is finding the user's data in
                     # the cache how above.
-                    async with lock:
+                    async with PostmanAdapter.lock:
+                        log.info("TEST DEBUG BEFORE 3: EMAIL " + get_email)
+
+                        # user_old = await asyncio.create_task(asyncio.to_thread(database_service.get_user_by_email, get_email))
                         user_old = database_service.get_user_by_email(get_email)
+
+                        log.info(
+                            "TEST DEBUG AFTER 3: "
+                            + str(type(user_old) == UsersPydantic)
+                        )
+                        log.info(
+                            "TEST DEBUG AFTER TYPE 3: EMAIL " + str(type(user_old))
+                        )
+                        log.info("TEST DEBUG AFTER 3: EMAIL " + str(user_old))
                     if user_old is not None:
                         self.get_person_model = user_old
                     log.info("TEST DEBUG FROM 3: EMAIL " + get_email)
