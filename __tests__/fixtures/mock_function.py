@@ -16,7 +16,8 @@ log = logging.getLogger(__name__)
 # ============================================
 # MOCK SUB PERSON CLASS
 # ============================================
-def __get_cache_staticmethod(value: str = None):
+def __get_cache_staticmethod(value: str = None) -> Optional[list[bytes]|dict]:
+    """It's direct work with the Redis's cache"""
     from persons.services import CacheManager
     log.info("""
             # ============================================

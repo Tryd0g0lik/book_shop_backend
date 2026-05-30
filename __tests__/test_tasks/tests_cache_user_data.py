@@ -13,11 +13,10 @@ class TestCacheUserData:
     """
 
     @pytest.mark.parametrize("args, qwargs, expected", [
-        (('user:pending:work80mailry',), {'username': 'Sergey', 'to_email': 'work80@mail.ry'}, True),
-        (('user:pending:work@80mailry',), {'username': 'Sergey', 'to_email': 'work80@mail.ry'}, False),
-        (('user:pending:work80mail.ry',), {'username': 'Sergey', 'to_email': 'work80@mail.ry'}, False),
-        (('user:pending:login:work80mailry',), {'username': 'Sergey', 'to_email': 'work80@mail.ry'}, True),
-        (('user:pending:letter_1:work80mailry',), {'username': 'Sergey', 'to_email': 'work80@mail.ry'}, True),
+        (('user:pending:work80mailry',), {'username': 'Sergey', 'email': 'work80@mail.ry'}, True),
+        (('user:pending:work@80mailry',), {'username': 'Sergey', 'email': 'work80@mail.ry'}, False),
+        (('user:pending:work80mail.ry',), {'username': 'Sergey', 'email': 'work80@mail.ry'}, False),
+        (('user:pending:letter:work80mailry',), {'username': 'Sergey', 'email': 'work80@mail.ry'}, True),
     ])
     async def test_cache_user_data(self, args, qwargs, expected):
         from persons.tasks.tasks_celery.task_set_cache import cache_user_data

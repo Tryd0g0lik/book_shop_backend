@@ -5,7 +5,7 @@ import sys
 from django.apps import AppConfig
 from django.dispatch import Signal
 
-from persons.services import CacheManager
+from persons.services import AccountManager, CacheManager
 
 # from persons.services.person_manager import PersonManager
 
@@ -20,6 +20,7 @@ DEBUG = True if int(IS_DEBUG) == 1 else False
 
 # personmanager = PersonManager()
 cachemanager = CacheManager()
+account_manager = AccountManager()
 new_person_signal = Signal(use_caching=False)
 
 

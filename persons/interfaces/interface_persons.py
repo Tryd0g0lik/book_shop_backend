@@ -4,11 +4,42 @@ This a content will use for how auxiliary classes for data typing.
 """
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, TypedDict
 
 from pydantic import BaseModel, ConfigDict
 
 from persons.interfaces.interface_emailStr import EmailString
+
+
+#
+class UsersDict(TypedDict):
+    id: Optional[str]
+    is_superuser: Optional[str]
+    username: Optional[str]
+    first_name: Optional[str]
+    last_name: Optional[str]
+    email: str
+
+
+class UsersPydanticDict(TypedDict):
+    id: int
+    last_login: Optional[datetime]
+    is_superuser: bool
+    username: str
+    first_name: str
+    last_name: str
+    email: str
+    is_staff: bool
+    is_active: bool
+    date_joined: datetime
+    category: str
+    password: str
+    is_sent: bool
+    is_verified: bool
+    verification_code: Optional[str]
+    balance: float
+    created_at: datetime
+    updated_at: datetime
 
 
 class UsersPydantic(BaseModel):

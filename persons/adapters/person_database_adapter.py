@@ -11,12 +11,18 @@ from typing import Optional
 from django.utils.hashable import make_hashable
 
 from persons.exceptions import PersonErrorImproperlyConfigured
-from persons.interfaces import PersonServiceInitialize, UsersPydantic
+from persons.interfaces import UsersPydantic
 
 log = logging.getLogger(__name__)
 
 
-class PersonServiceDatabaseAdapter(PersonServiceInitialize):
+class PersonServiceDatabaseAdapter:
+    """
+    Here we have the two variables for works with the person database.
+     - This service will allow us to get the one user by email or index, or create_or_update  one position from database.
+        Make the check - we have a specific email/index of the person or not.
+        For checking we have a two entry point. This is a 'user_id' and 'user_email'.
+    """
 
     @staticmethod
     def get_user_by_id(user_id: Optional[int] = None) -> Optional[UsersPydantic]:
@@ -84,7 +90,11 @@ class PersonServiceDatabaseAdapter(PersonServiceInitialize):
 
     @staticmethod
     def is_password(user_data: dict) -> bool:
-        """Search users by email"""
+        """
+        TODO: изменить логику. Внести проверку хешированного пароля получая нужные данные из самой базе данных.
+            На выход подать bool
+        Search users by email
+        """
         try:
             bool_list = [
                 True if k in ["password", "password2", "password"] else False

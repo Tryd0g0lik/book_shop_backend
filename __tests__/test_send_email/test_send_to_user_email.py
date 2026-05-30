@@ -1,9 +1,6 @@
 # __tests__/test_send_email/test_send_to_user_email.py:1
 
 import logging
-from typing import Optional
-
-import pytest
 
 from __tests__.fixtures.fixture_django import pytest_generate_tests
 from __tests__.fixtures.fixture_mock_patch import (
@@ -19,12 +16,12 @@ class TestSendToUserEmail:
 
     def test_send_to_user_email_no_valid(self):
         """Send Email (to the database User), here is returning True or mistake/"""
-        from persons.adapters import PersonServiceAdapter
-        database_service_ = PersonServiceAdapter()
+        from persons.adapters import PersonServiceDatabaseAdapter
+        database_service_ = PersonServiceDatabaseAdapter()
         result_bool = False
         lock = PostmanAdapter.lock
         try:
-            result_bool = PostmanAdapter.send_email_to_user(lock,
+            result_bool = PostmanAdapter.send_email_to_user(
                 database_service=database_service_,
                 subject_="First Test letter by the CONFIRM_EMAIL_Letter_0 template " ,
                 message_=EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value,
@@ -37,8 +34,8 @@ class TestSendToUserEmail:
 
     def test_send_to_user_email(self,users_model_data,  mock_database_get_user_model_2):
         """Here us need to check the user_id_, subject_, user_email_. These data are: 'Yes - They are called'"""
-        from persons.adapters import PersonServiceAdapter
-        database_service_ = PersonServiceAdapter()
+        from persons.adapters import PersonServiceDatabaseAdapter, PostmanAdapter
+        database_service_ = PersonServiceDatabaseAdapter()
         mock_user = users_model_data
         mock_user_id = mock_user.get("id")
         log.info(f"\nMock user ID: {str(mock_user_id)}")
@@ -53,7 +50,7 @@ class TestSendToUserEmail:
                 """)
             # The database and the < model >.email_user were mock.
             lock = PostmanAdapter.lock
-            result_bool = PostmanAdapter.send_email_to_user(lock,
+            result_bool = PostmanAdapter.send_email_to_user(
                 database_service=database_service_,
                 subject_="First Test letter by the CONFIRM_EMAIL_Letter_0 template %s" % mock_user_email,
                 message_=EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value,

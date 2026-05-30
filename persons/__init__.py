@@ -11,24 +11,30 @@ from project.settings_conf.settings_env import APP_NAME
 class EnumEmailLetter(Enum):
     CONFIRM_EMAIL_Letter_0 = "account/email/email_confirmation_subject.txt"
     CONFIRM_EMAIL_Letter_1 = "account/email/email_confirmation_message.txt"
+    CONFIRM_EMAIL_Letter_2 = "account/email/email_confirm_message.txt"
 
 
 class EnumTemplatesKeysCache(Enum):
     """
     The '< email >' at the end of line has it is from the 'test_address@mail.ru' in the 'test_addressmailru' view.
     :param 'user:pending:< email >' First letter of email/ Here we tell to
-        the user  EnumEmailLetter.CONFIRM_EMAIL_Letter_0. TIme live 5 minutes.
-    :param 'user:pending:letter_1:< email >' Message contain a secret code. Code to the verification email.
+        the user  EnumEmailLetter.CONFIRM_EMAIL_Letter. TIme live 5 minutes.
+        Template: 'user:pending:< email >': '{"username": < USERNAME >, "email": < EMAIL >}'
+    :param 'user:pending:letter:< email >' Message contain a secret code. Code to the verification email.
         TIme live 2 minutes or 120 seconds.
-    :param 'user:pending:login: < email >' This is the key under which we save a jwt-state. Time live is 24 hours
-        or 1440 minutes, or 86400 seconds. It means the data (in bytes): "{'is_superuser': < bool >, 'email': < EMAIL >,
-         'category': < user_CATEGORY >,}"
+         Example 'user:pending:letter:< email >':'{"username": < USERNAME >, "email": < EMAIL >, ....}'
+    :param 'user:pending:login'  This person must be having a status is_authenticated or not is_nonymous!
+        This is the key under which we are using how session's data. Time live is 24 hours
+        or 1440 minutes, or 86400 seconds. It means the value of data (in bytes): bytes'"[{'is_superuser': < bool >,
+        'email': < EMAIL >,'category': < user_CATEGORY >},]"'.
+         Note: Here < EMAIL > it is required element. It is a key for lookup the element.
+         Time live: 86400
 
     """
 
-    USER_PENDING_0 = "user:pending:%s"
-    USER_PENDING_LETTER_1 = "user:pending:letter_1:%s"
-    USER_PENDING_LOGIN_0 = "user:pending:login:%s"
+    USER_PENDING = "user:pending:%s"
+    USER_PENDING_LETTER = "user:pending:letter:%s"
+    USER_PENDING_LOGIN = "user:pending:login"
 
 
 class EnumTemplatesREGEX(Enum):

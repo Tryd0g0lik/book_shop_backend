@@ -40,7 +40,7 @@ class TestUserServiceAdapter:
         All content  of the mock database to the '__tests__.fixtures.fixture_django.pytest_generate_tests'
         :return:
         """
-        from persons.adapters import PersonServiceAdapter
+        from persons.adapters import PersonServiceDatabaseAdapter
 
         mock_user = users_model_data
         if mock_user["id"] in [4, 7]:
@@ -52,7 +52,7 @@ class TestUserServiceAdapter:
             # ============================================
             """)
             if mock_user['id'] in [userId]:
-                result = PersonServiceAdapter.get_user_by_id(user_id=userId)
+                result = PersonServiceDatabaseAdapter.get_user_by_id(user_id=userId)
                 log.info(f"""\n\t
                 # ============================================
                 # TEST DEBUG test_get_user_by_id AFTER RESULT:
@@ -72,11 +72,11 @@ class TestUserServiceAdapter:
                     assert em == userEm
 
     def test_is_email(self, mock_users_database ):
-        # PATH: persons.adapters.person_service_adapter.PersonServiceAdapter.is_email
-        from persons.adapters import PersonServiceAdapter
+        # PATH: persons.adapters.person_dabase_adapter.PersonServiceDatabaseAdapter.is_email
+        from persons.adapters import PersonServiceDatabaseAdapter
 
         # --------------------
-        person = PersonServiceAdapter()
+        person = PersonServiceDatabaseAdapter()
         result_email: bool = person.is_email("premium25@example.com")
 
         assert result_email is not None
@@ -112,13 +112,13 @@ class TestUserServiceAdapter:
         It means by conditions, we should create a new user in database.
         In bode of method 'create_or_update_in_database' we have a check (self.is_email() method & 'test_is_email' test )"email" in db.
         If "email" email not exists in db. user will be created.
-        PATH: persons.adapters.person_service_adapter.PersonServiceAdapter.create_or_update_in_database
+        PATH: persons.adapters.person_dabase_adapter.PersonServiceDatabaseAdapter.create_or_update_in_database
         :param mock_users_database: It is the mock-Users database model. All content of the mock database at the JSON-str
         :return: void
         """
 
         from __tests__.fixtures.mock_function import get_file
-        from persons.adapters import PersonServiceAdapter
+        from persons.adapters import PersonServiceDatabaseAdapter
         mock_db_json_str: str = get_file()
 
         new_user = {
@@ -129,7 +129,7 @@ class TestUserServiceAdapter:
             "password2": "pbkdf2_sha256$hash_admin_1",
         }
         # --------------------
-        person = PersonServiceAdapter()
+        person = PersonServiceDatabaseAdapter()
         result_email: bool = person.is_email("premium25@example.com")
 
         assert result_email is not None

@@ -7,12 +7,16 @@ import json
 import logging
 import queue
 import time
+from typing import Any, Mapping, Optional, Union
 
 from celery import shared_task
 
-from persons import EnumTemplatesKeysCache
+from persons import EnumEmailLetter, EnumTemplatesKeysCache, EnuSubjectOfLetter
+from persons.exceptions import PersonErrorTasks
+from persons.interfaces import PostmanAdapter
+from persons.interfaces.interface_persons import UsersPydanticDict
 from persons.tasks.sub_tasks_celery.sub_task_get_send_letter import (
-    task_child_process_letter_Thanks_for_your_account,
+    task_child_process_letter_thanks_for_your_account,
 )
 
 log = logging.getLogger(__name__)
@@ -23,7 +27,6 @@ log = logging.getLogger(__name__)
 # 1. GET ARRAY OF KEYS FROM THE CACHE
 # ============================================
 async def child_process_get_keys_0(
-    lock: asyncio.Lock,
     key_pattern: str,
     log_t: str,
     queue: queue.Queue,
@@ -52,41 +55,42 @@ async def child_process_get_keys_0(
         log.info(
             log_t[:-1]
             + f"[{child_process_get_keys_0.__name__}]:"
-            + """\n
+            + f"""\n
         # ============================================
         # REDIS CACHE SERVER - GET THE COLLECTION of KEYS
+        # - key_pattern: {str(key_pattern)}
+        # - keys: {str(keys)}
         # ============================================"""
         )
-        async with lock:
-            result_bool: bool = await cachemanager.aget(
-                key_pattern=key_pattern,
-                collection=keys,
-            )
-            log.warning(
-                log_t[:-1]
-                + f"[{child_process_get_keys_0.__name__}]:"
-                + " DEBUG \nReceived key_pattern %s \n & LIST LENGTH: %s & LIST: %s \n  RESULT_BOOL: %s "
-                % (key_pattern, str(len(keys)), str(keys), str(result_bool))
-            )
-            start_time = datetime.now()
-            if result_bool:
-                tasks = []
 
-                for key in keys:
-                    log.warning(
-                        log_t[:-1]
-                        + f"[{child_process_get_keys_0.__name__}]:"
-                        + " DEBUG THe KEY: %s RUN TO THE LOOP "
-                        % (key.decode("utf-8"),),
-                    )
-                    tasks.append(
-                        asyncio.create_task(
-                            cachemanager.aget(
-                                queue_collection=queue, key=key.decode("utf-8")
-                            )
+        result_bool: bool = await cachemanager.aget(
+            key_pattern=key_pattern,
+            collection=keys,
+        )
+        log.warning(
+            log_t[:-1]
+            + f"[{child_process_get_keys_0.__name__}]:"
+            + " DEBUG \nReceived key_pattern %s \n & LIST LENGTH: %s & LIST: %s \n  RESULT_BOOL: %s "
+            % (key_pattern, str(len(keys)), str(keys), str(result_bool))
+        )
+        start_time = datetime.now()
+        if result_bool:
+            tasks = []
+
+            for key in keys:
+                log.warning(
+                    log_t[:-1]
+                    + f"[{child_process_get_keys_0.__name__}]:"
+                    + " DEBUG THe KEY: %s RUN TO THE LOOP " % (key.decode("utf-8"),),
+                )
+                tasks.append(
+                    asyncio.create_task(
+                        cachemanager.aget(
+                            queue_collection=queue, key=key.decode("utf-8")
                         )
                     )
-                await asyncio.gather(*tasks, return_exceptions=True)
+                )
+            await asyncio.gather(*tasks, return_exceptions=True)
 
         log.info(
             log_t[:-1]
@@ -119,14 +123,32 @@ async def child_process_get_keys_0(
     except Exception as e:
         error_t = log_t[:-1] + "[child_process_get_keys_0] ERORR_TEXT: %s" % str(e)
         log.error(error_t)
-        raise e
+        raise PersonErrorTasks(e.args[0] if len(e.args) else str(e))
     return True
 
 
 # ============================================
 # THE SUB FUNCTION IS TO AVOID A CODE DUPLICATION, below/
 # ============================================
-def sub_function(keys_queue, log_t, result_bool):
+def sub_function(
+    keys_queue: queue,
+    log_t: str,
+    result_bool: bool,
+    subject_: str,
+    text_context_: str,
+    context_: Optional[Mapping[str, Any]],
+) -> Union[list | bool]:
+    """
+
+    :param queue keys_queue: Required.
+    :param str log_t: Required. It is a prefix for the logs.
+    :param result_bool: Required.
+    :param str subject_: Required. It is thema/heading for a letter.
+    :param str text_context_: Required. It is massage in the letter body
+    :param Optional[Mapping[str, Any]] context_: It is acontext data from the letter body.
+    :return:
+    """
+
     list_of_results = []
     qsize = keys_queue.qsize()
     if result_bool and qsize:
@@ -139,14 +161,23 @@ def sub_function(keys_queue, log_t, result_bool):
     del qsize
     if len(list_of_results) == 0:
         log.warning(
-            log_t
-            + "Queue empty. Maybe what wrong! Length of list: %s "
+            log_t[:-1]
+            + f"[{sub_function.__name__}]:"
+            + " Queue empty. Maybe what wrong! Length of list: %s "
             % len(list_of_results)
         )
         return False
+    kwargs = {"subject": subject_, "text_context": text_context_, "contex": context_}
+    task_child_process_letter_thanks_for_your_account.delay(
+        *(list_of_results,), **kwargs
+    )
+    log.info(
+        log_t[:-1]
+        + f"[{sub_function.__name__}]:"
+        + " Data has been transmitted next for sending in a email address."
+    )
 
-    task_child_process_letter_Thanks_for_your_account.delay(*(list_of_results,), {})
-    return True
+    return list_of_results
 
 
 async def send_letter_to_user_email(*args, **kwargs) -> bool:
@@ -161,6 +192,8 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
     log_t = f"[task {send_letter_to_user_email.__name__}]:"
     import asyncio
 
+    from persons.apps import account_manager
+
     log.info(f"DEBUG args: {args}")
     keys_queue = queue.Queue(2000)
 
@@ -172,8 +205,7 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
             log.info(log_t + """ \n BEFORE IS RUNNING THE child_process_get_keys_0""")
             async with lock:
                 result_bool = await child_process_get_keys_0(
-                    lock,
-                    key_pattern=EnumTemplatesKeysCache.USER_PENDING_0.value % "*",
+                    key_pattern=EnumTemplatesKeysCache.USER_PENDING.value % "*",
                     queue=keys_queue,
                     log_t=log_t,
                 )
@@ -184,15 +216,54 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
     Below we need t get the token. Then insert in letter and send.
             """
             )
+            subject: str = EnuSubjectOfLetter.SUB_TASK_GET_SEND_LETTER_0.value
+            text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value
+            context_: Optional[Mapping[str, Any]] = None
+            # Here we are transmitting data for mailing, Here we are speak obout the new account.
+            sub_function(
+                keys_queue, log_t, result_bool, subject, text_context, context_
+            )
 
-            sub_function(keys_queue, log_t, result_bool)
+            # Below we are transmitting data for a email verification.
+            postman: PostmanAdapter = account_manager.postman
+            sub_person: PostmanAdapter.SubPerson = postman.SubPerson(
+                person_email=args_str
+            )  #
+            # database_service: PostmanAdapter = await asyncio.create_task(asyncio.to_thread(lambda : account_manager.database_service))
+            # database_service = account_manager.database_service
+            database_service = postman.database_service
+
+            person_obj: Optional[UsersPydanticDict] = await sub_person.get_model(
+                database_service
+            )
+            account_manager = account_manager.inisialize_account()
+
+            if person_obj is not None:
+                subject: str = EnuSubjectOfLetter.SUB_TASK_GET_SEND_LETTER_0.value
+                text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_1.value
+                first_name = person_obj["first_name"]
+                context_ = {"user": first_name}
+                print(f"DEBUG context_: {str(context_)}")
+                generate_login_code = account_manager.generate_login_code()
+                print(f"DEBUG generate_login_code: {generate_login_code}")
+                context_.__setattr__("code", generate_login_code)
+                sub_function(
+                    keys_queue, log_t, result_bool, subject, text_context, context_
+                )
+            else:
+                t_error = (
+                    log_t
+                    + " Database data of new user did not receive after the registration!"
+                )
+                raise PersonErrorTasks(t_error)
+
     except queue.Full:
         sub_function(keys_queue, log_t, result_bool)
         raise
 
     except Exception as e:
         log.error(log_t + "ERROR TEXT => %s" % str(e))
-        raise e
+        raise PersonErrorTasks(e.args[0] if len(e.args) else str(e))
 
     return True
 

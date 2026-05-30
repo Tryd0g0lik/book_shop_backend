@@ -1,5 +1,6 @@
-__all__ = [
-    "PersonErrorImproperlyConfigured",
-]
+__all__ = ["PersonErrorImproperlyConfigured", "PersonErrorTasks"]
 
-from persons.exceptions.error_person import PersonErrorImproperlyConfigured
+from persons.exceptions.error_person import (
+    PersonErrorImproperlyConfigured,
+    PersonErrorTasks,
+)

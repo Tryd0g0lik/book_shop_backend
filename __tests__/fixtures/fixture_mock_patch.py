@@ -12,7 +12,7 @@ from __tests__.fixtures.fixture_django import (
 )
 from __tests__.fixtures.fixture_pydantic import mock_pydantic_user
 from __tests__.fixtures.mock_function import get_file, save_one_user
-from persons.adapters import PersonServiceAdapter
+from persons.adapters import PersonServiceDatabaseAdapter
 from persons.interfaces import UsersPydantic
 
 log = logging.getLogger(__name__)
@@ -67,7 +67,7 @@ def mock_person_service_adapter(mock_pydantic_user,  mocker):
     # FIXTURE PersonServiceAdapter
     # ============================================
     """)
-    mock_adapter_class = mocker.patch("persons.adapters.person_service_adapter.PersonServiceAdapter")
+    mock_adapter_class = mocker.patch("persons.adapters.person_database_adapter.PersonServiceDatabaseAdapter")
     mock_adapter_class.get_user_by_id.return_value = database_service_get_user_by_id(mock_pydantic_user)
     mock_adapter_class.get_user_by_email.return_value = database_service_get_user_by_email(mock_pydantic_user)
     mock_adapter_class.search_by_email = mocker.Mock(return_value=[mock_pydantic_user])
@@ -75,25 +75,18 @@ def mock_person_service_adapter(mock_pydantic_user,  mocker):
     yield mock_adapter_class
 
 @pytest.fixture
-def mock_subPerson_class(mock_mixin_method, mock_person_service_adapter,
-                         mock_user_django, mock_pydantic_user, mocker):
-    from __tests__.fixtures.mock_function import (
-        __get_cache_staticmethod,
-        is_person_velidator,
-    )
+def mock_subPerson_class(mock_pydantic_user, mocker):
     from persons.adapters import PostmanAdapter
     log.info("""
     # ============================================
     # FIXTURE SubPerson
     # ============================================
     """)
-    email: str = mock_user_django.__getattribute__("email")
-    index: int = mock_user_django.__getattribute__("id")
-    key = "user:pending:letter_1:%s" % email.replace("@", "").replace(".", "")
-
-    mock__get_cache =  mocker.patch.object(PostmanAdapter.SubPerson, "_SubPerson__get_cache", )
-    mock__get_cache.return_value =  __get_cache_staticmethod(key)
-    return  mock__get_cache
+    mock_postman = mocker.patch("persons.adapters.postman_adapter.PostmanAdapter")
+    mock_sub_person = mocker.patch.object(PostmanAdapter.SubPerson, "_get_data", )
+    mock_sub_person.return_value = [json.loads(mock_pydantic_user.model_dump_json())]
+    mock_postman.SubPerson._get_data = mock_sub_person
+    return  mock_postman
 
 @pytest.fixture
 def mock_database_get_user_model_2(mocker,users_model_data):
@@ -149,16 +142,6 @@ def mock_database_get_user_model(mocker, users_model_data):
     mock_users_model.object.get.return_value = mock_user
     mocker.patch("persons.models.Users")
     yield mock_user
-    sub = "First Test letter by the CONFIRM_EMAIL_Letter_0 template %s" % mock_user.email
-    em = "host_test@email.ru"
-    # log.info(f"\tTEST DEBUG call_args args: {mock_users_model.object.get.call_args.args}")
-    # log.info(f"TEST DEBUG call_args kwargs: {mock_users_model.object.get.call_args.kwargs}")
-    # log.info(f"TEST DEBUG call_args_list: {mock_users_model.object.get.call_args_list}")
-    # log.info(f"TEST DEBUG method_calls: {mock_users_model.object.get.method_calls}")
-    # mock_users_model.object.get.assert_called_with
-    # mock_users_model.object.get.assert_called_once_with(subject=sub,
-    #                                              message='account/email/email_confirmation_subject.txt',
-    #                                              from_email=em)
 
 # ============================================
 # MOCK DATABASE Users TO THE TestUserServiceAdapter TEST

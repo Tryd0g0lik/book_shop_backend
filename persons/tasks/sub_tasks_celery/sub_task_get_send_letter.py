@@ -1,10 +1,9 @@
 # persons/tasks/sub_tascs_celery/sub_task_get_send_letter.py:1
 
 import logging
+from typing import Any, Mapping, Optional
 
 from celery import shared_task
-
-from persons import EnuSubjectOfLetter
 
 log = logging.getLogger(__name__)
 
@@ -21,7 +20,7 @@ log = logging.getLogger(__name__)
     max_retries=3,
     retry_backoff_max=30,
 )
-def task_child_process_letter_Thanks_for_your_account(self, *args, **kwargs) -> bool:
+def task_child_process_letter_thanks_for_your_account(self, *args, **kwargs) -> bool:
     """
     This task is an alert for a user - "This Email address was entered into a form of registration. ..." and more.
     :param self:
@@ -35,7 +34,11 @@ def task_child_process_letter_Thanks_for_your_account(self, *args, **kwargs) -> 
     from persons import EnumEmailLetter
     from project.settings_conf.settings_env import APP_DEFAULT_FROM_EMAIL, APP_NAME
 
-    log_t = f"[{task_child_process_letter_Thanks_for_your_account.__name__}]:"
+    subject_: str = kwargs.get("subject")
+    text_context: str = kwargs.get("text_context")
+    contextx_: Optional[Mapping[str, Any]] = kwargs.get("context", None)
+
+    log_t = f"[{task_child_process_letter_thanks_for_your_account.__name__}]:"
     recipient_list_: list[str] = []
     try:
         log.info(
@@ -48,12 +51,12 @@ def task_child_process_letter_Thanks_for_your_account(self, *args, **kwargs) -> 
         """
         )
         # That is context to the body of letter
-        text_context = render_to_string(EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value)
+        text_context = render_to_string(text_context, contextx=contextx_)
         # Theme/Subject to the letter
-        subject_ = EnuSubjectOfLetter.SUB_TASK_GET_SEND_LETTER_0.value
+
         for one_list in args:
             for u in one_list:
-                em = u.__getitem__("to_email")
+                em = u.__getitem__("email")
                 recipient_list_.append(em)
 
         if len(recipient_list_) > 0:

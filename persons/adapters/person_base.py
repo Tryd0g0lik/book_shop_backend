@@ -103,7 +103,7 @@ object person) - Check. Do not belonging to the Users's model."
         Key name from the cache server. Default value is the None.
         :return str. returning the one key from the these:
         - 'user:pending:< email >';
-        - 'user:pending:letter_1:< email >';
+        - 'user:pending:letter:< email >';
         - 'user:pending:login: < email >';
         - 'user:pending:*'.
         """
@@ -114,8 +114,8 @@ object person) - Check. Do not belonging to the Users's model."
         """
         The all values on the entrance could hase the next template:
         - 'user:pending:< email >';
-        - 'user:pending:letter_1:< email >';
-        - 'user:pending:login: < email >';
+        - 'user:pending:letter:< email >';
+        - 'user:pending:login';
         - 'user:pending:*'.
         If it is an email's value that mean the '< email >' at end of line. It ('test_address@mail.ru') is from
             our line - the 'test_addressmailru'.

@@ -1,5 +1,6 @@
 """
 persons/exceptions/error_person.py:4
+Arial by error from the Person app.
 """
 
 from typing import Optional
@@ -7,7 +8,7 @@ from typing import Optional
 from django.core.exceptions import ImproperlyConfigured
 
 
-class PersonErrorImproperlyConfigured(ImproperlyConfigured):
+class PersonError(ImproperlyConfigured):
     def __init__(self, log_message: Optional[str] = "We do not have the valid data!"):
         self._log_message = log_message
         message: str = f"[{self.__class__.__name__}]:"
@@ -23,3 +24,14 @@ class PersonErrorImproperlyConfigured(ImproperlyConfigured):
     @_log_message.setter
     def _log_message(self, log_message: Optional[str] = None):
         self.__message: Optional[str] = log_message
+
+
+class PersonErrorImproperlyConfigured(PersonError):
+    def __init__(self, log_message: Optional[str] = "We do not have the valid data!"):
+        super().__init__(log_message)
+
+
+# Error of tasks
+class PersonErrorTasks(PersonError):
+    def __init__(self, log_message: Optional[str] = "We do not have the valid data!"):
+        super().__init__(log_message)

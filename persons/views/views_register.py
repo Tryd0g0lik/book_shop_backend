@@ -165,18 +165,15 @@ class UsersRegistrationView(AllauthSignupView):
 
         super().form_valid(form)
         username = form.cleaned_data.get("username")
-        to_email = form.cleaned_data.get("email")
+        email = form.cleaned_data.get("email")
         if (username is None) or (
             username is not None and isinstance(username, str) and len(username) < 2
         ):
-            setattr(form, "username", to_email.split("@")[0])
+            setattr(form, "username", email.split("@")[0])
             username = form.cleaned_data.get("username")
-        args = (
-            EnumTemplatesKeysCache.USER_PENDING_0.value
-            % to_email.replace("@", "").replace(".", ""),
-        )
+        args = (EnumTemplatesKeysCache.USER_PENDING.value % re.sub(r"[@.]", "", email),)
         # ------------------------------------
-        kwargs = {"username": username, "to_email": to_email}
+        kwargs = {"username": username, "email": email}
         try:
             task_of_cache.delay(*args, **kwargs)
             message = _("Registration is almost complete! Check your email.")

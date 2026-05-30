@@ -38,7 +38,7 @@ class CacherBaseMixin:
             finally:
                 cache.close()
 
-        ```
+         ```
         :param redis_master_name:
         """
         self._redis_password: Optional[str] = None

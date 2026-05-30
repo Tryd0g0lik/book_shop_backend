@@ -2,7 +2,7 @@ import logging
 
 import pytest
 
-# from __tests__.fixtures.fixture_django import mock_user_django
+from __tests__.fixtures.fixture_django import mock_user_django
 
 log = logging.getLogger(__name__)
 
