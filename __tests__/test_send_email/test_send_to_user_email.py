@@ -1,5 +1,9 @@
-# __tests__/test_send_email/test_send_to_user_email.py:1
+"""
+__tests__/test_send_email/test_send_to_user_email.py:1
+This Postman is sending letter  when we are working with PostmanAdapter.send_email_to_user. It is a person and it hase
+the property: 'is_authenticated' or/and 'not is_anonymouse'.
 
+"""
 import logging
 
 from __tests__.fixtures.fixture_django import pytest_generate_tests
@@ -14,12 +18,12 @@ log = logging.getLogger(__name__)
 
 class TestSendToUserEmail:
 
+
     def test_send_to_user_email_no_valid(self):
         """Send Email (to the database User), here is returning True or mistake/"""
         from persons.adapters import PersonServiceDatabaseAdapter
         database_service_ = PersonServiceDatabaseAdapter()
         result_bool = False
-        lock = PostmanAdapter.lock
         try:
             result_bool = PostmanAdapter.send_email_to_user(
                 database_service=database_service_,

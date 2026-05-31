@@ -1,6 +1,6 @@
 # persons/interfaces/interface_postman.py:2
 import asyncio
-from typing import Optional, Protocol
+from typing import ClassVar, Optional, Protocol
 
 from persons.exceptions import PersonErrorImproperlyConfigured
 from persons.exceptions.error_postman import PostmanRequiredModelError
@@ -67,28 +67,28 @@ class PersonServiceDatabaseAdapter:
 
 class PostmanAdapter(Protocol):
 
-    database_service: Optional[PersonServiceDatabaseAdapter] = None
-    lock: Optional[asyncio.Lock]
+    database_service: ClassVar[Optional[PersonServiceDatabaseAdapter]]
+    lock: ClassVar[Optional[asyncio.Lock]]
 
     def __init__(self) -> None: ...
 
     class SubPerson(Protocol):
         def __init__(
             self,
-            person_index: Optional[int] = None,
-            person_email: Optional[str] = None,
+            person_index: Optional[int],
+            person_email: Optional[str],
         ) -> None: ...
 
         async def get_model(
-            self, database_service: PersonServiceDatabaseAdapter
-        ) -> Optional[dict]: ...
+            self, database_service: PersonServiceDatabaseAdapter, key_cache=""
+        ) -> Optional[list[dict]]: ...
 
         def _get_data(
             self, email: str, database_service: PersonService
-        ) -> Optional[dict]: ...
+        ) -> Optional[list[dict]]: ...
 
         @staticmethod
-        def __get_cache(value: str) -> Optional[dict | list]: ...
+        def __get_cache(value: str) -> Optional[dict | list[bytes]]: ...
 
     @staticmethod
     def send_email_to_user(

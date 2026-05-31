@@ -5,7 +5,6 @@ persons/adapters/postman_adapter.py:1
 import asyncio
 import json
 import logging
-import re
 from typing import Optional
 
 from django.core.mail import send_mail
@@ -118,7 +117,7 @@ class PostmanAdapter(
             )
 
         async def get_model(
-            self, database_service: PersonServiceDatabaseInitialize
+            self, database_service: PersonServiceDatabaseInitialize, key_cache: str = ""
         ) -> Optional[list[dict]]:
             """
             Entrypoint is only 'self.get_index' & 'self.get_email',
@@ -132,16 +131,16 @@ class PostmanAdapter(
                 get_index = self.get_index
                 get_email = self.get_email
                 user_old = None
-                key_cache: str = ""
+
                 log.info(
-                    f"[SubPerson][get_model]: TEST DEBUG get_email: {get_email} & get_index {get_index}"
+                    f"[SubPerson][get_model]: TEST DEBUG get_email: {get_email} & get_index {get_index} & self.get_person_model: {str(self.get_person_model)}"
                 )
                 get_person_model = self.get_person_model
                 if get_person_model is None and get_email is None and get_index is None:
                     raise PersonErrorImproperlyConfigured()
                 log.info("TEST DEBUG 0")
                 # ====== Take the old model of user/person. Find data in the cache
-                # per template "user:pending:login:%s". If we got the data means, next we will be
+                # per template "user:pending:login". If we got the data, it means next we will be
                 # updating the model (contain the old tada).
                 # Object
                 if get_person_model is not None and isinstance(
@@ -151,7 +150,7 @@ class PostmanAdapter(
                     log.info(
                         "[SubPerson][get_model]: # ====== Take the old model of user/person. Find data in the cache"
                     )
-                    email_fra: str = get_person_model.__getattribute__("email")
+                    pass
 
                 # Index
                 elif get_index is not None and isinstance(get_index, int):
@@ -167,13 +166,13 @@ class PostmanAdapter(
 
                     if user_old is None:
                         return None
-                    # self.get_person_model = user_old
+                    self.get_person_model = user_old
                     log.info(
                         f"TEST DEBUG FROM 2: TYPE: {type(user_old)} % EMAIL {str(user_old)} "
                     )
                     email_fra: str = user_old.__getattribute__("email")
                     log.info("TEST DEBUG FROM 2: EMAIL " + email_fra)
-                    get_email = email_fra
+                    # get_email = email_fra
 
                     log.info("TEST DEBUG FROM 2: KEY CACHE " + key_cache)
                 # Email
@@ -193,13 +192,18 @@ class PostmanAdapter(
                             "TEST DEBUG AFTER TYPE 3: EMAIL " + str(type(user_old))
                         )
                         log.info("TEST DEBUG AFTER 3: EMAIL " + str(user_old.email))
-                    if user_old is not None:
-                        self.get_person_model = user_old
+                    if user_old is None:
+                        return None
+                    self.get_person_model = user_old
                     log.info("TEST DEBUG FROM 3: EMAIL " + get_email)
 
                     log.info("TEST DEBUG FROM 3: key_cache: " + key_cache)
-                key_cache += EnumTemplatesKeysCache.USER_PENDING_LOGIN.value
-                return self._get_data(key_cache, database_service, get_email)
+
+                return (
+                    self._get_data(key_cache, database_service)
+                    if (isinstance(key_cache, str) and len(key_cache) > 8)
+                    else None
+                )
             except Exception as e:
                 log.warning(" ".join([self.log_t, e.args[0] if e.args else str(e)]))
                 return None
@@ -208,7 +212,6 @@ class PostmanAdapter(
             self,
             value: str,
             database_service: PersonServiceDatabaseInitialize,
-            email=None,
         ) -> Optional[list[dict]]:
             """
             Value - it is a key of cache. From cache ser we are receiving the data or None.
@@ -225,7 +228,7 @@ class PostmanAdapter(
             :param database_service: Required. This is an object from the 'PersonServiceDatabaseAdapter()'.
             # :param email: This is the email of a person.
             #     The cache's key 'user:pending:login' have the list how the bytes line.
-            #     When we have the key 'user:pending:login' mean for lookup the person's data needed < EMAIL >.
+            #     When we are having the key 'user:pending:login' mean for lookup the person's data needed < EMAIL >.
             #         [item for item < VALUE OF user:pending:login> if item['email'] == email]
             # Note: You can send the total template  through value. It is the 'user:pending:%s' or 'user:pending:letter:%s'.
             #     It will return the total list from the keys: '["user:pending:< USER EMAIL one >",
@@ -234,86 +237,135 @@ class PostmanAdapter(
 
             :return: dist or None
             """
+            # ============================================
+            # CACHE
+            # ============================================
 
             # Value & Email
 
             # Check a key on the valid.
             PostmanAdapter.get_key_cache = value
             key_cache = PostmanAdapter.get_key_cache
-            data_list: list = []
+            data_of_cache_list: list = []
+            # None
+            if key_cache is None:
+                return None
             data_from_cache_server: Optional[bytes | list | dict] = self.__get_cache(
                 key_cache
             )
             log.info(
-                f"[SubPerson][_get_data]: TEST DEBUG BEFORE received the data_from_cache_server_list Type: {type(data_from_cache_server)}"
+                f"[SubPerson][_get_data]: TEST DEBUG BEFORE received the data_from_cache_server Type: {type(data_from_cache_server)}"
             )
             log.info(
-                f"[SubPerson][_get_data]: TEST DEBUG BEFORE received the data_from_cache_server_list: {str(data_from_cache_server)}"
+                f"[SubPerson][_get_data]: TEST DEBUG BEFORE received the data_from_cache_server: {str(data_from_cache_server)}"
             )
-            # None
-            if key_cache is not None:
-                return None
 
             # Value
-            # List
-            if isinstance(data_from_cache_server, list):
+            # List of bytes
+            log.info(" DEBUG [SubPerson][_get_data]:  1")
+            if (
+                isinstance(data_from_cache_server, list)
+                and len(data_from_cache_server) > 0
+                and type(data_from_cache_server[0]) == bytes
+            ):
+                log.info(" DEBUG [SubPerson][_get_data]:  2")
                 for data_from_cache_server_bytes in data_from_cache_server:
-                    data_list.append(json.loads(data_from_cache_server_bytes.decode()))
+                    log.info(" DEBUG [SubPerson][_get_data]:  3")
+                    data_from_cache_json = json.loads(
+                        data_from_cache_server_bytes.decode()
+                    )
+                    if isinstance(data_from_cache_json, dict):
+                        log.info(" DEBUG [SubPerson][_get_data]:  4")
+                        data_of_cache_list.append(data_from_cache_json)
+                    else:
+                        [
+                            data_of_cache_list.append(item)
+                            for item in data_from_cache_json
+                        ]
+                        log.info(
+                            f" DEBUG [SubPerson][_get_data]:  5 data_of_cache_list: {str(data_of_cache_list)} & data_from_cache_json: {str(data_from_cache_json)}"
+                        )
 
             # Dict
             elif isinstance(data_from_cache_server, dict):
-                data_list.append(data_from_cache_server)
-
+                log.info(" DEBUG [SubPerson][_get_data]:  6")
+                data_of_cache_list.append(data_from_cache_server)
+            # List
             elif isinstance(data_from_cache_server, list):
-                data_list.extend(data_from_cache_server)
+                log.info(" DEBUG [SubPerson][_get_data]:  7")
+                data_of_cache_list.extend(data_from_cache_server)
 
             else:
+
                 raise PostmanRequiredModelError(
                     self.log_t[:-1]
                     + f"[{self._get_data.__name__}]: "
                     + "Data is not valid."
                 )
 
+            old_user_database = self.get_person_model
+            log.info(
+                f" DEBUG [SubPerson][_get_data]:  8 data_of_cache_list: {str(data_of_cache_list)} & old_user_database: {str(old_user_database)}"
+            )
+            data_of_cache_list_respon = []
             # Updating data
-            for item_dict in data_list:
+            for item_dict in data_of_cache_list.copy():
                 if not isinstance(item_dict, bytes):
+                    log.info(
+                        f" DEBUG [SubPerson][_get_data]:  9 item_dict: {str(item_dict)}"
+                    )
                     # Need get one person.
-                    data_list_new: list[UsersDict] = [
-                        item for item in item_dict if item["email"] == email
-                    ]
-                    data_list.clear()
+                    data_list_new: list[dict] = []
+                    if item_dict["email"] == old_user_database.email:
+                        data_list_new.append(item_dict)
+
+                    log.info(
+                        f" DEBUG [SubPerson][_get_data]:  10 data_list_new: {str(data_list_new)}"
+                    )
                     if len(data_list_new) > 0:
                         item_dict = data_list_new[0]
                     else:
                         return None
                     del data_list_new
+                    log.info(
+                        f" DEBUG [SubPerson][_get_data]:  11 item_dict: {str(item_dict)}"
+                    )
                 try:
                     log.info("TEST DEBUG before user_from_database")
-                    # Database
-                    user_from_database = database_service.get_user_by_email(
-                        item_dict["email"]
-                    )
+                    # ============================================
+                    # DATABASE
+                    # ============================================
                     log.info("TEST DEBUG after user_from_database")
-                    user_from_database_json = user_from_database.model_dump_json()
+                    user_from_database_json = old_user_database.model_dump_json()
                     log.info(
                         f"[SubPerson][_get_data]: TEST DEBUG after user_from_database: TYPE: {type(json.loads(user_from_database_json))} & {str(user_from_database_json)}"
                     )
                     ud = json.loads(user_from_database_json)
-                    [setattr(ud, k, v) for k, v in item_dict.items() if hasattr(ud, k)]
+                    log.info(f"TEST DEBUG before ud {str(ud)}  type: {type(ud)}")
+                    [ud.__setitem__(k, v) for k, v in item_dict.items() if k in ud]
                     log.info("TEST DEBUG after setattr(ud)")
+                    # ============================================
+                    # DATABASE UPDATES
+                    # ============================================
                     database_service.create_or_update_in_database(user_data=ud)
                     log.info("Data of the cache's server was updated with new values.")
 
-                    data_list.append(ud)
+                    data_of_cache_list_respon.append(ud)
                 except Exception as e:
                     raise ValueError(
                         self.log_t[:-1] + f"[{self._get_data.__name__}]: " + str(e)
                     )
 
-            return data_list
+            return data_of_cache_list_respon
 
         @staticmethod
         def __get_cache(value: str) -> dict | list[bytes] | None:
+            """
+            TODO: Одно посещение 'cachemanager.get(key=value, collection=value_of_cache, exat=86400)' по ключу
+                'EnumTemplatesKeysCache.USER_PENDING_LOGIN.value' продлевает жизнь все базы дыннх
+            :param value:
+            :return:
+            """
             from persons.apps import cachemanager
 
             log.info(f"[SubPerson][__get_cache]: DEBUG {value}")

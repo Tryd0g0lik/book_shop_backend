@@ -15,6 +15,7 @@ from persons import EnumEmailLetter, EnumTemplatesKeysCache, EnuSubjectOfLetter
 from persons.exceptions import PersonErrorTasks
 from persons.interfaces import PostmanAdapter
 from persons.interfaces.interface_persons import UsersPydanticDict
+from persons.services import AccountManager
 from persons.tasks.sub_tasks_celery.sub_task_get_send_letter import (
     task_child_process_letter_thanks_for_your_account,
 )
@@ -38,8 +39,8 @@ async def child_process_get_keys_0(
         Надо вставить логику которая будет отслеживать - какие данные из keys успел отработать (до того как queue получила
         максимальную длину) а какие ключи не спела. Иначе потеляю данные и BACKOFF просто начнёт работу заного с теми
         же ключами и в том же количестве.
-    Here we are creating a queue of tasks. Everyone task it is a request to the cache Radis's server.
-    We collect all the result in the queue.
+    Here we are creating a queue of tasks. Every task it is a request to the cache Radis's server.
+    We collect all result in the queue.
     :param asyncio.Lock lock: It is beholder.
     :param str key_pattern: This is a pattern of the cache's key
     :param str log_t: This is simple the prefix text (subtext) for a log row/line.
@@ -192,14 +193,15 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
     log_t = f"[task {send_letter_to_user_email.__name__}]:"
     import asyncio
 
-    from persons.apps import account_manager
+    # from persons.apps import account_manager
 
-    log.info(f"DEBUG args: {args}")
+    log.info(f"DEBUG send_letter_to_user_email args: {args}")
     keys_queue = queue.Queue(2000)
 
     lock = asyncio.Lock()
     result_bool = False
-
+    subject: str = EnuSubjectOfLetter.SUB_TASK_GET_SEND_LETTER_0.value
+    context_: Optional[Mapping[str, Any]] = None
     try:
         for args_str in args:
             log.info(log_t + """ \n BEFORE IS RUNNING THE child_process_get_keys_0""")
@@ -216,49 +218,48 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
     Below we need t get the token. Then insert in letter and send.
             """
             )
-            subject: str = EnuSubjectOfLetter.SUB_TASK_GET_SEND_LETTER_0.value
             text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value
-            context_: Optional[Mapping[str, Any]] = None
+
             # Here we are transmitting data for mailing, Here we are speak obout the new account.
             sub_function(
                 keys_queue, log_t, result_bool, subject, text_context, context_
             )
-
+            account_manager = AccountManager()
             # Below we are transmitting data for a email verification.
             postman: PostmanAdapter = account_manager.postman
+            key_cache = EnumTemplatesKeysCache.USER_PENDING_LOGIN.value
             sub_person: PostmanAdapter.SubPerson = postman.SubPerson(
-                person_email=args_str
+                person_email=args_str,
             )  #
             # database_service: PostmanAdapter = await asyncio.create_task(asyncio.to_thread(lambda : account_manager.database_service))
             # database_service = account_manager.database_service
             database_service = postman.database_service
 
-            person_obj: Optional[UsersPydanticDict] = await sub_person.get_model(
-                database_service
+            person_list: Optional[list[UsersPydanticDict]] = await sub_person.get_model(
+                database_service, key_cache
             )
             account_manager = account_manager.inisialize_account()
-
-            if person_obj is not None:
-                subject: str = EnuSubjectOfLetter.SUB_TASK_GET_SEND_LETTER_0.value
-                text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_1.value
-                first_name = person_obj["first_name"]
-                context_ = {"user": first_name}
-                print(f"DEBUG context_: {str(context_)}")
-                generate_login_code = account_manager.generate_login_code()
-                print(f"DEBUG generate_login_code: {generate_login_code}")
-                context_.__setattr__("code", generate_login_code)
-                sub_function(
-                    keys_queue, log_t, result_bool, subject, text_context, context_
-                )
-            else:
-                t_error = (
-                    log_t
-                    + " Database data of new user did not receive after the registration!"
-                )
-                raise PersonErrorTasks(t_error)
+            for person_obj in person_list:
+                print(f"DEBUG person_obj: {str(person_obj)} & Type: {type(person_obj)}")
+                if person_obj is not None and isinstance(person_obj, dict):
+                    text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_1.value
+                    first_name = person_obj["first_name"]
+                    context_: dict = {"user": first_name}
+                    print(f"DEBUG context_: {str(context_)}")
+                    generate_login_code = account_manager.generate_login_code()
+                    print(f"DEBUG generate_login_code: {generate_login_code}")
+                    context_.__setitem__("code", generate_login_code)
+                    sub_function(
+                        keys_queue, log_t, result_bool, subject, text_context, context_
+                    )
+                else:
+                    t_error = " Database data of new user did not receive after the registration!"
+                    raise PersonErrorTasks(t_error)
 
     except queue.Full:
-        sub_function(keys_queue, log_t, result_bool)
+        sub_function(
+            keys_queue, log_t, result_bool, subject, "text_context ERROR have", context_
+        )
         raise
 
     except Exception as e:

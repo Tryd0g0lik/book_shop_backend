@@ -153,9 +153,9 @@ class CacheManager:
         px: Optional[int] = None,
         exat: Optional[int] = None,
         persist=None,
-    ):
+    ) -> Optional[bool]:
         """
-        You choose where could will saving data. It is the queue or the simple list
+        You choose where could will saving the get's data. In the queue or the simple list.
         :param str key_pattern: This is the template of key. Default value is None. Example 'user:pending:*'
         :param str key: This is the one key.Key which get the data from the cache serve. Default value is None.
             Example: 'user:pending:< user email has hot containing '.' & '@' characters >'
@@ -165,7 +165,7 @@ class CacheManager:
         :param int px: milliseconds  This is a time of caching. That is the cache time of life At getex
         :param exat: Timestamp=seconds. Set the specified Unix time in seconds, Default value is None
         :param persist: Remove the existing timeout on key, turning the key, Default value is None
-        :return:
+        :return: Optional[bool] If return the True mean oll successfully or mistake.
         """
         log.info(
             self.log_t[:-1]
