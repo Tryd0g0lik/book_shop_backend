@@ -194,7 +194,7 @@ class TestSendToUserEmailFromTask:
         actual_call_args_first = mock_sub_function.call_args_list[0].args
 
 
-        assert actual_call_args_first[4] ==  EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value
+        assert actual_call_args_first[3] ==  EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value
         assert actual_call_args_first[-1] is None
 
         actual_call_args_list_last = mock_sub_function.call_args_list[1].args

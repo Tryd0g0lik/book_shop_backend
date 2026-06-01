@@ -236,7 +236,6 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
                     sub_function(
                         list_of_keys,
                         log_t,
-                        result_bool,
                         subject,
                         text_context,
                         None,
@@ -249,7 +248,6 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
                     sub_function(
                         list_of_keys,
                         log_t,
-                        result_bool,
                         subject,
                         text_context,
                         context_,
