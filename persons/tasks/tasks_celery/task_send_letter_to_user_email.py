@@ -133,15 +133,13 @@ async def child_process_get_keys_0(
 # THE SUB FUNCTION IS TO AVOID A CODE DUPLICATION, below/
 # ============================================
 def sub_function(
-    keys_queue: queue,
+    list_of_keys: list,
     log_t: str,
-    result_bool: bool,
     subject_: str,
     text_context_: str,
     context_: Optional[Mapping[str, Any]],
 ) -> Union[list | bool]:
     """
-
     :param queue keys_queue: Required.
     :param str log_t: Required. It is a prefix for the logs.
     :param result_bool: Required.
@@ -151,35 +149,18 @@ def sub_function(
     :return:
     """
 
-    list_of_results = []
-    qsize = keys_queue.qsize()
-    if result_bool and qsize:
-        while not keys_queue.empty():
-            byte_code = keys_queue.get_nowait()
-            json_code = json.loads(byte_code.decode("utf-8"))
-            list_of_results.append(json_code)
+    # keys_queue: queue = test_keys_queue
+    log_t = log_t[:-1] + "[test sub_function]:"
 
-    # The clean storage
-    del qsize
-    if len(list_of_results) == 0:
-        log.warning(
-            log_t[:-1]
-            + f"[{sub_function.__name__}]:"
-            + " Queue empty. Maybe what wrong! Length of list: %s "
-            % len(list_of_results)
-        )
-        return False
     kwargs = {"subject": subject_, "text_context": text_context_, "context": context_}
-    task_child_process_letter_thanks_for_your_account.delay(
-        *(list_of_results,), **kwargs
-    )
+    task_child_process_letter_thanks_for_your_account.delay(*(list_of_keys,), **kwargs)
     log.info(
         log_t[:-1]
         + f"[{sub_function.__name__}]:"
         + " Data has been transmitted next for sending in a email address."
     )
 
-    return list_of_results
+    return list_of_keys
 
 
 async def send_letter_to_user_email(*args, **kwargs) -> bool:

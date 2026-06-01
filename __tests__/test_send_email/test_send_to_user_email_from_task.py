@@ -106,7 +106,6 @@ class TestSendToUserEmailFromTask:
         def sub_function(
             list_of_keys: list,
             log_t: str,
-            result_bool: bool,
             subject_: str,
             text_context_: str,
             context_: Optional[Mapping[str, Any]],
@@ -125,7 +124,6 @@ class TestSendToUserEmailFromTask:
             # Start the task_send_letter_to_user_email.py::sub_function()
             # list_of_keys: {str(list_of_keys)} & Type: {type(list_of_keys)},
             # log_t: {str(log_t)} & Type: {type(log_t)},
-            # result_bool: {str(result_bool)} & Type: {type(result_bool)},
             # subject_: {str(subject_)} & Type: {type(subject_)},
             # text_context_: {str(text_context_)} & Type: {type(text_context_)},
             # context_: {str(context_)} & Type: {type(context_)},,
