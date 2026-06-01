@@ -4,9 +4,6 @@ import logging
 from typing import Any, Mapping, Optional
 
 from celery import shared_task
-from django.template.loader import get_template
-
-from persons import EnumEmailLetter
 
 log = logging.getLogger(__name__)
 
@@ -15,65 +12,20 @@ def child_process_emailing(*args, **kwargs):
     from django.core.mail import send_mail
     from django.template.loader import render_to_string
 
-    from project.settings_conf.settings_env import APP_DEFAULT_FROM_EMAIL, APP_NAME
+    from project.settings_conf.settings_env import APP_DEFAULT_FROM_EMAIL
 
-    log_t = f"[task_child_process_letter_thanks_for_your_account][{child_process_emailing.__name__}]:"
-    log.info(
-        f"""\n
-    DEBUG BEGINNING child_process_emailing:
-    # kwargs: {kwargs}
-
-"""
-    )
     subject_: str = kwargs.get("subject")
     text_context: str = kwargs.get("text_context")
     context_: Optional[Mapping[str, Any]] = kwargs.get("context")
 
     recipient_list_: list[str] = []
-
-    log.info(
-        log_t
-        + f"""\n
-        # ============================================
-        # LETTER FOR THE USER'S EMAIL
-        # ============================================
-        # args: {str(args)}
-        # kwargs: {str(kwargs)}
-        # contextx_: {str(context_)}
-        """
-    )
-
-    log.info(
-        f"""\n
-    {str(text_context)}
-"""
-    )
     # That is context to the body of letter
     text_context = render_to_string(template_name=text_context, context=context_)
-    log.info(
-        f"""\n
-        # ============================================
-        # render_to_string FOR THE USER'S LETTER
-        # ============================================
-        # text_context: {text_context}
-    """
-    )
-    # Theme/Subject to the letter
-
     for one_list in args:
-        log.info(
-            f"""\n
-            DEBUG AFTER GOT one_list
-        """
-        )
         for u in one_list:
             em = u.__getitem__("email")
             recipient_list_.append(em)
-    log.info(
-        f"""\n
-    DEBUG BEFORE SEND LETTER send_mail
-"""
-    )
+
     if len(recipient_list_) > 0:
         send_mail(
             subject=subject_,

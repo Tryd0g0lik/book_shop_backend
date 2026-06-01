@@ -194,11 +194,6 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
     log_t = f"[task {send_letter_to_user_email.__name__}]:"
     import asyncio
 
-    from allauth.account.internal.userkit import user_display
-
-    # from persons.apps import account_manager
-
-    log.info(f"DEBUG send_letter_to_user_email args: {args}")
     keys_queue = queue.Queue(2000)
     list_of_keys = []
     lock = asyncio.Lock()
@@ -230,9 +225,7 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
                     byte_code = keys_queue.get_nowait()
                     json_code = json.loads(byte_code.decode("utf-8"))
                     list_of_keys.append(json_code)
-                    log.info(f"DDEBUG sub_function: 1")
             else:
-                log.info(f"DDEBUG sub_function: 2")
                 return False
 
             account_manager = AccountManager()
@@ -286,9 +279,7 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
                     raise PersonErrorTasks(t_error)
                 del result_bool, text_context, context_
     except queue.Full:
-        sub_function(
-            keys_queue, log_t, result_bool, subject, "text_context ERROR have", context_
-        )
+
         raise
 
     except Exception as e:
