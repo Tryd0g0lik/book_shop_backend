@@ -197,7 +197,7 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
 
     log.info(f"DEBUG send_letter_to_user_email args: {args}")
     keys_queue = queue.Queue(2000)
-
+    list_of_keys = []
     lock = asyncio.Lock()
     result_bool = False
     subject: str = EnuSubjectOfLetter.SUB_TASK_GET_SEND_LETTER_0.value
@@ -216,13 +216,24 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
                 + """\n
     We have the DATA in QUEUES (the JSON format). These data we above received.
     Below we need t get the token. Then insert in letter and send.
+    
             """
             )
             text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value
-
+            qsize = keys_queue.qsize()
+            log.info(f"DDEBUG sub_function: 0 qsize: {qsize}")
+            if result_bool and qsize:
+                while not keys_queue.empty():
+                    byte_code = keys_queue.get_nowait()
+                    json_code = json.loads(byte_code.decode("utf-8"))
+                    list_of_keys.append(json_code)
+                    log.info(f"DDEBUG sub_function: 1")
+            else:
+                log.info(f"DDEBUG sub_function: 2")
+                return False
             # Here we are transmitting data for mailing, Here we are speak obout the new account.
             sub_function(
-                keys_queue, log_t, result_bool, subject, text_context, context_
+                list_of_keys, log_t, result_bool, subject, text_context, context_
             )
             account_manager = AccountManager()
             # Below we are transmitting data for a email verification.
@@ -230,9 +241,7 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
             key_cache = EnumTemplatesKeysCache.USER_PENDING_LOGIN.value
             sub_person: PostmanAdapter.SubPerson = postman.SubPerson(
                 person_email=args_str,
-            )  #
-            # database_service: PostmanAdapter = await asyncio.create_task(asyncio.to_thread(lambda : account_manager.database_service))
-            # database_service = account_manager.database_service
+            )
             database_service = postman.database_service
 
             person_list: Optional[list[UsersPydanticDict]] = await sub_person.get_model(
@@ -250,12 +259,13 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
                     print(f"DEBUG generate_login_code: {generate_login_code}")
                     context_.__setitem__("code", generate_login_code)
                     sub_function(
-                        keys_queue, log_t, result_bool, subject, text_context, context_
+                        list_of_keys, log_t, result_bool, subject, text_context, context_
                     )
+
                 else:
                     t_error = " Database data of new user did not receive after the registration!"
                     raise PersonErrorTasks(t_error)
-
+                del result_bool, text_context, context_
     except queue.Full:
         sub_function(
             keys_queue, log_t, result_bool, subject, "text_context ERROR have", context_

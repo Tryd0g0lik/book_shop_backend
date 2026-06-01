@@ -5,6 +5,8 @@ from typing import Any, Mapping, Optional
 
 from celery import shared_task
 
+from persons import EnumEmailLetter
+
 log = logging.getLogger(__name__)
 
 
@@ -28,12 +30,25 @@ def child_process_emailing(*args, **kwargs):
         # LETTER FOR THE USER'S EMAIL
         # ============================================
         # args: {str(args)}
+        # kwargs: {str(kwargs)}
         """
     )
+
     # That is context to the body of letter
     text_context = render_to_string(text_context, context=contextx_)
+    log.info(f"""\n
+        # ============================================
+        # render_to_string FOR THE USER'S LETTER
+        # ============================================
+        # text_context: {text_context}
+    """)
     # Theme/Subject to the letter
-
+    if text_context == EnumEmailLetter.CONFIRM_EMAIL_Letter_1.value:
+        log.warning(
+            log_t
+            + f"""\n
+            The letter was contain the code: {text_context} 
+    """)
     for one_list in args:
         for u in one_list:
             em = u.__getitem__("email")

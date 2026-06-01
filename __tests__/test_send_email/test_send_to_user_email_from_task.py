@@ -12,6 +12,7 @@ from __tests__.fixtures.fixture_mock_patch import (
     mock_cacher_adapter_mixin,
     mock_subPerson_class,
 )
+from persons import EnumEmailLetter
 from persons.interfaces import UsersPydantic
 
 log = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ class TestSendToUserEmailFromTask:
     async def test_send_letter_to_user_email(self, mock_cacher_adapter_mixin,
                                              users_model_data, mocker):
         """
-        Here is a goal to send a latter and say about registration.
+        Here is a goal to send the two latter for the aver of user and say about registration.
         First letter will say about: "Your email address was used for registration the new account "
         :return:
         """
@@ -41,6 +42,7 @@ class TestSendToUserEmailFromTask:
             child_process_get_keys_0,
             send_letter_to_user_email,
         )
+        # ----
         log_t = "[TestSendToUserEmailFromTask][test_send_letter_to_user_email]:"
         test_keys_queue = queue.Queue(2000)
         # ----
@@ -53,12 +55,13 @@ class TestSendToUserEmailFromTask:
         """)
         mock_get_user_by_email = mocker.patch(
             "persons.adapters.person_database_adapter.PersonServiceDatabaseAdapter.get_user_by_email")
+        mock_get_user_by_email.reset_mock()
         user_object = UsersPydantic(**users_model_data)
         mock_get_user_by_email.return_value = user_object
         # ----
         mock_create_or_update_in_database = mocker.patch(
             "persons.adapters.person_database_adapter.PersonServiceDatabaseAdapter.create_or_update_in_database")
-
+        mock_create_or_update_in_database.reset_mock()
         mock_create_or_update_in_database.side_effect = lambda user_data=None: None
 
         # ----
@@ -69,20 +72,28 @@ class TestSendToUserEmailFromTask:
         """)
         mock_child_process_get_keys_0 = mocker.patch(
             "persons.tasks.tasks_celery.task_send_letter_to_user_email.child_process_get_keys_0")
-        mock_child_process_get_keys_0.side_effect = lambda key_pattern,\
-                                                           log_t,\
-                                                           queue: True
+        mock_child_process_get_keys_0.reset_mock()
+
+        bytes_Line = json.dumps(
+            {"username": users_model_data["username"], "email": users_model_data["email"]}).encode()
+        def mock_queue_collection(key_pattern, log_t, queue):
+
+            queue.put_nowait(bytes_Line)
+            return True
+
+        mock_child_process_get_keys_0.side_effect = mock_queue_collection
 
         # ----
         # if users_model_data["id"] == 10:
-        bytes_Line = json.dumps({"username": users_model_data["username"], "email": users_model_data["email"]}).encode()
-        test_keys_queue.put_nowait(bytes_Line)
+
+
         log.info("""\n
         # ============================================
         # Mock the task_send_letter_to_user_email.py::sub_function()
         # ============================================
         """)
         mock_sub_function = mocker.patch("persons.tasks.tasks_celery.task_send_letter_to_user_email.sub_function")
+        mock_sub_function.reset_mock()
         # ============================================
         # Test tHe task_send_letter_to_user_email.py::send_letter_to_user_email
         # This task have two letters.
@@ -92,7 +103,7 @@ class TestSendToUserEmailFromTask:
         # 2. Second letter need to send the code verification.
         # ============================================
         def sub_function(
-            keys_queue: queue,
+            list_of_keys: list,
             log_t: str,
             result_bool: bool,
             subject_: str,
@@ -111,7 +122,7 @@ class TestSendToUserEmailFromTask:
             log.info(f"""\n
             # ============================================
             # Start the task_send_letter_to_user_email.py::sub_function()
-            # keys_queue: {str(keys_queue)} & Type: {type(keys_queue)},
+            # list_of_keys: {str(list_of_keys)} & Type: {type(list_of_keys)},
             # log_t: {str(log_t)} & Type: {type(log_t)},
             # result_bool: {str(result_bool)} & Type: {type(result_bool)},
             # subject_: {str(subject_)} & Type: {type(subject_)},
@@ -119,33 +130,36 @@ class TestSendToUserEmailFromTask:
             # context_: {str(context_)} & Type: {type(context_)},,
             # ============================================
             """)
-            list_of_results = []
-            keys_queue: queue = test_keys_queue
+
+            # keys_queue: queue = test_keys_queue
             log_t = log_t[:-1] + "[test sub_function]:"
             result_bool = True
-            qsize = keys_queue.qsize()
-            if result_bool and qsize:
-                while not keys_queue.empty():
-                    byte_code = keys_queue.get_nowait()
-                    json_code = json.loads(byte_code.decode("utf-8"))
-                    list_of_results.append(json_code)
-            else:
-                return False
+
+            # log.info(f"DDEBUG sub_function: 0 \n result_bool: {result_bool} \n keys_queue: {keys_queue} ")
+
+            log.info(f"DDEBUG sub_function: 3")
             # The clean storage
-            del qsize
-            if len(list_of_results) == 0:
-                log.warning(
-                    log_t
-                    + " Queue empty. Maybe what wrong! Length of list: %s "
-                    % len(list_of_results)
-                )
-                return False
+
+            # if len(list_of_keys) == 0:
+            #     log.warning(
+            #         log_t
+            #         + " Queue empty. Maybe what wrong! Length of list: %s "
+            #         % len(list_of_keys)
+            #     )
+            #     return False
             kwargs = {"subject": subject_, "text_context": text_context_, "contex": context_}
-            result_bool = child_process_emailing(*(list_of_results,), **kwargs)
+            log.info(f"""\n
+            # ============================================
+            # TEST BEFORE SEND LETTER child_process_emailing
+            # ============================================
+            # kwargs: {kwargs}
+            """)
+            result_bool = child_process_emailing(*(list_of_keys,), **kwargs)
+
             assert isinstance(result_bool, bool)
             assert result_bool
 
-            return list_of_results
+            return list_of_keys
 
         mock_sub_function.side_effect = sub_function
 
@@ -156,6 +170,7 @@ class TestSendToUserEmailFromTask:
 
         mock_subperson__get_cache = mocker.patch(
             "persons.adapters.postman_adapter.PostmanAdapter.SubPerson._SubPerson__get_cache")
+        mock_subperson__get_cache.reset_mock()
         mock_subperson__get_cache.return_value = [json.dumps([kwargs,]).encode()]
         # ----
         log.info("""\n
@@ -165,7 +180,7 @@ class TestSendToUserEmailFromTask:
         """)
 
         args = (EnumTemplatesKeysCache.USER_PENDING.value % re.sub(r"[@.]", "", email),)
-        test_send_letter_to_user_email = await send_letter_to_user_email(*args, *kwargs)
+        test_send_letter_to_user_email = await send_letter_to_user_email(*args, **kwargs)
 
         # ----
         assert isinstance(test_send_letter_to_user_email, bool|list)
@@ -174,6 +189,30 @@ class TestSendToUserEmailFromTask:
         mock_get_user_by_email.assert_called()
 
         mock_sub_function.assert_called()
+        # This is simply logs
+        log.warning(mock_sub_function.call_args_list)
+        log.info(mock_sub_function.call_args_list[0])
+        log.info(mock_sub_function.call_args_list[0][0])
+        log.info(mock_sub_function.call_args_list[0].args)
+        log.info(mock_sub_function.call_args_list[0].kwargs)
+        log.info(mock_sub_function.mock_calls)
+
+
+        actual_call_args_first = mock_sub_function.call_args_list[0].args
+
+
+        assert actual_call_args_first[4] ==  EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value
+        assert actual_call_args_first[-1] is None
+
+        actual_call_args_list_last = mock_sub_function.call_args_list[1].args
+        log.warning(f"--------------- \n {mock_sub_function.call_args_list[1]}" )
+        assert actual_call_args_list_last[-2] == EnumEmailLetter.CONFIRM_EMAIL_Letter_1.value
+
+        assert actual_call_args_list_last[-1] is not None
+        assert type(actual_call_args_list_last[-1]) == dict
+        assert len(actual_call_args_list_last[-1]["code"]) == 9
+        assert "{'user': " in str(actual_call_args_list_last[-1])
+        assert " 'code': " in str(actual_call_args_list_last[-1])
 
 
         mock_child_process_get_keys_0.assert_called()
