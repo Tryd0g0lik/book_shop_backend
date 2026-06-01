@@ -4,6 +4,7 @@ import logging
 from typing import Any, Mapping, Optional
 
 from celery import shared_task
+from django.template.loader import get_template
 
 from persons import EnumEmailLetter
 
@@ -17,9 +18,16 @@ def child_process_emailing(*args, **kwargs):
     from project.settings_conf.settings_env import APP_DEFAULT_FROM_EMAIL, APP_NAME
 
     log_t = f"[task_child_process_letter_thanks_for_your_account][{child_process_emailing.__name__}]:"
+    log.info(
+        f"""\n
+    DEBUG BEGINNING child_process_emailing:
+    # kwargs: {kwargs}
+
+"""
+    )
     subject_: str = kwargs.get("subject")
     text_context: str = kwargs.get("text_context")
-    contextx_: Optional[Mapping[str, Any]] = kwargs.get("context", None)
+    context_: Optional[Mapping[str, Any]] = kwargs.get("context")
 
     recipient_list_: list[str] = []
 
@@ -31,29 +39,41 @@ def child_process_emailing(*args, **kwargs):
         # ============================================
         # args: {str(args)}
         # kwargs: {str(kwargs)}
+        # contextx_: {str(context_)}
         """
     )
 
+    log.info(
+        f"""\n
+    {str(text_context)}
+"""
+    )
     # That is context to the body of letter
-    text_context = render_to_string(text_context, context=contextx_)
-    log.info(f"""\n
+    text_context = render_to_string(template_name=text_context, context=context_)
+    log.info(
+        f"""\n
         # ============================================
         # render_to_string FOR THE USER'S LETTER
         # ============================================
         # text_context: {text_context}
-    """)
+    """
+    )
     # Theme/Subject to the letter
-    if text_context == EnumEmailLetter.CONFIRM_EMAIL_Letter_1.value:
-        log.warning(
-            log_t
-            + f"""\n
-            The letter was contain the code: {text_context} 
-    """)
+
     for one_list in args:
+        log.info(
+            f"""\n
+            DEBUG AFTER GOT one_list
+        """
+        )
         for u in one_list:
             em = u.__getitem__("email")
             recipient_list_.append(em)
-
+    log.info(
+        f"""\n
+    DEBUG BEFORE SEND LETTER send_mail
+"""
+    )
     if len(recipient_list_) > 0:
         send_mail(
             subject=subject_,

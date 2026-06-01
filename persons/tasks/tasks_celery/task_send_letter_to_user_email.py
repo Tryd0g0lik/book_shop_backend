@@ -14,7 +14,8 @@ from celery import shared_task
 from persons import EnumEmailLetter, EnumTemplatesKeysCache, EnuSubjectOfLetter
 from persons.exceptions import PersonErrorTasks
 from persons.interfaces import PostmanAdapter
-from persons.interfaces.interface_persons import UsersPydanticDict
+from persons.interfaces.interface_persons import UsersPydantic, UsersPydanticDict
+from persons.models import Users
 from persons.services import AccountManager
 from persons.tasks.sub_tasks_celery.sub_task_get_send_letter import (
     task_child_process_letter_thanks_for_your_account,
@@ -168,7 +169,7 @@ def sub_function(
             % len(list_of_results)
         )
         return False
-    kwargs = {"subject": subject_, "text_context": text_context_, "contex": context_}
+    kwargs = {"subject": subject_, "text_context": text_context_, "context": context_}
     task_child_process_letter_thanks_for_your_account.delay(
         *(list_of_results,), **kwargs
     )
@@ -193,6 +194,8 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
     log_t = f"[task {send_letter_to_user_email.__name__}]:"
     import asyncio
 
+    from allauth.account.internal.userkit import user_display
+
     # from persons.apps import account_manager
 
     log.info(f"DEBUG send_letter_to_user_email args: {args}")
@@ -216,7 +219,7 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
                 + """\n
     We have the DATA in QUEUES (the JSON format). These data we above received.
     Below we need t get the token. Then insert in letter and send.
-    
+
             """
             )
             text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value
@@ -231,10 +234,7 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
             else:
                 log.info(f"DDEBUG sub_function: 2")
                 return False
-            # Here we are transmitting data for mailing, Here we are speak obout the new account.
-            sub_function(
-                list_of_keys, log_t, result_bool, subject, text_context, context_
-            )
+
             account_manager = AccountManager()
             # Below we are transmitting data for a email verification.
             postman: PostmanAdapter = account_manager.postman
@@ -248,18 +248,37 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
                 database_service, key_cache
             )
             account_manager = account_manager.inisialize_account()
-            for person_obj in person_list:
-                print(f"DEBUG person_obj: {str(person_obj)} & Type: {type(person_obj)}")
-                if person_obj is not None and isinstance(person_obj, dict):
+            for person_dict in person_list:
+                # Here we are transmitting data for mailing, Here we are speak obout the new account.
+                print(
+                    f"DEBUG person_dict: {str(person_dict)} & Type: {type(person_dict)}"
+                )
+                print(f"DEBUG context_: {str(context_)} & Type: {type(context_)}")
+                if person_dict is not None and isinstance(person_dict, dict):
+                    person_obj = Users(**person_dict)
+                    context_ = {
+                        "user": person_obj,
+                    }
+                    sub_function(
+                        list_of_keys,
+                        log_t,
+                        result_bool,
+                        subject,
+                        text_context,
+                        None,
+                    )
+
                     text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_1.value
-                    first_name = person_obj["first_name"]
-                    context_: dict = {"user": first_name}
-                    print(f"DEBUG context_: {str(context_)}")
                     generate_login_code = account_manager.generate_login_code()
                     print(f"DEBUG generate_login_code: {generate_login_code}")
                     context_.__setitem__("code", generate_login_code)
                     sub_function(
-                        list_of_keys, log_t, result_bool, subject, text_context, context_
+                        list_of_keys,
+                        log_t,
+                        result_bool,
+                        subject,
+                        text_context,
+                        context_,
                     )
 
                 else:

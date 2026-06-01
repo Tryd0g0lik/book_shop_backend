@@ -284,3 +284,4 @@ f_extension = "csv, docx, pdf, rtf, txt, xlsx, zip"
 WAGTAILDOCS_EXTENSIONS = list(f_extension.split(", "))
 WAGTAILADMIN_LOGIN_FORM = "persons.forms.UsersLoginForm"
 # WAGTAIL_APPEND_SLASH = "/"
+# USER_MODEL_USERNAME_FIELD = "TEST_USER_MODEL_USERNAME_FIELD"

@@ -42,6 +42,7 @@ class TestSendToUserEmailFromTask:
             child_process_get_keys_0,
             send_letter_to_user_email,
         )
+
         # ----
         log_t = "[TestSendToUserEmailFromTask][test_send_letter_to_user_email]:"
         test_keys_queue = queue.Queue(2000)
@@ -133,21 +134,8 @@ class TestSendToUserEmailFromTask:
 
             # keys_queue: queue = test_keys_queue
             log_t = log_t[:-1] + "[test sub_function]:"
-            result_bool = True
 
-            # log.info(f"DDEBUG sub_function: 0 \n result_bool: {result_bool} \n keys_queue: {keys_queue} ")
-
-            log.info(f"DDEBUG sub_function: 3")
-            # The clean storage
-
-            # if len(list_of_keys) == 0:
-            #     log.warning(
-            #         log_t
-            #         + " Queue empty. Maybe what wrong! Length of list: %s "
-            #         % len(list_of_keys)
-            #     )
-            #     return False
-            kwargs = {"subject": subject_, "text_context": text_context_, "contex": context_}
+            kwargs = {"subject": subject_, "text_context": text_context_, "context": context_}
             log.info(f"""\n
             # ============================================
             # TEST BEFORE SEND LETTER child_process_emailing
@@ -164,6 +152,13 @@ class TestSendToUserEmailFromTask:
         mock_sub_function.side_effect = sub_function
 
         # ----
+        log.info(f"""\n
+        # ============================================
+        # TEST THE users_model_data DICT:
+        # ============================================
+        # users_model_data: {users_model_data}
+        """)
+
         email = users_model_data["email"]
         kwargs = {"username": users_model_data["username"], "email": email}
         # ----
