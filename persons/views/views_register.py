@@ -118,17 +118,18 @@ class UsersRegistrationView(AllauthSignupView):
             ]
 
             if len(result_list) > 0:
-
+                log.info(
+                    f"""\n
+                # ============================================
+                # DEBUG POST'S DATA BEFORE REGISTRATION
+                # request: {request},
+                # *args: {args},
+                # **kwargs: {kwargs},
+                # ============================================
+                """
+                )
                 super().post(request, *args, **kwargs)
                 return render(request, "auth/register.html", status=201)
-                # return response
-                # context = {
-                #     "form": form,
-                #     "category_choices": CATEGORY_STATUS,
-                #     "message_for_user": USER_EMAIL_BASIS_MESSAGE,
-                # }
-                #
-                # return render(request, "auth/register.html", context, status=401)
             return HttpResponseRedirect(
                 reverse(
                     "register",
@@ -143,7 +144,7 @@ class UsersRegistrationView(AllauthSignupView):
         except Exception as e:
             ERROR_TEXT = " ".join(
                 [
-                    self.log_t[-1] + f"{self.get.__name__}:",
+                    self.log_t[-1] + f"{self.post.__name__}:",
                     datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     " Server error to the user registration. URL: %s TEXT_ERROR: %s"
                     % (pathname, e.args[0] if e.args else str(e)),
@@ -172,6 +173,7 @@ class UsersRegistrationView(AllauthSignupView):
             setattr(form, "username", email.split("@")[0])
             username = form.cleaned_data.get("username")
         args = (EnumTemplatesKeysCache.USER_PENDING.value % re.sub(r"[@.]", "", email),)
+        # args = (email,)
         # ------------------------------------
         kwargs = {"username": username, "email": email}
         try:

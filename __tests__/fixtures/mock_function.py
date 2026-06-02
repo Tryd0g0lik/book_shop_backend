@@ -25,6 +25,7 @@ def __get_cache_staticmethod(value: str = None) -> Optional[list[bytes]|dict]:
             # ============================================
             """)
     cachemanager_test = CacheManager()
+
     # value_of_cache: Optional[bytes] = None
     value_of_cache: Optional[list | dict] = []
     log.info(f"[Mock __get_cache.CacheManager ]: Before Value: {str(value)}")

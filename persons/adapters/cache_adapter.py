@@ -16,7 +16,7 @@ from .cache_base import CacherBaseMixin
 log = logging.getLogger(__name__)
 
 
-class CacherAdapterMixin(CacherBaseMixin):
+class CacherAdapter(CacherBaseMixin):
     _pool = None
     _pool_lock = threading.Lock()
 
@@ -33,12 +33,12 @@ class CacherAdapterMixin(CacherBaseMixin):
         )
 
         try:
-            if CacherAdapterMixin._pool is None:
+            if CacherAdapter._pool is None:
                 redis_database = self.redis_database
                 redis_master_name = self.redis_master_name
                 redis_password = self.redis_password
-                with CacherAdapterMixin._pool_lock:
-                    CacherAdapterMixin._pool = ConnectionPool(
+                with CacherAdapter._pool_lock:
+                    CacherAdapter._pool = ConnectionPool(
                         host=REDIS_HOST,
                         port=int(REDIS_PORT),
                         password=redis_password,
@@ -61,9 +61,9 @@ class CacherAdapterMixin(CacherBaseMixin):
             raise ValueError(log_t)
 
     def __get_client(self):
-        if CacherAdapterMixin._pool is None:
+        if CacherAdapter._pool is None:
             self._init_pool()
-        return Redis(connection_pool=CacherAdapterMixin._pool)
+        return Redis(connection_pool=CacherAdapter._pool)
 
     def related(self) -> bool:
         if self.server_client is None:
@@ -120,10 +120,10 @@ class CacherAdapterMixin(CacherBaseMixin):
             pass
 
     def _recreated_pool(self):
-        with CacherAdapterMixin._pool_lock:
-            if CacherAdapterMixin._pool:
-                CacherAdapterMixin._pool.disconnect()
-                CacherAdapterMixin._pool = None
+        with CacherAdapter._pool_lock:
+            if CacherAdapter._pool:
+                CacherAdapter._pool.disconnect()
+                CacherAdapter._pool = None
             self._init_pool()
 
     def close(self):
@@ -133,8 +133,8 @@ class CacherAdapterMixin(CacherBaseMixin):
         is_connected = self.is_connected
         if is_connected:
             self.server_client = None
-            CacherAdapterMixin._pool = None
+            CacherAdapter._pool = None
 
     @property
     def is_connected(self) -> bool:
-        return True if CacherAdapterMixin._pool is not None else False
+        return True if CacherAdapter._pool is not None else False

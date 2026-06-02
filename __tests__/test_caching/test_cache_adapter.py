@@ -21,7 +21,7 @@ from __tests__.test_caching.fixture_caching import fixture_cacher_adapter_mixin
 
 REDIS_DB = 2
 
-class TestCacherAdapterMixin:
+class TestCacherAdapter:
 
     def test_init_pool(self, fixture_cacher_adapter_mixin, mocker):
         """
@@ -54,14 +54,14 @@ class TestCacherAdapterMixin:
 
     def test_related(self, fixture_cacher_adapter_mixin, mocker):
         """
-        Our goal is checking the answer from the 'CacherAdapterMixin.related'.
+        Our goal is checking the answer from the 'CacherAdapter.related'.
         Thy are mocks:
-            - CacherAdapterMixin.__get_client
+            - CacherAdapter.__get_client
         :param mocker:
-        :param fixture_cacher_adapter_mixin: This is running the CacherAdapterMixin().
+        :param fixture_cacher_adapter_mixin: This is running the CacherAdapter().
         '''
-            test_cacher = CacherAdapterMixin()
-            CacherAdapterMixin._pool = None
+            test_cacher = CacherAdapter()
+            CacherAdapter._pool = None
             yield test_cacher
             if test_cacher.is_connected:
             test_cacher.close()
@@ -70,7 +70,7 @@ class TestCacherAdapterMixin:
         """
         test_cacher = fixture_cacher_adapter_mixin
 
-        mock__get_client = mocker.patch.object(fixture_cacher_adapter_mixin, "_CacherAdapterMixin__get_client")
+        mock__get_client = mocker.patch.object(fixture_cacher_adapter_mixin, "_CacherAdapter__get_client")
         mock__get_client.return_value = "SUCCESS"
         assert test_cacher.server_client is None
         test__result = test_cacher.related()
@@ -91,7 +91,7 @@ class TestCacherAdapterMixin:
         test_cacher = fixture_cacher_adapter_mixin
 
         mocker.patch(
-            'persons.adapters.CacherAdapterMixin.is_connected',
+            'persons.adapters.CacherAdapter.is_connected',
             new_callable=mocker.PropertyMock,
             return_value=True
         )

@@ -156,7 +156,7 @@ class PersonServiceDatabaseAdapter:
                 )
             except PersonErrorImproperlyConfigured as e:
                 raise PersonErrorImproperlyConfigured(e.args[0] if e.args else str(e))
-        elif em is not None:
+        if get_person_model_old is None and em is not None:
             # ============================================
             # CREATE NEW USER IN DATABASE
             # ============================================
@@ -199,17 +199,63 @@ Change the email address."
                     """
                     )
                     user_data.__setitem__("password", password_hashed)
+                    log.info(f"TEST DEBUG user_data: {str(user_data)}")
                     del password_hashed, password_str
                     password1 = user_data.get("password1")
+                    log.info(f"TEST DEBUG password1: {str(password1)}")
                     if password1:
                         del user_data["password1"]
                 except TypeError as e:
                     raise TypeError(
                         "Password should be a hashable object. " + str(e)
                     ) from e
+                log.info(
+                    f"TEST DEBUG BEFORE DATABASE CREATE user_data: {str(user_data)}"
+                )
                 user_new = Users.objects.create(**user_data)
-                return UsersPydantic.model_validate(user_new)
+
+                log.info(f"TEST DEBUG AFTER DATABASE CREATE user_new: {str(user_new)}")
+                user_new_pydantic = UsersPydantic.model_validate(user_new)
+                """"
+                ЗАпуск из теста
+                ЛОГ: INFO 2026-06-02 18:22:34,272 person_database_adapter 19276 10652 TEST DEBUG AFTER DATABASE CREATE user_new: User: staff_moderator Regisrated was: 2026-06-02 11:22:34.271929+00:00
+                Вроде создал.
+                Но записи базе данных нет. Проверить условия сохранения в модели.
+
+                !! Данные взять из оригинала и обновить параметризацию теста
+
+                Запуск через djangp
+                ЛОГ:
+                INFO 2026-06-02 18:16:45,387 postman_adapter 18556 18092 TEST DEBUG 0
+INFO 2026-06-02 18:16:45,387 postman_adapter 18556 18092 TEST DEBUG 3
+INFO 2026-06-02 18:16:45,387 postman_adapter 18556 18092 TEST DEBUG BEFORE 3: EMAIL moderator@example.com
+INFO 2026-06-02 18:16:45,392 postman_adapter 18556 18092 TEST DEBUG AFTER 3:
+str(type(user_old): <class 'NoneType'>
+UsersPydantic: <class 'persons.interfaces.interface_persons.UsersPydantic'>
+False
+INFO 2026-06-02 18:16:45,392 postman_adapter 18556 18092 TEST DEBUG AFTER TYPE 3: EMAIL <class 'NoneType'>
+WARNING 2026-06-02 18:16:45,392 postman_adapter 18556 18092 [SubPerson][SubPerson]: 'NoneType' object has no attribute 'email'
+INFO 2026-06-02 18:16:45,392 task_send_letter_to_user_email 18556 18092
+                # ============================================
+                # DEBUG
+                # person_list: None
+                # Type: <class 'NoneType'>
+                # ============================================
+
+ERROR 2026-06-02 18:16:45,393 task_send_letter_to_user_email 18556 18092 [task send_letter_to_user_email]:ERROR TEXT => 'NoneType' object is not iterable
+ERROR 2026-06-02 18:16:45,393 loop_async_sync 18556 18092 Writing ASYNC to the cache server failed! TEXT_ERROR: [PersonErrorTasks]:
+[PersonErrorTasks]:'NoneType' object is not iterable
+
+
+
+
+                """
+                log.info(
+                    f"TEST DEBUG AFTER DATABASE CREATE user_new_pydantic: {str(user_new_pydantic)}"
+                )
+                return user_new_pydantic
             except PersonErrorImproperlyConfigured as e:
+                log.info(f"TEST DEBUG PersonErrorImproperlyConfigured: {str(e)}")
                 raise e
         if get_person_model_old is None:
             raise PersonErrorImproperlyConfigured("User not found.")

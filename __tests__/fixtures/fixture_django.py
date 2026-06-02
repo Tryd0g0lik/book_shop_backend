@@ -67,6 +67,7 @@ def mock_user_django():
     mock_user.date_joined = now
     return mock_user
 
+
 # ELSE
 def pytest_generate_tests(metafunc):
     if "users_model_data" in metafunc.fixturenames:

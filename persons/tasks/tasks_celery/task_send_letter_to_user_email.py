@@ -6,6 +6,7 @@ import asyncio
 import json
 import logging
 import queue
+import re
 import time
 from typing import Any, Mapping, Optional, Union
 
@@ -15,8 +16,6 @@ from persons import EnumEmailLetter, EnumTemplatesKeysCache, EnuSubjectOfLetter
 from persons.exceptions import PersonErrorTasks
 from persons.interfaces import PostmanAdapter
 from persons.interfaces.interface_persons import UsersPydantic, UsersPydanticDict
-from persons.models import Users
-from persons.services import AccountManager
 from persons.tasks.sub_tasks_celery.sub_task_get_send_letter import (
     task_child_process_letter_thanks_for_your_account,
 )
@@ -50,7 +49,13 @@ async def child_process_get_keys_0(
     """
     from datetime import datetime
 
-    from persons.apps import cachemanager
+    from persons.interfaces import (
+        AsyncCacherAdapter as AsyncCacherAdapterMixinInitialize,
+    )
+    from persons.interfaces import CacheManager as CacheManagerInitialize
+    from persons.services import CacheManager
+
+    cachemanager: CacheManagerInitialize = CacheManager()
 
     keys: list = []
     try:
@@ -62,6 +67,7 @@ async def child_process_get_keys_0(
         # REDIS CACHE SERVER - GET THE COLLECTION of KEYS
         # - key_pattern: {str(key_pattern)}
         # - keys: {str(keys)}
+        # - cachemanager.cacher.redis_database: {cachemanager.cacher.redis_database}
         # ============================================"""
         )
 
@@ -119,7 +125,7 @@ async def child_process_get_keys_0(
         log.info(log_t)
         log.info(
             log_t[:-1]
-            + f"[{child_process_get_keys_0.__name__}]: ====================== /DEBUG Review ======================"
+            + f"[{child_process_get_keys_0.__name__}]: \n ====================== /DEBUG Review ======================"
         )
 
     except Exception as e:
@@ -175,87 +181,113 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
     log_t = f"[task {send_letter_to_user_email.__name__}]:"
     import asyncio
 
-    keys_queue = queue.Queue(2000)
+    from persons.services import AccountManager
+
+    dict_queue = queue.Queue(2000)
     list_of_keys = []
     lock = asyncio.Lock()
     result_bool = False
     subject: str = EnuSubjectOfLetter.SUB_TASK_GET_SEND_LETTER_0.value
     context_: Optional[Mapping[str, Any]] = None
     try:
-        for args_str in args:
-            log.info(log_t + """ \n BEFORE IS RUNNING THE child_process_get_keys_0""")
-            async with lock:
-                result_bool = await child_process_get_keys_0(
-                    key_pattern=EnumTemplatesKeysCache.USER_PENDING.value % "*",
-                    queue=keys_queue,
-                    log_t=log_t,
-                )
-            log.info(
-                log_t
-                + """\n
-    We have the DATA in QUEUES (the JSON format). These data we above received.
-    Below we need t get the token. Then insert in letter and send.
+        # emails = [v for k, v in kwargs.items() if k == "email"]
+        # key_cache = list(args)[0]
+        # for one_email in emails:
 
-            """
+        async with lock:
+            result_bool = await child_process_get_keys_0(
+                key_pattern=EnumTemplatesKeysCache.USER_PENDING.value % "*",
+                queue=dict_queue,
+                log_t=log_t,
             )
-            text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value
-            qsize = keys_queue.qsize()
-            log.info(f"DDEBUG sub_function: 0 qsize: {qsize}")
-            if result_bool and qsize:
-                while not keys_queue.empty():
-                    byte_code = keys_queue.get_nowait()
-                    json_code = json.loads(byte_code.decode("utf-8"))
-                    list_of_keys.append(json_code)
-            else:
-                return False
+        log.info(
+            log_t
+            + """\n
+            # ============================================
+We have the DATA in QUEUES (the JSON format). These data we above received.
+Below we need t get the token. Then insert in letter and send.
+            # ============================================
+        """
+        )
 
-            account_manager = AccountManager()
-            # Below we are transmitting data for a email verification.
-            postman: PostmanAdapter = account_manager.postman
-            key_cache = EnumTemplatesKeysCache.USER_PENDING_LOGIN.value
+        qsize = dict_queue.qsize()
+        log.info(f"DDEBUG sub_function: 0 qsize: {qsize}")
+        if result_bool and qsize:
+            while not dict_queue.empty():
+                byte_code = dict_queue.get_nowait()
+                json_code = json.loads(byte_code.decode("utf-8"))
+                list_of_keys.append(json_code)
+        else:
+            return False
+
+        account_manager = AccountManager()
+        # Below we are transmitting data for a email verification.
+        postman: PostmanAdapter = account_manager.postman
+        for one_dict in list_of_keys:
+            one_email = one_dict.get("email")
+
+            # key_cache = EnumTemplatesKeysCache.USER_PENDING_LETTER.value
             sub_person: PostmanAdapter.SubPerson = postman.SubPerson(
-                person_email=args_str,
+                person_email=one_email,
             )
             database_service = postman.database_service
-
+            key_cache = EnumTemplatesKeysCache.USER_PENDING.value % re.sub(
+                r"[@.]+", "", one_email
+            )
+            log.info(
+                log_t
+                + f""" \n
+                # ============================================
+                # BEFORE IS RUNNING THE child_process_get_keys_0,
+                # args_str: {one_email}
+                # key_cache: {key_cache}
+                # ============================================
+"""
+            )
             person_list: Optional[list[UsersPydanticDict]] = await sub_person.get_model(
-                database_service, key_cache
+                database_service,
+            )
+            log.info(
+                f"""
+                # ============================================
+                # DEBUG
+                # person_list: {str(person_list)}
+                # Type: {type(person_list)}
+                # ============================================
+"""
             )
             account_manager = account_manager.inisialize_account()
             for person_dict in person_list:
                 # Here we are transmitting data for mailing, Here we are speak obout the new account.
-                print(
+                log.info(
                     f"DEBUG person_dict: {str(person_dict)} & Type: {type(person_dict)}"
                 )
-                print(f"DEBUG context_: {str(context_)} & Type: {type(context_)}")
-                if person_dict is not None and isinstance(person_dict, dict):
-                    person_obj = Users(**person_dict)
-                    context_ = {
-                        "user": person_obj,
-                    }
-                    sub_function(
-                        list_of_keys,
-                        log_t,
-                        subject,
-                        text_context,
-                        None,
-                    )
 
-                    text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_1.value
-                    generate_login_code = account_manager.generate_login_code()
-                    print(f"DEBUG generate_login_code: {generate_login_code}")
-                    context_.__setitem__("code", generate_login_code)
-                    sub_function(
-                        list_of_keys,
-                        log_t,
-                        subject,
-                        text_context,
-                        context_,
-                    )
+                text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value
+                sub_function(
+                    list_of_keys,
+                    log_t,
+                    subject,
+                    text_context,
+                    None,
+                )
 
-                else:
-                    t_error = " Database data of new user did not receive after the registration!"
-                    raise PersonErrorTasks(t_error)
+                text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_1.value
+                generate_login_code = account_manager.generate_login_code()
+                log.info(f"DEBUG generate_login_code: {generate_login_code}")
+                context_ = {
+                    "user": json.dumps(person_dict),
+                    "code": generate_login_code,
+                }
+                log.info(f"DEBUG context_: {str(context_)} & Type: {type(context_)}")
+                sub_function(
+                    list_of_keys,
+                    log_t,
+                    subject,
+                    text_context,
+                    context_,
+                )
+
                 del result_bool, text_context, context_
     except queue.Full:
 

@@ -1,5 +1,5 @@
 # persons/tasks/sub_tascs_celery/sub_task_get_send_letter.py:1
-
+import json
 import logging
 from typing import Any, Mapping, Optional
 
@@ -12,12 +12,26 @@ def child_process_emailing(*args, **kwargs):
     from django.core.mail import send_mail
     from django.template.loader import render_to_string
 
+    from persons.models import Users
     from project.settings_conf.settings_env import APP_DEFAULT_FROM_EMAIL
 
+    log.info(
+        f"""\n
+    # ============================================
+    # DEBUG child_process_emailing
+    # args: {args}
+    # kwargs: {kwargs}
+    # subject_: str = {kwargs.get("subject")}
+    #     text_context: str = {kwargs.get("text_context")}
+    #     context_: Optional[Mapping[str, Any]] = {kwargs.get("context")}
+    #     context_['user'] = {json.loads((kwargs.get("context"))['user'])}
+    # ============================================
+"""
+    )
     subject_: str = kwargs.get("subject")
     text_context: str = kwargs.get("text_context")
     context_: Optional[Mapping[str, Any]] = kwargs.get("context")
-
+    context_["user"] = json.loads(context_["user"])
     recipient_list_: list[str] = []
     # That is context to the body of letter
     text_context = render_to_string(template_name=text_context, context=context_)
@@ -56,6 +70,7 @@ def task_child_process_letter_thanks_for_your_account(self, *args, **kwargs) -> 
     :param kwargs: empty
     :return: bool
     """
+
     log_t = f"[{task_child_process_letter_thanks_for_your_account.__name__}]:"
     try:
         child_process_emailing(*args, **kwargs)

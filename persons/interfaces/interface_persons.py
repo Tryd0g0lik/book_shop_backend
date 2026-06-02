@@ -43,8 +43,6 @@ class UsersPydanticDict(TypedDict):
 
 
 class UsersPydantic(BaseModel):
-    id: int
-    last_login: Optional[datetime]
     is_superuser: bool
     username: str
     first_name: str
@@ -52,15 +50,12 @@ class UsersPydantic(BaseModel):
     email: str
     is_staff: bool
     is_active: bool
-    date_joined: datetime
     category: str
     password: str
     is_sent: bool
     is_verified: bool
     verification_code: Optional[str]
     balance: float
-    created_at: datetime
-    updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 

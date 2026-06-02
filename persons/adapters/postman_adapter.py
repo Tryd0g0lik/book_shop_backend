@@ -10,9 +10,6 @@ from typing import Optional
 from django.core.mail import send_mail
 
 from persons.interfaces import (
-    PersonService,
-)
-from persons.interfaces import (
     PersonServiceDatabaseAdapter as PersonServiceDatabaseInitialize,
 )
 from persons.interfaces import (
@@ -24,7 +21,7 @@ from .. import EnumTemplatesKeysCache, EnumTemplatesREGEX
 from ..exceptions import PersonErrorImproperlyConfigured
 from ..exceptions.error_postman import PostmanRequiredModelError
 from ..interfaces import EmailString
-from . import CacherAdapterMixin, PersonServiceDatabaseAdapter
+from . import CacherAdapter, PersonServiceDatabaseAdapter
 from .person_base import PersonBasisMixin
 
 #
@@ -33,49 +30,9 @@ from .person_base import PersonBasisMixin
 log = logging.getLogger(__name__)
 
 
-class PostmanAdapter(
-    CacherAdapterMixin,
-):
-    database_service = None
+class PostmanAdapter:
+    database_service: PersonServiceDatabaseInitialize = PersonServiceDatabaseAdapter()
     lock = asyncio.Lock()
-
-    def __init__(
-        self,
-        db: int = 0,
-        max_connections: int = 5,
-        decode_responses: bool = False,
-        socket_connect_timeout: int = 5,
-        socket_timeout: int = 5,
-        retry_on_timeout: bool = True,
-        health_check_interval: int = 30,
-    ):
-        """
-        The Postman. It is a builder. It contains the:
-            - interface of cache-server through the 'persons.apps.cachemanager';
-            - account service/manager. It is for a work through email. It is sending a secret token or the integer code
-              fnd more it is for account actions. 'persons.apps.accountmanager';
-            - emailing. It is a simply sending a message/email to the user's email address
-                through 'PostmanAdapter.send_email_to_user';
-            - service of database. It is a work with a searching, getting of user by email or id, checking of
-                email address, password in relation database (It not Redis) - 'database_service = PersonServiceDatabaseAdapter'.
-
-        :param db:
-        :param max_connections:
-        :param decode_responses:
-        :param socket_connect_timeout:
-        :param socket_timeout:
-        :param retry_on_timeout:
-        :param health_check_interval:
-        """
-        super().__init__(
-            db,
-            max_connections,
-            decode_responses,
-            socket_connect_timeout,
-            socket_timeout,
-            retry_on_timeout,
-            health_check_interval,
-        )
 
     def __new__(cls, *args, **kwargs):
         """
@@ -102,7 +59,6 @@ class PostmanAdapter(
             person_email: Optional[str] = None,
         ) -> None:
             """
-            Important! This person must be having a status is_authenticated or not is_nonymous!
             Sub_class for works wih properties and cache or database of Person.
             Here we have the two variables for works with the person database.
              - 'database_service' will allow us to get the one user by email or index, or create_or_update  one position from database.
@@ -133,7 +89,7 @@ class PostmanAdapter(
                 user_old = None
 
                 log.info(
-                    f"[SubPerson][get_model]: TEST DEBUG get_email: {get_email} & get_index {get_index} & self.get_person_model: {str(self.get_person_model)}"
+                    f"[SubPerson][get_model]: TEST DEBUG \n get_email: {get_email} \n get_index {get_index} \n self.get_person_model: {str(self.get_person_model)} \n key_cache: {key_cache}"
                 )
                 get_person_model = self.get_person_model
                 if get_person_model is None and get_email is None and get_index is None:
@@ -162,8 +118,13 @@ class PostmanAdapter(
                     )
 
                     async with PostmanAdapter.lock:
-                        user_old = database_service.get_user_by_id(get_index)
 
+                        def get_user_by_index_sync(index):
+                            return database_service.get_user_by_id(index)
+
+                        user_old = await asyncio.to_thread(
+                            get_user_by_index_sync, get_index
+                        )
                     if user_old is None:
                         return None
                     self.get_person_model = user_old
@@ -182,28 +143,59 @@ class PostmanAdapter(
                     async with PostmanAdapter.lock:
                         log.info("TEST DEBUG BEFORE 3: EMAIL " + get_email)
 
-                        user_old = database_service.get_user_by_email(get_email)
+                        def get_user_by_email_sync(email):
+                            return database_service.get_user_by_email(email)
+
+                        user_old = await asyncio.to_thread(
+                            get_user_by_email_sync, get_email
+                        )
 
                         log.info(
-                            "TEST DEBUG AFTER 3: "
+                            "TEST DEBUG AFTER 3: \n"
+                            + f"str(type(user_old): {str(type(user_old))} \n"
+                            + f"UsersPydantic: {str(UsersPydantic)} \n"
                             + str(type(user_old) == UsersPydantic)
                         )
                         log.info(
                             "TEST DEBUG AFTER TYPE 3: EMAIL " + str(type(user_old))
                         )
                         log.info("TEST DEBUG AFTER 3: EMAIL " + str(user_old.email))
+
                     if user_old is None:
                         return None
                     self.get_person_model = user_old
                     log.info("TEST DEBUG FROM 3: EMAIL " + get_email)
 
                     log.info("TEST DEBUG FROM 3: key_cache: " + key_cache)
+                PostmanAdapter.SubPerson.get_key_cache = key_cache
 
-                return (
-                    self._get_data(key_cache, database_service)
-                    if (isinstance(key_cache, str) and len(key_cache) > 8)
-                    else None
+                # if len(key_cache) > 0:
+                def get_data_sync():
+                    return self._get_data(key_cache, database_service)
+
+                get_data = await asyncio.to_thread(get_data_sync)
+                log.info(
+                    f"""
+                # ============================================
+                # DEBUG [{self.get_model.__name__}]
+                # key_cache: {key_cache}
+                # get_data: {get_data}
+                # get_data Type: {type(get_data)}
+                # ============================================
+                """
                 )
+                return get_data
+            #                 else:
+            #                     get_data_json = json.loads(self.get_person_model.model_dump_json())
+            #                     log.info(f"""
+            #                     # ============================================
+            #                     # DEBUG [{self.get_model.__name__}]
+            #                     # key_cache: {key_cache}
+            #                     # get_data_json: {get_data_json}
+            #                     # get_data_json Type: {type(get_data_json)}
+            #                     # ============================================
+            # """)
+            #                     return [get_data_json]
             except Exception as e:
                 log.warning(" ".join([self.log_t, e.args[0] if e.args else str(e)]))
                 return None
@@ -244,14 +236,13 @@ class PostmanAdapter(
             # Value & Email
 
             # Check a key on the valid.
-            PostmanAdapter.get_key_cache = value
-            key_cache = PostmanAdapter.get_key_cache
+
             data_of_cache_list: list = []
             # None
-            if key_cache is None:
+            if value is None:
                 return None
             data_from_cache_server: Optional[bytes | list | dict] = self.__get_cache(
-                key_cache
+                value
             )
             log.info(
                 f"[SubPerson][_get_data]: TEST DEBUG BEFORE received the data_from_cache_server Type: {type(data_from_cache_server)}"
@@ -305,10 +296,17 @@ class PostmanAdapter(
 
             old_user_database = self.get_person_model
             log.info(
-                f" DEBUG [SubPerson][_get_data]:  8 data_of_cache_list: {str(data_of_cache_list)} & old_user_database: {str(old_user_database)}"
+                f"""
+                # ============================================
+                # DEBUG [SubPerson][_get_data]:
+                # data_of_cache_list: {str(data_of_cache_list)}
+                #old_user_database: {str(old_user_database)}
+                # ============================================
+"""
             )
             data_of_cache_list_respon = []
             # Updating data
+
             for item_dict in data_of_cache_list.copy():
                 if not isinstance(item_dict, bytes):
                     log.info(
@@ -331,23 +329,36 @@ class PostmanAdapter(
                         f" DEBUG [SubPerson][_get_data]:  11 item_dict: {str(item_dict)}"
                     )
                 try:
-                    log.info("TEST DEBUG before user_from_database")
                     # ============================================
                     # DATABASE
                     # ============================================
-                    log.info("TEST DEBUG after user_from_database")
                     user_from_database_json = old_user_database.model_dump_json()
                     log.info(
-                        f"[SubPerson][_get_data]: TEST DEBUG after user_from_database: TYPE: {type(json.loads(user_from_database_json))} & {str(user_from_database_json)}"
+                        f"""\n
+                    # ============================================
+                    # [SubPerson][_get_data]: TEST DEBUG after user_from_database:
+                    # TYPE: {type(json.loads(user_from_database_json))}
+                    & {str(user_from_database_json)}
+                    # ============================================
+"""
                     )
                     ud = json.loads(user_from_database_json)
-                    log.info(f"TEST DEBUG before ud {str(ud)}  type: {type(ud)}")
                     [ud.__setitem__(k, v) for k, v in item_dict.items() if k in ud]
-                    log.info("TEST DEBUG after setattr(ud)")
+                    log.info(
+                        f"""\n
+                    # ============================================
+                    # TEST DEBUG
+                    # after setattr(ud):  {str(ud)}
+                    # after setattr(ud) Type: {type(ud)}
+                    # ============================================
+"""
+                    )
                     # ============================================
                     # DATABASE UPDATES
                     # ============================================
+
                     database_service.create_or_update_in_database(user_data=ud)
+
                     log.info("Data of the cache's server was updated with new values.")
 
                     data_of_cache_list_respon.append(ud)

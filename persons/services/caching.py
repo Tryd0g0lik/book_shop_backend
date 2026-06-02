@@ -10,15 +10,19 @@ import re
 import threading
 from typing import Optional
 
-from persons.adapters import AsyncCacherAdapterMixin, CacherAdapterMixin
+from persons.adapters import AsyncCacherAdapter, CacherAdapter
+from persons.interfaces import AsyncCacherAdapter as AsyncCacherAdapterInitialize
+from persons.interfaces import CacherAdapter as CacherAdapterInitialize
 from project.settings_conf.settings_env import REDIS_DB
 
 log = logging.getLogger(__name__)
 
+log.info(f"DEBUG REDIS_DB: {REDIS_DB}")
+
 
 class CacheManager:
-    cacher = CacherAdapterMixin(db=int(REDIS_DB))
-    asynccacher = AsyncCacherAdapterMixin(db=int(REDIS_DB))
+    cacher: CacherAdapterInitialize = CacherAdapter(db=REDIS_DB)
+    asynccacher: AsyncCacherAdapterInitialize = AsyncCacherAdapter(db=REDIS_DB)
 
     def __init__(
         self,
@@ -275,7 +279,7 @@ class CacheManager:
                                 log.info(
                                     self.log_t[:-1]
                                     + "[aget]:"
-                                    + " SIMPLE GET THE CACHE PER A SINGLE KEY"
+                                    + f" SIMPLE GET THE CACHE PER A SINGLE KEY: {key}"
                                 )
 
                                 value = await conn.get(key)
@@ -323,6 +327,9 @@ class CacheManager:
                             and re.search(r"[\w:]{1,50}", key_pattern, flags=re.ASCII)
                         ):
                             keys = await conn.keys(key_pattern)
+                            log.info(
+                                self.log_t[:-1] + "[aget]:" + " \nKEYS: " + str(keys)
+                            )
                             if keys:
                                 collection.extend(list(keys))
                             # collection.extend(keys)

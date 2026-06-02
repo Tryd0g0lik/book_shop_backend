@@ -37,7 +37,7 @@ class TestCacheManagerSaving:
         ],
     )
     async def test_cache_manager_method_save(self, key_str, data_dict, expected):
-        from persons.services.caching import CacheManager
+        from persons.services import CacheManager
 
         cachemanager = CacheManager()
         result_bool = await cachemanager.asave(key_str, data_dict)

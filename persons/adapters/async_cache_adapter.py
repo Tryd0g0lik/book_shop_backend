@@ -17,7 +17,7 @@ from persons.adapters.cache_base import CacherBaseMixin
 log = logging.getLogger(__name__)
 
 
-class AsyncCacherAdapterMixin(CacherBaseMixin):
+class AsyncCacherAdapter(CacherBaseMixin):
 
     async_pool: Optional[ConnectionPool] = None
 
@@ -51,23 +51,18 @@ class AsyncCacherAdapterMixin(CacherBaseMixin):
         )
 
         try:
-            if AsyncCacherAdapterMixin.async_pool is None:
+            if AsyncCacherAdapter.async_pool is None:
                 # ============================================
                 # GET WORKERS
                 # ============================================
                 log.info(
-                    self.log_t
-                    + self._init_pool.__name__
+                    self.log_t[:-1]
+                    + f"[{self._init_pool.__name__}]:"
                     + " Before Redis Connection & pool initialized."
                 )
 
                 # async with self.async_lock:
-                print(
-                    self.log_t
-                    + self._init_pool.__name__
-                    + " Before the async pool initialized."
-                )
-                AsyncCacherAdapterMixin.async_pool = ConnectionPool(
+                AsyncCacherAdapter.async_pool = ConnectionPool(
                     host=REDIS_HOST,
                     port=int(REDIS_PORT),
                     password=self.redis_password,
@@ -81,29 +76,24 @@ class AsyncCacherAdapterMixin(CacherBaseMixin):
                     health_check_interval=self.health_check_interval,
                 )
                 log.info(
-                    self.log_t
-                    + self._init_pool.__name__
-                    + " Redis Connection pool initialized."
-                )
-                print(
-                    self.log_t
-                    + self._init_pool.__name__
+                    self.log_t[:-1]
+                    + f"[{self._init_pool.__name__}]:"
                     + " Redis Connection pool initialized."
                 )
         except Exception as e:
             log_t = (
                 self.log_t[:-1]
-                + self._init_pool.__name__
+                + f"[{self._init_pool.__name__}]:"
                 + " Connection with a cache server failed. %s" % str(e)
             )
-            print(log_t)
+            log.info(log_t)
             raise ValueError(log_t)
 
     async def _get_client(self):
-        if AsyncCacherAdapterMixin.async_pool is None:
+        if AsyncCacherAdapter.async_pool is None:
             async with self.async_lock:
                 await self._init_pool()
-        return Redis(connection_pool=AsyncCacherAdapterMixin.async_pool)
+        return Redis(connection_pool=AsyncCacherAdapter.async_pool)
 
     async def related(self) -> bool:
         if self.server_client is None:
@@ -113,9 +103,9 @@ class AsyncCacherAdapterMixin(CacherBaseMixin):
                 # ============================================
                 self.server_client = await self._get_client()
             except Exception as e:
-                log_t = self.log_t if e.args else str(e) + self.related.__name__
+                log_t = self.log_t if e.args else str(e)
                 log_t += (
-                    self.related.__name__
+                    f"[{self.related.__name__}]:"
                     + " Connection with a cache server failed. %s" % e.args[0]
                 )
                 print(log_t)
@@ -168,10 +158,10 @@ class AsyncCacherAdapterMixin(CacherBaseMixin):
 
     async def _recreated_pool(self):
         async with self.async_lock:
-            is_pool = AsyncCacherAdapterMixin.async_pool
+            is_pool = AsyncCacherAdapter.async_pool
             if is_pool is not None:
-                await AsyncCacherAdapterMixin.async_pool.disconnect()
-                AsyncCacherAdapterMixin.async_pool = None
+                await AsyncCacherAdapter.async_pool.disconnect()
+                AsyncCacherAdapter.async_pool = None
             await self._init_pool()
 
     async def close(self):
@@ -180,15 +170,15 @@ class AsyncCacherAdapterMixin(CacherBaseMixin):
         # ============================================
 
         if self.server_client:
-            await self.server_client.close()
+            await self.server_client.aclose()
             self.server_client = None
-        is_pool = AsyncCacherAdapterMixin.async_pool
+        is_pool = AsyncCacherAdapter.async_pool
         if is_pool is not None:
-            await AsyncCacherAdapterMixin.async_pool.disconnect()
-            AsyncCacherAdapterMixin.async_pool = None
+            await AsyncCacherAdapter.async_pool.disconnect()
+            AsyncCacherAdapter.async_pool = None
 
     async def is_connected(self) -> bool:
-        is_pool = AsyncCacherAdapterMixin.async_pool
+        is_pool = AsyncCacherAdapter.async_pool
         if is_pool is None:
             return False
         try:

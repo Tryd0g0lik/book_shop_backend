@@ -4,7 +4,7 @@ from typing import ClassVar, Optional, Protocol
 
 from persons.exceptions import PersonErrorImproperlyConfigured
 from persons.exceptions.error_postman import PostmanRequiredModelError
-from persons.interfaces import CacherAdapter, PersonService, UsersPydantic
+from persons.interfaces import UsersPydantic
 
 
 class PersonBasisMixin(Protocol):
@@ -84,7 +84,7 @@ class PostmanAdapter(Protocol):
         ) -> Optional[list[dict]]: ...
 
         def _get_data(
-            self, email: str, database_service: PersonService
+            self, email: str, database_service: PersonServiceDatabaseAdapter
         ) -> Optional[list[dict]]: ...
 
         @staticmethod
