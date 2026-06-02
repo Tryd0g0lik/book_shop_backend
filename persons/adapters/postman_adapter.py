@@ -59,10 +59,27 @@ class PostmanAdapter:
             person_email: Optional[str] = None,
         ) -> None:
             """
-            Sub_class for works wih properties and cache or database of Person.
+            Sub_class for works wih properties of the one person. They are updating through entrypoint, cache and  database.
+            === For get & update data.
             Here we have the two variables for works with the person database.
-             - 'database_service' will allow us to get the one user by email or index, or create_or_update  one position from database.
-                Make the check - we have a specific email/index of the person or not.
+             - 'database_service' will allow us to get the one user by:
+             - - an email address or
+             - - index. It is database.
+             And. We have the three variables for works with the cache data.
+             - - ... or
+             - - ...,
+             - - value/cache_key, It is for cache.
+             The method get_model for the:
+             - get new data from source,
+             - get simple - None. It if we hadn't found data.
+
+             By email address or index we look up the person data in database and only database.
+             When we have the 'value' (cache key) from collection 'EnumTemplatesKeysCache' (by path persons/__init__.py)
+             mean we can look up data in the cache server and then update data in database.
+
+             When user registrate, first his data go in database and same data is sending in cache server.
+             After,  all moves persons (by a site), first is updating data in cache and then only will be to update data in database.
+
             :param int person_index: It is an index of person.
             :param str person_email: It is a email address.
             """
