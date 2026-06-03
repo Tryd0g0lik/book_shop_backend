@@ -49,9 +49,6 @@ async def child_process_get_keys_0(
     """
     from datetime import datetime
 
-    from persons.interfaces import (
-        AsyncCacherAdapter as AsyncCacherAdapterMixinInitialize,
-    )
     from persons.interfaces import CacheManager as CacheManagerInitialize
     from persons.services import CacheManager
 
@@ -61,10 +58,9 @@ async def child_process_get_keys_0(
     try:
         log.info(
             log_t[:-1]
-            + f"[{child_process_get_keys_0.__name__}]:"
-            + f"""\n
+            + f"""[{child_process_get_keys_0.__name__}]: \n
         # ============================================
-        # REDIS CACHE SERVER - GET THE COLLECTION of KEYS
+        # REDIS CACHE SERVER - BEFORE  THE GET COLLECTION BY THE TEMPLATE of KEYS
         # - key_pattern: {str(key_pattern)}
         # - keys: {str(keys)}
         # - cachemanager.cacher.redis_database: {cachemanager.cacher.redis_database}
@@ -77,8 +73,13 @@ async def child_process_get_keys_0(
         )
         log.warning(
             log_t[:-1]
-            + f"[{child_process_get_keys_0.__name__}]:"
-            + " DEBUG \nReceived key_pattern %s \n & LIST LENGTH: %s & LIST: %s \n  RESULT_BOOL: %s "
+            + f""""[{child_process_get_keys_0.__name__}]: \n
+        # ============================================
+        # DEBUG REDIS CACHE SERVER - AFTER  THE GET COLLECTION BY THE TEMPLATE of KEYS
+        # Received key_pattern %s \n# LIST LENGTH: %s
+        # LIST: %s \n# RESULT_BOOL: %s
+        # ============================================
+"""
             % (key_pattern, str(len(keys)), str(keys), str(result_bool))
         )
         start_time = datetime.now()
@@ -89,7 +90,13 @@ async def child_process_get_keys_0(
                 log.warning(
                     log_t[:-1]
                     + f"[{child_process_get_keys_0.__name__}]:"
-                    + " DEBUG THe KEY: %s RUN TO THE LOOP " % (key.decode("utf-8"),),
+                    + """\n
+        # ============================================
+        # DEBUG REDIS CACHE SERVER - BEFORE  THE GET COLLECTION BY THE KEY of POSITION
+        # THe KEY: %s
+        # ============================================
+        """
+                    % (key.decode("utf-8"),),
                 )
                 tasks.append(
                     asyncio.create_task(
@@ -99,10 +106,21 @@ async def child_process_get_keys_0(
                     )
                 )
             await asyncio.gather(*tasks, return_exceptions=True)
+        log.info(
+            log_t[:-1]
+            + f"[{child_process_get_keys_0.__name__}]:"
+            + """\n
+        # ============================================
+        # DEBUG REDIS CACHE SERVER - AFTER  THE GET COLLECTION BY THE KEY of POSITION
+        # THe FOUND CACHE'S POSITIONS: %s
+        # ============================================
+        """
+            % queue.qsize()
+        )
 
         log.info(
             log_t[:-1]
-            + f"[{child_process_get_keys_0.__name__}]: ====================== DEBUG Review ======================"
+            + f"[{child_process_get_keys_0.__name__}]:\n ====================== DEBUG Review ======================"
         )
         end_time = datetime.now()
         passed_time: datetime.now = end_time - start_time
@@ -324,23 +342,16 @@ def task_postman(self, *args, **kwargs) -> None:
 
     log_t = "[task_postman]:"
     try:
+        custom_loop = CustomizationSyncAsyncLoop(*args, **kwargs)
+        custom_loop.get_new_function = send_letter_to_user_email
+        wrapper = custom_loop.get_new_loop()
+        log.info(
+            log_t + " After opening a new loop. & Before run the threading.Thread."
+        )
+        Thread(target=wrapper).start()
 
-        args_len = len(args)
-        kwargs_len = len(kwargs) if kwargs is not None else 0
-        if args_len > 0 and kwargs_len > 0:
-            log.info(
-                log_t + "DEBUG *ARGS: %s & **KWARGS: %s" % (str(args), str(kwargs))
-            )
-            custom_loop = CustomizationSyncAsyncLoop(*args, **kwargs)
-            custom_loop.get_new_function = send_letter_to_user_email
-            wrapper = custom_loop.get_new_loop()
-            log.info(
-                log_t + " After opening a new loop. & Before run the threading.Thread."
-            )
-            Thread(target=wrapper).start()
-        else:
-            time.sleep(3)
-        return
+        time.sleep(3)
+
     except Exception as e:
         log.info(log_t + str(e))
         raise self.retry(exc=e, countdown=30)

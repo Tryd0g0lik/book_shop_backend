@@ -172,8 +172,8 @@ class TestSendToUserEmailFromTask:
         # ============================================
         """)
 
-        args = (EnumTemplatesKeysCache.USER_PENDING.value % re.sub(r"[@.]", "", email),)
-        test_send_letter_to_user_email = await send_letter_to_user_email(*args, **kwargs)
+        # args = (EnumTemplatesKeysCache.USER_PENDING.value % re.sub(r"[@.]", "", email),)
+        test_send_letter_to_user_email = await send_letter_to_user_email()
 
         # ----
         assert isinstance(test_send_letter_to_user_email, bool|list)

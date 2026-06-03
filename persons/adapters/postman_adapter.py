@@ -31,7 +31,6 @@ log = logging.getLogger(__name__)
 
 
 class PostmanAdapter:
-    database_service: PersonServiceDatabaseInitialize = PersonServiceDatabaseAdapter()
     lock = asyncio.Lock()
 
     def __new__(cls, *args, **kwargs):
@@ -42,7 +41,7 @@ class PostmanAdapter:
         :param list | tuple args:
         :param dict kwargs:
         """
-        from .person_database_adapter import PersonServiceDatabaseAdapter
+        from . import PersonServiceDatabaseAdapter
 
         cls.KEY_OF_CACHE_REGEX = EnumTemplatesREGEX.PERSON_KEYS_OF_CACHE_IN_REGEX.value
         cls.log_t: str = "[%s]" % cls.__class__.__name__

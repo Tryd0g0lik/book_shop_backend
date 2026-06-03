@@ -15,6 +15,7 @@ def child_process_emailing(*args, **kwargs):
     from persons.models import Users
     from project.settings_conf.settings_env import APP_DEFAULT_FROM_EMAIL
 
+    context = kwargs.get("context", None)
     log.info(
         f"""\n
     # ============================================
@@ -23,18 +24,36 @@ def child_process_emailing(*args, **kwargs):
     # kwargs: {kwargs}
     # subject_: str = {kwargs.get("subject")}
     #     text_context: str = {kwargs.get("text_context")}
-    #     context_: Optional[Mapping[str, Any]] = {kwargs.get("context")}
-    #     context_['user'] = {json.loads((kwargs.get("context"))['user'])}
+    #     context_: Optional[Mapping[str, Any]] = {context}
+    #     context_['user'] = {json.loads(context['user']) if context is not None else None}
     # ============================================
 """
     )
     subject_: str = kwargs.get("subject")
     text_context: str = kwargs.get("text_context")
-    context_: Optional[Mapping[str, Any]] = kwargs.get("context")
-    context_["user"] = json.loads(context_["user"])
+    context_: Optional[Mapping[str, Any]] = context
+    if context is not None:
+        context_["user"] = Users(**(json.loads(context_["user"])))
+    log.info(
+        f"""
+    # ============================================
+    # DEBUG child_process_emailing - USER FROM JSON TO OBJECT
+    # context_: {context_}
+    # context_ user type: {type(context_["user"]) if context_ is not None else None}
+    # ============================================
+    """
+    )
     recipient_list_: list[str] = []
     # That is context to the body of letter
     text_context = render_to_string(template_name=text_context, context=context_)
+    log.info(
+        f"""
+        # ============================================
+        # DEBUG child_process_emailing - AFTER render_to_string()
+        # text_context: {text_context}
+        # ============================================
+        """
+    )
     for one_list in args:
         for u in one_list:
             em = u.__getitem__("email")

@@ -66,18 +66,9 @@ class PersonServiceDatabaseAdapter:
 
 
 class PostmanAdapter(Protocol):
-
-    database_service: ClassVar[Optional[PersonServiceDatabaseAdapter]]
     lock: ClassVar[Optional[asyncio.Lock]]
 
-    def __init__(self) -> None: ...
-
-    class SubPerson(Protocol):
-        def __init__(
-            self,
-            person_index: Optional[int],
-            person_email: Optional[str],
-        ) -> None: ...
+    class SubPerson(PersonBasisMixin, Protocol):
 
         async def get_model(
             self, database_service: PersonServiceDatabaseAdapter, key_cache=""
