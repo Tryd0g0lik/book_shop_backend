@@ -9,8 +9,6 @@ from threading import Thread
 from uuid import uuid4
 
 from celery import shared_task
-
-# from django.core.mail import send_mail
 from redis import ConnectionError, TimeoutError
 
 from persons.services import CustomizationSyncAsyncLoop
@@ -43,10 +41,7 @@ async def cache_user_data(*args, **kwargs) -> bool:
     log_t = "[task cache_user_data]:"
 
     for k in args:
-        log.info(
-            log_t
-            + f"TEST DEBUG k: {str(k)} & args: {str(args)} & kwargs: {str(kwargs)} "
-        )
+        log.info(log_t + f"TEST DEBUG k: {str(k)}")
         # It is an REGEX expression - Check
         if not PERSON_KEYS_OF_CACHE_IN_REGEX.search(k):
             log.error(
@@ -127,20 +122,16 @@ def task_of_cache(self, *args, **kwargs) -> None:
     :return: void
     """
     log_t = "[task_of_cache]:"
-    args_len = len(args)
-    kwargs_len = len(kwargs) if kwargs is not None else 0
+
     try:
-        if args_len > 0 and kwargs_len > 0:
-            custom_loop = CustomizationSyncAsyncLoop(*args, **kwargs)
-            custom_loop.get_new_function = cache_user_data
-            custom_loop.is_async = True
-            wrapper = custom_loop.get_new_loop()
-            log.info(
-                log_t + " After opening a new loop. & Before run the threading.Thread."
-            )
-            Thread(target=wrapper).start()
-        else:
-            time.sleep(3)
-        return
+
+        custom_loop = CustomizationSyncAsyncLoop(*args, **kwargs)
+        custom_loop.get_new_function = cache_user_data
+        custom_loop.is_async = True
+        wrapper = custom_loop.get_new_loop()
+        log.info(
+            log_t + " After opening a new loop. & Before run the threading.Thread."
+        )
+        Thread(target=wrapper).start()
     except Exception as e:
         raise self.retry(exc=e, countdown=30)

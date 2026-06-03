@@ -181,7 +181,7 @@ class CacheManager:
 # Checking of connection
             """
         )
-        await self.asynccacher.related()
+
         is_connected = await self.asynccacher.is_connected()
         if is_connected is None or not is_connected:
             await self.asynccacher.related()

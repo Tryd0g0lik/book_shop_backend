@@ -17,6 +17,7 @@ from persons.exceptions import PersonErrorTasks
 from persons.interfaces import PostmanAdapter
 from persons.interfaces.interface_persons import UsersPydantic, UsersPydanticDict
 from persons.tasks.sub_tasks_celery.sub_task_get_send_letter import (
+    child_process_emailing,
     task_child_process_letter_thanks_for_your_account,
 )
 
@@ -63,7 +64,7 @@ async def child_process_get_keys_0(
         # REDIS CACHE SERVER - BEFORE  THE GET COLLECTION BY THE TEMPLATE of KEYS
         # - key_pattern: {str(key_pattern)}
         # - keys: {str(keys)}
-        # - cachemanager.cacher.redis_database: {cachemanager.cacher.redis_database}
+        # - number cachemanager.AFTER  THE GET COLLECTION BY THE TEMPLATE of KEYScacher.redis_database: {cachemanager.cacher.redis_database}
         # ============================================"""
         )
 
@@ -177,7 +178,8 @@ def sub_function(
     log_t = log_t[:-1] + "[test sub_function]:"
 
     kwargs = {"subject": subject_, "text_context": text_context_, "context": context_}
-    task_child_process_letter_thanks_for_your_account.delay(*(list_of_keys,), **kwargs)
+    # task_child_process_letter_thanks_for_your_account.delay(*(list_of_keys,), **kwargs)
+    child_process_emailing(*(list_of_keys,), **kwargs)
     log.info(
         log_t[:-1]
         + f"[{sub_function.__name__}]:"
@@ -220,10 +222,11 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
             )
         log.info(
             log_t
-            + """\n
+            + f"""\n
             # ============================================
 We have the DATA in QUEUES (the JSON format). These data we above received.
 Below we need t get the token. Then insert in letter and send.
+            # dict_queue: {dict_queue.qsize()}
             # ============================================
         """
         )
@@ -263,7 +266,7 @@ Below we need t get the token. Then insert in letter and send.
 """
             )
             person_list: Optional[list[UsersPydanticDict]] = await sub_person.get_model(
-                database_service,
+                database_service, key_cache
             )
             log.info(
                 f"""

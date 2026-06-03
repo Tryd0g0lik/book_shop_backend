@@ -42,6 +42,25 @@ class UsersPydanticDict(TypedDict):
     updated_at: datetime
 
 
+# class UsersPydantic(BaseModel):
+#     id: Optional[int]
+#     last_login: Optional[datetime]
+#     is_superuser: bool
+#     username: Optional[str]
+#     first_name: Optional[str]
+#     last_name: Optional[str]
+#     email: Optional[str]
+#     is_staff: bool
+#     is_active: bool
+#     date_joined: Optional[datetime]
+#     category: Optional[str]
+#     password: Optional[str]
+#     is_sent: Optional[str]
+#     is_verified: Optional[str]
+#     verification_code: Optional[str]
+#     balance: Optional[float]
+#     created_at: Optional[datetime]
+#     updated_at: Optional[datetime]
 class UsersPydantic(BaseModel):
     is_superuser: bool
     username: str

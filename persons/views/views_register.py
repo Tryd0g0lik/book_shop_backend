@@ -186,4 +186,4 @@ class UsersRegistrationView(AllauthSignupView):
             task_postman.delay(*args, **kwargs)
         messages.success(self.request, message)
 
-        return
+        return True

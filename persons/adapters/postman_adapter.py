@@ -85,7 +85,7 @@ class PostmanAdapter:
             self.log_t = "[%s]:" % self.__class__.__name__
             super().__init__(self.log_t, person_index, person_email)
             log.info(
-                f"\n[SubPerson][get_model]: TEST DEBUG person_index: {self.get_index} & get_email: {self.get_email}"
+                f"\n[SubPerson][get_model]: DEBUG person_index: {self.get_index} & get_email: {self.get_email}"
             )
 
         async def get_model(
@@ -105,12 +105,12 @@ class PostmanAdapter:
                 user_old = None
 
                 log.info(
-                    f"[SubPerson][get_model]: TEST DEBUG \n get_email: {get_email} \n get_index {get_index} \n self.get_person_model: {str(self.get_person_model)} \n key_cache: {key_cache}"
+                    f"[SubPerson][get_model]: DEBUG \n get_email: {get_email} \n get_index {get_index} \n self.get_person_model: {str(self.get_person_model)} \n key_cache: {key_cache}"
                 )
                 get_person_model = self.get_person_model
                 if get_person_model is None and get_email is None and get_index is None:
                     raise PersonErrorImproperlyConfigured()
-                log.info("TEST DEBUG 0")
+                log.info("DEBUG 0")
                 # ====== Take the old model of user/person. Find data in the cache
                 # per template "user:pending:login". If we got the data, it means next we will be
                 # updating the model (contain the old tada).
@@ -118,7 +118,7 @@ class PostmanAdapter:
                 if get_person_model is not None and isinstance(
                     get_person_model, UsersPydantic
                 ):
-                    log.info("TEST DEBUG 1")
+                    log.info("DEBUG 1")
                     log.info(
                         "[SubPerson][get_model]: # ====== Take the old model of user/person. Find data in the cache"
                     )
@@ -128,9 +128,9 @@ class PostmanAdapter:
                 elif get_index is not None and isinstance(get_index, int):
                     # ====== Take the user's index, lookup the old user's model. Then is finding the user's data in
                     # the cache how above.
-                    log.info("TEST DEBUG 2")
+                    log.info("DEBUG 2")
                     log.info(
-                        "[SubPerson][get_model]: TEST DEBUG # ====== Take the user's index, lookup the old user's model. Then is finding the user's data in"
+                        "[SubPerson][get_model]: DEBUG # ====== Take the user's index, lookup the old user's model. Then is finding the user's data in"
                     )
 
                     async with PostmanAdapter.lock:
@@ -145,19 +145,19 @@ class PostmanAdapter:
                         return None
                     self.get_person_model = user_old
                     log.info(
-                        f"TEST DEBUG FROM 2: TYPE: {type(user_old)} % EMAIL {str(user_old)} "
+                        f"DEBUG FROM 2: TYPE: {type(user_old)} % EMAIL {str(user_old)} "
                     )
                     email_fra: str = user_old.__getattribute__("email")
-                    log.info("TEST DEBUG FROM 2: EMAIL " + email_fra)
+                    log.info("DEBUG FROM 2: EMAIL " + email_fra)
                     # get_email = email_fra
 
-                    log.info("TEST DEBUG FROM 2: KEY CACHE " + key_cache)
+                    log.info("DEBUG FROM 2: KEY CACHE " + key_cache)
                 # Email
                 elif get_email is not None and isinstance(get_email, str):
-                    log.info("TEST DEBUG 3")
+                    log.info("DEBUG 3")
                     # ====== Take the user's email, lookup the old user's model. Then is finding the user's data in
                     async with PostmanAdapter.lock:
-                        log.info("TEST DEBUG BEFORE 3: EMAIL " + get_email)
+                        log.info("DEBUG BEFORE 3: EMAIL " + get_email)
 
                         def get_user_by_email_sync(email):
                             return database_service.get_user_by_email(email)
@@ -167,29 +167,28 @@ class PostmanAdapter:
                         )
 
                         log.info(
-                            "TEST DEBUG AFTER 3: \n"
+                            "DEBUG AFTER 3: \n"
                             + f"str(type(user_old): {str(type(user_old))} \n"
                             + f"UsersPydantic: {str(UsersPydantic)} \n"
                             + str(type(user_old) == UsersPydantic)
                         )
-                        log.info(
-                            "TEST DEBUG AFTER TYPE 3: EMAIL " + str(type(user_old))
-                        )
-                        log.info("TEST DEBUG AFTER 3: EMAIL " + str(user_old.email))
+                        log.info("DEBUG AFTER TYPE 3: EMAIL " + str(type(user_old)))
+                        log.info("DEBUG AFTER 3: EMAIL " + str(user_old.email))
 
                     if user_old is None:
                         return None
                     self.get_person_model = user_old
-                    log.info("TEST DEBUG FROM 3: EMAIL " + get_email)
+                    log.info("DEBUG FROM 3: EMAIL " + get_email)
 
-                    log.info("TEST DEBUG FROM 3: key_cache: " + key_cache)
+                    log.info("DEBUG FROM 3: key_cache: " + key_cache)
                 PostmanAdapter.SubPerson.get_key_cache = key_cache
 
                 # if len(key_cache) > 0:
                 def get_data_sync():
                     return self._get_data(key_cache, database_service)
 
-                get_data = await asyncio.to_thread(get_data_sync)
+                get_data = self._get_data(key_cache, database_service)
+                # get_data = await asyncio.to_thread(get_data_sync)
                 log.info(
                     f"""
                 # ============================================
@@ -261,10 +260,10 @@ class PostmanAdapter:
                 value
             )
             log.info(
-                f"[SubPerson][_get_data]: TEST DEBUG BEFORE received the data_from_cache_server Type: {type(data_from_cache_server)}"
+                f"[SubPerson][_get_data]: DEBUG BEFORE received the data_from_cache_server Type: {type(data_from_cache_server)}"
             )
             log.info(
-                f"[SubPerson][_get_data]: TEST DEBUG BEFORE received the data_from_cache_server: {str(data_from_cache_server)}"
+                f"[SubPerson][_get_data]: DEBUG BEFORE received the data_from_cache_server: {str(data_from_cache_server)}"
             )
 
             # Value
@@ -352,7 +351,7 @@ class PostmanAdapter:
                     log.info(
                         f"""\n
                     # ============================================
-                    # [SubPerson][_get_data]: TEST DEBUG after user_from_database:
+                    # [SubPerson][_get_data]: DEBUG after user_from_database:
                     # TYPE: {type(json.loads(user_from_database_json))}
                     & {str(user_from_database_json)}
                     # ============================================
@@ -363,7 +362,7 @@ class PostmanAdapter:
                     log.info(
                         f"""\n
                     # ============================================
-                    # TEST DEBUG
+                    # DEBUG
                     # after setattr(ud):  {str(ud)}
                     # after setattr(ud) Type: {type(ud)}
                     # ============================================
