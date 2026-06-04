@@ -4,7 +4,7 @@ from typing import ClassVar, Optional, Protocol
 
 from persons.exceptions import PersonErrorImproperlyConfigured
 from persons.exceptions.error_postman import PostmanRequiredModelError
-from persons.interfaces import UsersPydantic
+from persons.interfaces import CacheManager, UsersPydantic
 
 
 class PersonBasisMixin(Protocol):

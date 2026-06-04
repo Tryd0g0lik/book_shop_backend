@@ -25,7 +25,7 @@ class TestRegistrationAndSendCodeVerification:
     def super_form_valid(self):
         # from persons.apps import cachemanager  # account_manager,
         # from persons.tasks.tasks_celery.task_set_cache import cache_user_data
-        from persons.apps import CacheManager
+        from persons.apps import cachemanager
         from persons.exceptions.error_postman import PostmanRequiredModelError
         from persons.interfaces import UsersPydantic
 
@@ -33,12 +33,12 @@ class TestRegistrationAndSendCodeVerification:
         # from persons.tasks.tasks_celery.task_set_cache import (
         #     task_of_cache,
         # )
-        cachemanager = CacheManager()
+
         account_manager = AccountManager()
 
 
         async def async_super_form_valid(user_data):
-
+            postman = account_manager.postman
             log.info(f"""\n
             # ============================================
             # MOCK the form_valid
@@ -46,7 +46,7 @@ class TestRegistrationAndSendCodeVerification:
             # ============================================
             """)
 
-            postman = account_manager.postman
+
 
             # Create a new user.
             SubPerson = postman.SubPerson
@@ -73,7 +73,7 @@ class TestRegistrationAndSendCodeVerification:
             # ============================================
             """)
             value: str = EnumTemplatesKeysCache.USER_PENDING.value % re.sub(r'[@.]', "", email)
-            await cachemanager.asave(value, {"username": username, "email": email})
+            await sub_person.cachemanager.asave(value, {"username": username, "email": email})
             log.info(f"""\n
             # ============================================
             # MOCK the form_valid
@@ -82,7 +82,7 @@ class TestRegistrationAndSendCodeVerification:
             # ============================================
             """)
 
-            await sub_person.get_model(database_service_, value)
+            await sub_person.get_model(database_service_,value)
             # await asyncio.to_thread(lambda : sub_person._get_data(value,database_service=database_service_))
             # await cachemanager.asynccacher.close()
             return

@@ -18,6 +18,7 @@ Configured to use PBKDF2 + HMAC + SHA256.
 The result is a 64 byte binary string. Iterations may be changed
 safely but you must rename the algorithm if you change SHA256.
 Current algorithm is: 'pbkdf2_sha256'
+Template is : "%s$%d$%s$%s" (algorithm,iterations, salt, hash )
 """
 
 import logging

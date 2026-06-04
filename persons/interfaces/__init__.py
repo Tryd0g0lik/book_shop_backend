@@ -1,3 +1,5 @@
+from typing import TypeAlias, Union
+
 __all__ = [
     "UsersPydantic",
     "EmailString",
@@ -20,7 +22,11 @@ from persons.interfaces.interface_cache_adapter import (
 
 # from persons.interfaces.interface_dataservice import PersonService
 from persons.interfaces.interface_emailStr import EmailString
-from persons.interfaces.interface_persons import UsersDict, UsersPydantic
+from persons.interfaces.interface_persons import (
+    UsersDict,
+    UsersPydantic,
+    UsersPydanticDict,
+)
 from persons.interfaces.interface_postman import (
     PersonBasisMixin,
     PersonServiceDatabaseAdapter,

@@ -21,7 +21,7 @@ class UsersDict(TypedDict):
     email: str
 
 
-class UsersPydanticDict(TypedDict):
+class UsersPydanticDict(ConfigDict):
     id: int
     last_login: Optional[datetime]
     is_superuser: bool
@@ -42,39 +42,58 @@ class UsersPydanticDict(TypedDict):
     updated_at: datetime
 
 
-# class UsersPydantic(BaseModel):
-#     id: Optional[int]
-#     last_login: Optional[datetime]
-#     is_superuser: bool
-#     username: Optional[str]
-#     first_name: Optional[str]
-#     last_name: Optional[str]
-#     email: Optional[str]
-#     is_staff: bool
-#     is_active: bool
-#     date_joined: Optional[datetime]
-#     category: Optional[str]
-#     password: Optional[str]
-#     is_sent: Optional[str]
-#     is_verified: Optional[str]
-#     verification_code: Optional[str]
-#     balance: Optional[float]
-#     created_at: Optional[datetime]
-#     updated_at: Optional[datetime]
 class UsersPydantic(BaseModel):
+    id: Optional[int]
+    last_login: Optional[datetime]
     is_superuser: bool
-    username: str
-    first_name: str
-    last_name: str
-    email: str
+    username: Optional[str]
+    first_name: Optional[str]
+    last_name: Optional[str]
+    email: Optional[str]
     is_staff: bool
     is_active: bool
-    category: str
-    password: str
-    is_sent: bool
-    is_verified: bool
+    date_joined: Optional[datetime]
+    category: Optional[str]
+    password: Optional[str]
+    is_sent: Optional[str]
+    is_verified: Optional[str]
     verification_code: Optional[str]
-    balance: float
+    balance: Optional[float]
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
+
+    def to_dict_without_secret_data(self) -> dict:
+        """We are excepts the password/ verification_code field from dict"""
+        return self.model_dump(exclude={"password", "verification_code"})
+
+    def to_public_dict(self) -> dict:
+        """Field only for publication"""
+        return self.model_dump(
+            include={
+                "id",
+                "username",
+                "email",
+                "first_name",
+                "last_name",
+                "balance",
+                "last_login",
+            }
+        )
+
+    # class UsersPydantic(BaseModel):
+    #     is_superuser: bool
+    #     username: str
+    #     first_name: str
+    #     last_name: str
+    #     email: str
+    #     is_staff: bool
+    #     is_active: bool
+    #     category: str
+    #     password: str
+    #     is_sent: bool
+    #     is_verified: bool
+    #     verification_code: Optional[str]
+    #     balance: float
 
     model_config = ConfigDict(from_attributes=True)
 

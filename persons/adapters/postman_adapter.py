@@ -41,7 +41,7 @@ class PostmanAdapter:
         :param list | tuple args:
         :param dict kwargs:
         """
-        from . import PersonServiceDatabaseAdapter
+        from persons.adapters import PersonServiceDatabaseAdapter
 
         cls.KEY_OF_CACHE_REGEX = EnumTemplatesREGEX.PERSON_KEYS_OF_CACHE_IN_REGEX.value
         cls.log_t: str = "[%s]" % cls.__class__.__name__
@@ -82,11 +82,15 @@ class PostmanAdapter:
             :param int person_index: It is an index of person.
             :param str person_email: It is a email address.
             """
+            from persons.services import CacheManager
+
             self.log_t = "[%s]:" % self.__class__.__name__
             super().__init__(self.log_t, person_index, person_email)
             log.info(
                 f"\n[SubPerson][get_model]: DEBUG person_index: {self.get_index} & get_email: {self.get_email}"
             )
+            self.cachemanager = CacheManager()
+            self.value_of_cache: Optional[list[bytes] | dict] = []
 
         async def get_model(
             self, database_service: PersonServiceDatabaseInitialize, key_cache: str = ""
@@ -96,6 +100,9 @@ class PostmanAdapter:
             # First - Check (lock up) in cache server. Here we will look the similar state.
             # If we could do not find the similar data then we will be looking to the relation database.
             Note: This method hase only one the cache key- 'user:pending:login'.
+            :param database_service:PersonServiceDatabaseInitialize. Required
+            :param cachemanager: CacheManagerInitialiae. Required
+            :param key_cache: str = ""
             :return:
             """
 
@@ -184,10 +191,13 @@ class PostmanAdapter:
                 PostmanAdapter.SubPerson.get_key_cache = key_cache
 
                 # if len(key_cache) > 0:
-                def get_data_sync():
-                    return self._get_data(key_cache, database_service)
+                # def get_data_sync():
+                #     return self._get_data(key_cache, database_service, cachemanager)
 
-                get_data = self._get_data(key_cache, database_service)
+                get_data = await self._get_data(
+                    key_cache,
+                    database_service,
+                )
                 # get_data = await asyncio.to_thread(get_data_sync)
                 log.info(
                     f"""
@@ -215,7 +225,7 @@ class PostmanAdapter:
                 log.warning(" ".join([self.log_t, e.args[0] if e.args else str(e)]))
                 return None
 
-        def _get_data(
+        async def _get_data(
             self,
             value: str,
             database_service: PersonServiceDatabaseInitialize,
@@ -256,9 +266,12 @@ class PostmanAdapter:
             # None
             if value is None:
                 return None
-            data_from_cache_server: Optional[bytes | list | dict] = self.__get_cache(
-                value
+            log.info("[SubPerson][_get_data]: BEFORE COROUTINE")
+            coroutines = self.__get_cache(
+                value,
             )
+            await coroutines
+            data_from_cache_server: Optional[bytes | list | dict] = self.value_of_cache
             log.info(
                 f"[SubPerson][_get_data]: DEBUG BEFORE received the data_from_cache_server Type: {type(data_from_cache_server)}"
             )
@@ -368,12 +381,16 @@ class PostmanAdapter:
                     # ============================================
 """
                     )
+
                     # ============================================
                     # DATABASE UPDATES
                     # ============================================
+                    def create_or_update_in_database_sync():
+                        return database_service.create_or_update_in_database(
+                            user_data=ud
+                        )
 
-                    database_service.create_or_update_in_database(user_data=ud)
-
+                    await asyncio.to_thread(create_or_update_in_database_sync)
                     log.info("Data of the cache's server was updated with new values.")
 
                     data_of_cache_list_respon.append(ud)
@@ -384,25 +401,26 @@ class PostmanAdapter:
 
             return data_of_cache_list_respon
 
-        @staticmethod
-        def __get_cache(value: str) -> dict | list[bytes] | None:
+        def __get_cache(self, value: str):
             """
             TODO: Одно посещение 'cachemanager.get(key=value, collection=value_of_cache, exat=86400)' по ключу
                 'EnumTemplatesKeysCache.USER_PENDING_LOGIN.value' продлевает жизнь все базы дыннх
             :param value:
             :return:
             """
-            from persons.apps import cachemanager
 
             log.info(f"[SubPerson][__get_cache]: DEBUG {value}")
             # value_of_cache: Optional[bytes] = None
-            value_of_cache: Optional[list[bytes] | dict] = []
+
             # ============================================
             # CONNECT TO THE CACHE SERVER
             # ============================================
             try:
-                cachemanager.get(key=value, collection=value_of_cache, exat=86400)
-                return value_of_cache
+                # cachemanager.get_sync(key=value, collection=value_of_cache, exat=86400)
+                # return value_of_cache
+                return self.cachemanager.get_sync(
+                    key=value, collection=self.value_of_cache, exat=86400
+                )
             except Exception as e:
                 log.error(
                     f"[SubPerson][__get_cache]: {e.args[0] if e.args else str(e)}"

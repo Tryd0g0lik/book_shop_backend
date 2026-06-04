@@ -16,10 +16,11 @@ from persons import EnumEmailLetter, EnumTemplatesKeysCache, EnuSubjectOfLetter
 from persons.exceptions import PersonErrorTasks
 from persons.interfaces import PostmanAdapter
 from persons.interfaces.interface_persons import UsersPydantic, UsersPydanticDict
-from persons.tasks.sub_tasks_celery.sub_task_get_send_letter import (
-    child_process_emailing,
-    task_child_process_letter_thanks_for_your_account,
-)
+
+# from persons.tasks.sub_tasks_celery.sub_task_get_send_letter import (
+#     child_process_emailing,
+#     task_child_process_letter_thanks_for_your_account,
+# )
 
 log = logging.getLogger(__name__)
 
@@ -51,10 +52,12 @@ async def child_process_get_keys_0(
     from datetime import datetime
 
     from persons.interfaces import CacheManager as CacheManagerInitialize
-    from persons.services import CacheManager
+    from persons.services import AccountManager
 
-    cachemanager: CacheManagerInitialize = CacheManager()
-
+    account_manager = AccountManager()
+    postman = account_manager.postman
+    SubPerson = postman.SubPerson
+    sub_person = SubPerson()
     keys: list = []
     try:
         log.info(
@@ -64,11 +67,10 @@ async def child_process_get_keys_0(
         # REDIS CACHE SERVER - BEFORE  THE GET COLLECTION BY THE TEMPLATE of KEYS
         # - key_pattern: {str(key_pattern)}
         # - keys: {str(keys)}
-        # - number cachemanager.AFTER  THE GET COLLECTION BY THE TEMPLATE of KEYScacher.redis_database: {cachemanager.cacher.redis_database}
         # ============================================"""
         )
 
-        result_bool: bool = await cachemanager.aget(
+        result_bool: bool = await sub_person.cachemanager.aget(
             key_pattern=key_pattern,
             collection=keys,
         )
@@ -101,7 +103,7 @@ async def child_process_get_keys_0(
                 )
                 tasks.append(
                     asyncio.create_task(
-                        cachemanager.aget(
+                        sub_person.cachemanager.aget(
                             queue_collection=queue, key=key.decode("utf-8")
                         )
                     )
@@ -173,6 +175,9 @@ def sub_function(
     :param Optional[Mapping[str, Any]] context_: It is acontext data from the letter body.
     :return:
     """
+    from persons.tasks.sub_tasks_celery.sub_task_get_send_letter import (
+        child_process_emailing,
+    )
 
     # keys_queue: queue = test_keys_queue
     log_t = log_t[:-1] + "[test sub_function]:"
@@ -201,7 +206,7 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
     log_t = f"[task {send_letter_to_user_email.__name__}]:"
     import asyncio
 
-    from persons.services import AccountManager
+    from persons.services import AccountManager, CacheManager
 
     dict_queue = queue.Queue(2000)
     list_of_keys = []
@@ -240,15 +245,16 @@ Below we need t get the token. Then insert in letter and send.
                 list_of_keys.append(json_code)
         else:
             return False
-
         account_manager = AccountManager()
+
         # Below we are transmitting data for a email verification.
-        postman: PostmanAdapter = account_manager.postman
+        postman = account_manager.postman
+
         for one_dict in list_of_keys:
             one_email = one_dict.get("email")
 
             # key_cache = EnumTemplatesKeysCache.USER_PENDING_LETTER.value
-            sub_person: PostmanAdapter.SubPerson = postman.SubPerson(
+            sub_person = postman.SubPerson(
                 person_email=one_email,
             )
             database_service = postman.database_service
@@ -265,6 +271,7 @@ Below we need t get the token. Then insert in letter and send.
                 # ============================================
 """
             )
+
             person_list: Optional[list[UsersPydanticDict]] = await sub_person.get_model(
                 database_service, key_cache
             )

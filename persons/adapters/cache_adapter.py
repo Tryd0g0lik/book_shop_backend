@@ -80,9 +80,8 @@ class CacherAdapter(CacherBaseMixin):
     @contextmanager
     def connected(self):
         is_connected = self.is_connected
-        if not is_connected:
-            log_t = self.log_t + " Connection with a cache server is invalid."
-            raise ValueError(log_t)
+        if not is_connected is None or not is_connected:
+            self.related()
         # ============================================
         # GET REDIS CLIENT
         # ============================================
