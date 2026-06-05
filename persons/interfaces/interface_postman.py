@@ -4,7 +4,7 @@ from typing import ClassVar, Optional, Protocol
 
 from persons.exceptions import PersonErrorImproperlyConfigured
 from persons.exceptions.error_postman import PostmanRequiredModelError
-from persons.interfaces import UsersPydantic
+from persons.interfaces import CacheManager, UsersPydantic
 
 
 class PersonBasisMixin(Protocol):
@@ -62,22 +62,13 @@ class PersonServiceDatabaseAdapter:
         user_data: dict,
         user_id: Optional[int] = None,
         user_email: Optional[str] = None,
-    ) -> UsersPydantic: ...
+    ) -> dict: ...
 
 
 class PostmanAdapter(Protocol):
-
-    database_service: ClassVar[Optional[PersonServiceDatabaseAdapter]]
     lock: ClassVar[Optional[asyncio.Lock]]
 
-    def __init__(self) -> None: ...
-
-    class SubPerson(Protocol):
-        def __init__(
-            self,
-            person_index: Optional[int],
-            person_email: Optional[str],
-        ) -> None: ...
+    class SubPerson(PersonBasisMixin, Protocol):
 
         async def get_model(
             self, database_service: PersonServiceDatabaseAdapter, key_cache=""

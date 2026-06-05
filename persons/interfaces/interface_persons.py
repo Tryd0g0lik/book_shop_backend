@@ -4,7 +4,7 @@ This a content will use for how auxiliary classes for data typing.
 """
 
 from datetime import datetime
-from typing import Optional, TypedDict
+from typing import Optional, TypedDict, Union
 
 from pydantic import BaseModel, ConfigDict
 
@@ -21,41 +21,79 @@ class UsersDict(TypedDict):
     email: str
 
 
-class UsersPydanticDict(TypedDict):
-    id: int
-    last_login: Optional[datetime]
-    is_superuser: bool
-    username: str
-    first_name: str
-    last_name: str
-    email: str
-    is_staff: bool
-    is_active: bool
-    date_joined: datetime
-    category: str
-    password: str
-    is_sent: bool
-    is_verified: bool
+class UsersPydanticDict(ConfigDict):
+    id: Optional[int]
+    last_login: Optional[Union[datetime, str]]
+    is_superuser: Optional[bool]
+    username: Optional[str]
+    first_name: Optional[str]
+    last_name: Optional[str]
+    email: Optional[str]
+    is_staff: Optional[bool]
+    is_active: Optional[bool]
+    date_joined: Optional[Union[datetime, str]]
+    category: Optional[str]
+    password: Optional[str]
+    is_sent: Optional[bool]
+    is_verified: Optional[bool]
     verification_code: Optional[str]
-    balance: float
-    created_at: datetime
-    updated_at: datetime
+    balance: Optional[float]
+    created_at: Optional[Union[datetime, str]]
+    updated_at: Optional[Union[datetime, str]]
 
 
 class UsersPydantic(BaseModel):
-    is_superuser: bool
-    username: str
-    first_name: str
-    last_name: str
-    email: str
-    is_staff: bool
-    is_active: bool
-    category: str
-    password: str
-    is_sent: bool
-    is_verified: bool
+    id: Optional[int]
+    last_login: Optional[datetime]
+    is_superuser: Optional[bool]
+    username: Optional[str]
+    first_name: Optional[str]
+    last_name: Optional[str]
+    email: Optional[str]
+    is_staff: Optional[bool]
+    is_active: Optional[bool]
+    date_joined: Optional[datetime]
+    category: Optional[str]
+    password: Optional[str]
+    is_sent: Optional[bool]
+    is_verified: Optional[bool]
     verification_code: Optional[str]
-    balance: float
+    balance: Optional[float]
+    created_at: Optional[datetime]
+    updated_at: Optional[datetime]
+
+    def to_dict_without_secret_data(self) -> dict:
+        """We are excepts the password/ verification_code field from dict"""
+        return self.model_dump(exclude={"password", "verification_code"})
+
+    def to_public_dict(self) -> dict:
+        """Field only for publication"""
+        return self.model_dump(
+            include={
+                "id",
+                "username",
+                "email",
+                "first_name",
+                "last_name",
+                "balance",
+                "last_login",
+            }
+        )
+
+    # class UsersPydantic(BaseModel):
+    #     is_superuser: bool
+    #     username: str
+    #     first_name: str
+    #     last_name: str
+    #     email: str
+    #     is_staff: bool
+    #     is_active: bool
+    #     category: str
+    #     password: str
+    #     is_sent: bool
+    #     is_verified: bool
+    #     verification_code: Optional[str]
+    #     balance: float
 
     model_config = ConfigDict(from_attributes=True)
 

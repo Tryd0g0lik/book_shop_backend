@@ -2,9 +2,9 @@
 persons/adapters/person_base.py:1
 """
 
-from typing import Optional
+from typing import Optional, Union
 
-from persons.interfaces import UsersPydantic
+from persons.interfaces import UsersPydantic, UsersPydanticDict
 
 # from persons.exceptions import PersonErrorImproperlyConfigured
 from ..exceptions.error_postman import PostmanRequiredModelError
@@ -29,12 +29,12 @@ class PersonBasisMixin:
         self.log_t: str = log_t[:-1] + f"[{self.__class__.__name__}]:"
 
     @property
-    def get_person_model(self) -> UsersPydantic | None:
+    def get_person_model(self) -> Optional[UsersPydantic] | None:
         return self.__person_model
 
     @get_person_model.setter
-    def get_person_model(self, value: Optional[UsersPydantic] = None) -> None:
-        self._is_person(value)
+    def get_person_model(self, value: Optional[UsersPydanticDict] = None) -> None:
+        # self._is_person(value)
         self.__person_model = value
 
     @property
@@ -51,7 +51,7 @@ class PersonBasisMixin:
             )
 
         if value is not None:
-            self._is_person(value)
+            # self._is_person(value)
             self.__person_email = value.__getattr__("email")
         else:
             self.__person_email = email
@@ -70,7 +70,7 @@ class PersonBasisMixin:
             )
 
         if value is not None:
-            self._is_person(value)
+            # self._is_person(value)
             self.__person_index = value.__getattr__("id")
         else:
             self.__person_index = index
@@ -90,7 +90,7 @@ class PersonBasisMixin:
 is invalid."
             )
         # The value belonging to the Users's model or not (is not object person) - Check
-        if not isinstance(value, UsersPydantic):
+        if not isinstance(value, Union[UsersPydantic]):
             raise PostmanRequiredModelError(
                 " The value belonging to the Users's model or not (is not \
 object person) - Check. Do not belonging to the Users's model."

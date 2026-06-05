@@ -5,6 +5,8 @@ persons/__init__.py:1
 import re
 from enum import Enum
 
+from typing_extensions import TypeAlias
+
 from project.settings_conf.settings_env import APP_NAME
 
 

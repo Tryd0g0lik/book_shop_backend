@@ -15,12 +15,44 @@ from django.core.validators import (
 from django.utils.translation import gettext_lazy as _
 
 from persons.models import Users
-from project.settings_conf.settings_env import CATEGORY_STATUS
+from project.settings_conf.settings_env import (
+    APP_MINIMUM_PASSWORD_LENGTH,
+    CATEGORY_STATUS,
+)
 
 log = logging.getLogger(__name__)
 
 
 class UsersRegistrationForm(SignupForm):
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #
+    #     # We don't know a view of the password1/password2 filed. They could be the 'forms.CharField' or
+    #     # 'forms.PasswordInput' or anything else.
+    #     if "password1" in self.fields:
+    #         field_password1 = self.fields["password1"]
+    #         field_password2 = self.fields["password2"]
+    #         for view in [field_password1, field_password2]:
+    #             if hasattr(view, "validators"):
+    #                 has_method_length = any(
+    #                     isinstance(v, MinLengthValidator) for v in view.validators
+    #                 )
+    #                 if has_method_length:
+    #                     view.validators = [
+    #                         v
+    #                         for v in view.validators
+    #                         if not isinstance(v, MinLengthValidator)
+    #                     ]
+    #                     view.validators.append(
+    #                         MinLengthValidator(APP_MINIMUM_PASSWORD_LENGTH)
+    #                     )
+    #             else:
+    #                 # I won't believe if SignupForm.password* doesn't have the validators prop.
+    #                 view.validators = []
+    #                 view.validators.append(
+    #                     MinLengthValidator(APP_MINIMUM_PASSWORD_LENGTH)
+    #                 )
+
     email = forms.EmailField(
         required=True,
         label="Email",
@@ -57,6 +89,7 @@ class UsersRegistrationForm(SignupForm):
             "invalid": _("Please enter a valid category."),
         },
     )
+
     first_name = forms.CharField(
         required=False,
         label=_("First Name"),
@@ -73,6 +106,7 @@ class UsersRegistrationForm(SignupForm):
         help_text=_("Field is not required"),
         error_messages={"invalid": _("Please enter a valid first name.")},
     )
+
     check_user = forms.BooleanField(
         widget=forms.CheckboxInput(
             attrs={

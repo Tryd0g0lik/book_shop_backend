@@ -94,8 +94,6 @@ class CacherAdapter(CacherBaseMixin, Protocol):
 
 
 class CacheManager(Protocol):
-    cacher: CacherAdapter
-    asynccacher: AsyncCacherAdapter
 
     async def asave(
         self, key: str, default: Optional[dict | list | tuple] = None, ttl: int = 300
@@ -117,7 +115,7 @@ class CacheManager(Protocol):
         persist=None,
     ) -> Union[bool, "UsersPydantic"]: ...
 
-    def get(
+    def get_sync(
         self,
         queue_collection: Optional["queue.Queue"] = None,
         collection: Optional[list | tuple] = None,

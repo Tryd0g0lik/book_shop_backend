@@ -150,6 +150,7 @@ def mock_database_get_user_model(mocker, users_model_data):
 def mock_users_database(mocker):
     from __tests__.fixtures.mock_function import get_one_user
 
+
     log.info("""\n
     # ============================================
     # FIXTURE BEFORE GETS A MOCK USER OF DATABASE

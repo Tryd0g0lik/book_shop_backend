@@ -92,7 +92,6 @@ class UsersRegistrationView(AllauthSignupView):
 
     @method_decorator(require_POST)
     def post(self, request, *args, **kwargs):
-
         # form = self.form_class(request.POST)
         pathname = request.path
         user = request.user
@@ -106,7 +105,6 @@ class UsersRegistrationView(AllauthSignupView):
             return redirect("/")
         # ---- END TEST BLOCK
         messages.success(request, _("Registration successful! Chek your email."))
-
         try:
             """
             TODO: В зависимости от того какой pathname в result_list - присваеваем роль.
@@ -116,12 +114,19 @@ class UsersRegistrationView(AllauthSignupView):
                 for item in ["register/admin", "register/moderator", "register/manager"]
                 if item in url_parent or re.search(r"/register/$", url_parent)
             ]
-
+            log.info(
+                f"""\n
+            # ============================================
+            # DEBUG POST'S DATA BEFORE REGISTRATION 1
+            # result_list: {result_list},
+            # ============================================
+            """
+            )
             if len(result_list) > 0:
                 log.info(
                     f"""\n
                 # ============================================
-                # DEBUG POST'S DATA BEFORE REGISTRATION
+                # DEBUG POST'S DATA BEFORE REGISTRATION 2
                 # request: {request},
                 # *args: {args},
                 # **kwargs: {kwargs},
@@ -165,8 +170,18 @@ class UsersRegistrationView(AllauthSignupView):
         )
 
         super().form_valid(form)
+
         username = form.cleaned_data.get("username")
         email = form.cleaned_data.get("email")
+        log.info(
+            f"""\n
+        # ============================================
+        # DEBUG form_valid 2
+        # username: {username}
+        # email: {email}
+        # ============================================
+        """
+        )
         if (username is None) or (
             username is not None and isinstance(username, str) and len(username) < 2
         ):
@@ -177,6 +192,16 @@ class UsersRegistrationView(AllauthSignupView):
         # ------------------------------------
         kwargs = {"username": username, "email": email}
         try:
+            log.info(
+                f"""\n
+            # ============================================
+            # DEBUG BEFORE RUNNING TASK task_of_cache
+            # args: {args}
+            # kwargs: {kwargs}
+            # ============================================
+            """
+            )
+            # CELERY + REDIS
             task_of_cache.delay(*args, **kwargs)
             message = _("Registration is almost complete! Check your email.")
         except Exception as e:

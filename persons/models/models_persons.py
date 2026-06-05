@@ -7,7 +7,10 @@ from django.core.validators import MinLengthValidator, MinValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from project.settings_conf.settings_env import CATEGORY_STATUS
+from project.settings_conf.settings_env import (
+    APP_MINIMUM_PASSWORD_LENGTH,
+    CATEGORY_STATUS,
+)
 
 
 # Create your models here.
@@ -35,7 +38,11 @@ class Users(AbstractUser):
    """
 
     category = models.CharField(default="BASE", choices=CATEGORY_STATUS, max_length=50)
-    password = models.CharField(_("password"), max_length=255)
+    password = models.CharField(
+        _("password"),
+        max_length=255,
+        validators=[MinLengthValidator(APP_MINIMUM_PASSWORD_LENGTH)],
+    )
     is_sent = models.BooleanField(
         default=False,
         verbose_name="Message was sent",

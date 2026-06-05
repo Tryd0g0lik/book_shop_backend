@@ -19,8 +19,6 @@ log = logging.getLogger(__name__)
 
 class AsyncCacherAdapter(CacherBaseMixin):
 
-    async_pool: Optional[ConnectionPool] = None
-
     def __init__(
         self,
         db: int = 0,
@@ -42,6 +40,7 @@ class AsyncCacherAdapter(CacherBaseMixin):
         )
         self.log_t = "[AsyncCacherAdapter]:"
         self.async_lock = asyncio.Lock()
+        self.async_pool: Optional[ConnectionPool] = None
 
     async def _init_pool(self) -> None:
 
@@ -51,7 +50,7 @@ class AsyncCacherAdapter(CacherBaseMixin):
         )
 
         try:
-            if AsyncCacherAdapter.async_pool is None:
+            if self.async_pool is None:
                 # ============================================
                 # GET WORKERS
                 # ============================================
@@ -62,7 +61,7 @@ class AsyncCacherAdapter(CacherBaseMixin):
                 )
 
                 # async with self.async_lock:
-                AsyncCacherAdapter.async_pool = ConnectionPool(
+                self.async_pool = ConnectionPool(
                     host=REDIS_HOST,
                     port=int(REDIS_PORT),
                     password=self.redis_password,
@@ -90,10 +89,10 @@ class AsyncCacherAdapter(CacherBaseMixin):
             raise ValueError(log_t)
 
     async def _get_client(self):
-        if AsyncCacherAdapter.async_pool is None:
-            async with self.async_lock:
-                await self._init_pool()
-        return Redis(connection_pool=AsyncCacherAdapter.async_pool)
+        if self.async_pool is None:
+            # async with self.async_lock:
+            await self._init_pool()
+        return Redis(connection_pool=self.async_pool)
 
     async def related(self) -> bool:
         if self.server_client is None:
@@ -114,11 +113,6 @@ class AsyncCacherAdapter(CacherBaseMixin):
 
     @asynccontextmanager
     async def asyncconnected(self):
-        is_connected = await self.is_connected()
-        if not is_connected:
-            log_t = self.log_t + " Connection with a cache server is invalid."
-            await self._recreated_pool()
-            raise ValueError(log_t)
         # ============================================
         # GET REDIS CLIENT
         # ============================================
@@ -157,12 +151,12 @@ class AsyncCacherAdapter(CacherBaseMixin):
             pass
 
     async def _recreated_pool(self):
-        async with self.async_lock:
-            is_pool = AsyncCacherAdapter.async_pool
-            if is_pool is not None:
-                await AsyncCacherAdapter.async_pool.disconnect()
-                AsyncCacherAdapter.async_pool = None
-            await self._init_pool()
+        # async with self.async_lock:
+        is_pool = self.async_pool
+        if is_pool is not None:
+            await self.async_pool.disconnect()
+            self.async_pool = None
+        await self._init_pool()
 
     async def close(self):
         # ============================================
@@ -172,13 +166,13 @@ class AsyncCacherAdapter(CacherBaseMixin):
         if self.server_client:
             await self.server_client.aclose()
             self.server_client = None
-        is_pool = AsyncCacherAdapter.async_pool
+        is_pool = self.async_pool
         if is_pool is not None:
-            await AsyncCacherAdapter.async_pool.disconnect()
-            AsyncCacherAdapter.async_pool = None
+            await self.async_pool.disconnect()
+            self.async_pool = None
 
     async def is_connected(self) -> bool:
-        is_pool = AsyncCacherAdapter.async_pool
+        is_pool = self.async_pool
         if is_pool is None:
             return False
         try:

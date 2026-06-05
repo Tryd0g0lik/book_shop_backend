@@ -8,7 +8,7 @@ import logging
 import queue
 import re
 import threading
-from typing import Optional
+from typing import Coroutine, Optional
 
 from persons.adapters import AsyncCacherAdapter, CacherAdapter
 from persons.interfaces import AsyncCacherAdapter as AsyncCacherAdapterInitialize
@@ -21,13 +21,12 @@ log.info(f"DEBUG REDIS_DB: {REDIS_DB}")
 
 
 class CacheManager:
-    cacher: CacherAdapterInitialize = CacherAdapter(db=REDIS_DB)
-    asynccacher: AsyncCacherAdapterInitialize = AsyncCacherAdapter(db=REDIS_DB)
 
     def __init__(
         self,
     ):
         self.log_t = f"{__name__.split("/")[-1]}" + "[CacheManager]:"
+        self.asynccacher: AsyncCacherAdapterInitialize = AsyncCacherAdapter(db=REDIS_DB)
 
     async def asave(
         self, key: str, default: Optional[dict | list | tuple] = None, ttl: int = 300
@@ -39,6 +38,9 @@ class CacheManager:
         :param ttl:  This is a time of caching. That is the cache time of life.
         :return: bool
         """
+        is_connected = await self.asynccacher.is_connected()
+        if not is_connected is None or not is_connected:
+            await self.asynccacher.related()
         log.info(
             """\n
 # ============================================
@@ -47,10 +49,10 @@ class CacheManager:
 # Checking of connection
             """
         )
-        await self.asynccacher.related()
-        is_connected = await self.asynccacher.is_connected()
-        if is_connected is None or not is_connected:
-            await self.asynccacher.related()
+        #
+        # is_connected = await self.asynccacher.is_connected()
+        # if is_connected is None or not is_connected:
+        #     await self.asynccacher.related()
         log.info(
             """\n
 # Here we make caching of data.
@@ -89,6 +91,7 @@ class CacheManager:
                 log.info(
                     self.log_t[:-1] + "[asave]:" + " Data was cached successfully!"
                 )
+
         except Exception as e:
             log_t = " ".join(
                 [
@@ -171,30 +174,18 @@ class CacheManager:
         :param persist: Remove the existing timeout on key, turning the key, Default value is None
         :return: Optional[bool] If return the True mean oll successfully or mistake.
         """
-        log.info(
-            self.log_t[:-1]
-            + "[aget]:"
-            + """\n
-# ============================================
-# CACHE SERVER AGET
-# ============================================
-# Checking of connection
-            """
-        )
-        await self.asynccacher.related()
         is_connected = await self.asynccacher.is_connected()
-        if is_connected is None or not is_connected:
+        if is_connected is not None or not is_connected:
             await self.asynccacher.related()
-        log.info(self.log_t[:-1] + "[aget]:" + "DEBUG WAS CONNECTED: %s" % is_connected)
         log.info(
             self.log_t[:-1]
             + "[aget]:"
-            + """\n
-# Here we make caching of data.
-# ============================================
-# GET DATA FROM THE CACHE
-# ============================================
-"""
+            + """
+            # Here we make caching of data.
+            # ============================================
+            # GET DATA FROM THE CACHE
+            # ============================================
+            """
         )
         try:
             log.info(self.log_t[:-1] + "[aget]:" + " Before open the connection.")
@@ -434,7 +425,8 @@ class CacheManager:
             raise ValueError(log_t)
         return True
 
-    def get(
+    #
+    def get_sync(
         self,
         queue_collection: Optional[queue.Queue] = None,
         collection: Optional[list | tuple] = None,
@@ -473,7 +465,6 @@ class CacheManager:
 
             from persons.services import CustomizationSyncAsyncLoop
 
-            args = []
             qwargs = {
                 "queue_collection": queue_collection,
                 "collection": collection,
@@ -484,28 +475,19 @@ class CacheManager:
                 "exat": exat,
                 "persist": persist,
             }
-            loop_async_sync = CustomizationSyncAsyncLoop(*args, **qwargs)
-            loop_async_sync.get_new_function = self.aget
-            loop_async_sync.is_async = True
-            if loop_async_sync.is_async:
-                loop_async_get = loop_async_sync.get_new_loop()
+            # return self.aget(**qwargs)
+            loop = None
+            try:
+                # Получаем текущий или создаём новый event loop
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                # Нет запущенного цикла — создаём новый
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
 
-                t = threading.Thread(
-                    target=loop_async_get,
-                    daemon=True,
-                )
-                t.start()
-                t.join(timeout=10)
-                return loop_async_get
-            log_t = " ".join(
-                [
-                    self.log_t[:-1] + "[save]:",
-                    "Check a new loop. THe AGET method don't run in the sync loop.",
-                ]
-            )
-
-            log.error(log_t)
-            raise ValueError(log_t)
+                # Выполняем корутину и получаем результат
+            get_data = loop.run_until_complete(self.aget(**qwargs))
+            return get_data
         except Exception as e:
             log.error(e.args if e.args else str(e))
             raise e

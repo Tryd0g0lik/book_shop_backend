@@ -10,6 +10,15 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 
 project/settings.py:24
+
+=== PASSWORD !!
+Secure password hashing using the PBKDF2 algorithm (recommended)
+
+Configured to use PBKDF2 + HMAC + SHA256.
+The result is a 64 byte binary string. Iterations may be changed
+safely but you must rename the algorithm if you change SHA256.
+Current algorithm is: 'pbkdf2_sha256'
+Template is : "%s$%d$%s$%s" (algorithm,iterations, salt, hash )
 """
 
 import logging

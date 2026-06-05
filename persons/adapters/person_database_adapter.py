@@ -6,14 +6,33 @@ This is service for a work only with a business logic for the Users (Persons)
 
 import json
 import logging
-from typing import Optional
+from typing import Optional, TypeAlias, TypedDict, Union
 
-from django.utils.hashable import make_hashable
+from django.contrib.auth.hashers import PBKDF2PasswordHasher
+from django.db.models import Q, QuerySet
+from kombu.transport.sqlalchemy.models import Queue
 
 from persons.exceptions import PersonErrorImproperlyConfigured
 from persons.interfaces import UsersPydantic
+from project.settings import SECRET_KEY
 
 log = logging.getLogger(__name__)
+VerifyTypes: TypeAlias = Union[bytes, str]
+
+
+class VerifyUserIdType(TypedDict):
+    user_id: int
+
+
+class VerifyUserEmailType(TypedDict):
+    user_email: str
+
+
+UserPointType = Union[VerifyUserIdType, VerifyUserEmailType]
+
+# This is  names of keys of passwords.
+# When we want to rewrite password us need to have "old_password" and "new_password"
+password_keys = ["old_password", "new_password"]
 
 
 class PersonServiceDatabaseAdapter:
@@ -24,19 +43,41 @@ class PersonServiceDatabaseAdapter:
         For checking we have a two entry point. This is a 'user_id' and 'user_email'.
     """
 
+    log_t = "[PersonServiceDatabaseAdapter]:"
+    # def __new__(cls, *args, **kwargs):
+    #     initionally = super().__new__(cls, *args, **kwargs)
+    #     initionally.log_t = PersonServiceDatabaseAdapter.__class__.__name__
+    #     return initionally
+
     @staticmethod
     def get_user_by_id(user_id: Optional[int] = None) -> Optional[UsersPydantic]:
         """GEt user from the database and conversion through the Pydantic"""
         from persons.models import Users
 
+        log.info(
+            f"""
+        {PersonServiceDatabaseAdapter.log_t[:-1]}[{PersonServiceDatabaseAdapter.get_user_by_id.__name__}]:
+        # user_email: {user_id}
+        """
+        )
         try:
             if user_id is not None and isinstance(user_id, int):
                 user = Users.objects.get(id=user_id)
+                log.info(
+                    f"""
+                {PersonServiceDatabaseAdapter.log_t[:-1]}[{PersonServiceDatabaseAdapter.get_user_by_id.__name__}]:
+                # user:  {str(user)}
+                """
+                )
                 return UsersPydantic.model_validate(user)
         except Users.DoesNotExist:
             return None
         except Exception as e:
-            raise PersonErrorImproperlyConfigured(e.args[0] if e.args else str(e))
+            log_t = (
+                PersonServiceDatabaseAdapter.log_t[:-1]
+                + f"[PersonServiceDatabaseAdapter.get_user_by_id.__name__]: {e.args[0] if e.args else str(e)}"
+            )
+            raise PersonErrorImproperlyConfigured(log_t) from e
 
     @staticmethod
     def get_user_by_email(
@@ -45,14 +86,37 @@ class PersonServiceDatabaseAdapter:
         """GEt user from the database and conversion through the Pydantic"""
         from persons.models import Users
 
+        log.info(
+            f"""
+        {PersonServiceDatabaseAdapter.log_t[:-1]}[{PersonServiceDatabaseAdapter.get_user_by_email.__name__}]:
+        # user_email: {user_email}
+        """
+        )
         try:
             if user_email is not None and isinstance(user_email, str):
                 user = Users.objects.get(email=user_email)
-                return UsersPydantic.model_validate(user)
+                log.info(
+                    f"""
+                {PersonServiceDatabaseAdapter.log_t[:-1]}[{PersonServiceDatabaseAdapter.get_user_by_email.__name__}]:
+                # user: {str(user)}
+                """
+                )
+                user_validated = UsersPydantic.model_validate(user)
+                log.info(
+                    f"""
+                {PersonServiceDatabaseAdapter.log_t[:-1]}[{PersonServiceDatabaseAdapter.get_user_by_email.__name__}]:
+                # user_validated: {str(user_validated)}
+                """
+                )
+                return user_validated
         except Users.DoesNotExist:
             return None
         except Exception as e:
-            raise PersonErrorImproperlyConfigured(e.args[0] if e.args else str(e))
+            log_t = (
+                PersonServiceDatabaseAdapter.log_t[:-1]
+                + f"[{PersonServiceDatabaseAdapter.get_user_by_email.__name__}]: {e.args[0] if e.args else str(e)}"
+            )
+            raise PersonErrorImproperlyConfigured(log_t) from e
         return None
 
     @staticmethod
@@ -60,6 +124,12 @@ class PersonServiceDatabaseAdapter:
         """Search users by email"""
         from persons.models import Users
 
+        log.info(
+            f"""
+        {PersonServiceDatabaseAdapter.log_t[:-1]}[{PersonServiceDatabaseAdapter.search_by_email.__name__}]:
+        # user_email: {user_email}
+        """
+        )
         try:
             users = Users.objects.filter(email__icontains=user_email)
             return (
@@ -68,227 +138,331 @@ class PersonServiceDatabaseAdapter:
                 else []
             )
         except Exception as e:
-            raise PersonErrorImproperlyConfigured(e.args[0] if e.args else str(e))
+            log_t = (
+                PersonServiceDatabaseAdapter.log_t[:-1]
+                + f"[{PersonServiceDatabaseAdapter.search_by_email.__name__}]: {e.args[0] if e.args else str(e)}"
+            )
+            raise PersonErrorImproperlyConfigured(log_t) from e
+
+    @staticmethod
+    def save(user_dict: dict) -> list[UsersPydantic]:
+        """Save data users by email"""
+        from persons.models import Users
+
+        user_list = []
+        try:
+            user = Users.objects.create(**user_dict)
+            user_list.append(user)
+
+            return (
+                [UsersPydantic.model_validate(user_list[0])]
+                if len(user_list) > 0
+                else []
+            )
+        except Exception as e:
+            log_t = (
+                PersonServiceDatabaseAdapter.log_t[:-1]
+                + f"[{PersonServiceDatabaseAdapter.save.__name__}]: {e.args[0] if e.args else str(e)}"
+            )
+            raise PersonErrorImproperlyConfigured(log_t) from e
 
     @staticmethod
     def is_email(user_email: str) -> bool:
         """Search users by email"""
         from persons.models import Users
+        from persons.services import CustomizationSyncAsyncLoop
 
         try:
-            print(
-                f"\n ------------------ \n TEST DEBUG BEFORE. email:  {str(user_email)}"
-            )
+            print(f"\n ------------------ \n DEBUG BEFORE. email:  {str(user_email)}")
             test_result = Users.objects.get(email=user_email)
-            print(
-                f"\n ------------------ \n\t TEST DEBUG AFTER Users.objects cycle. email:  {str(test_result)}"
-            )
-            return True
+
+            return True if test_result is not None else False
         except Exception as e:
-            print(str(e))
-            return False
+            log_t = (
+                PersonServiceDatabaseAdapter.log_t[:-1]
+                + f"[{PersonServiceDatabaseAdapter.is_email.__name__}]: {e.args[0] if e.args else str(e)}"
+            )
+
+            raise PersonErrorImproperlyConfigured(log_t) from e
 
     @staticmethod
     def is_password(user_data: dict) -> bool:
         """
-        TODO: изменить логику. Внести проверку хешированного пароля получая нужные данные из самой базе данных.
-            На выход подать bool
-        Search users by email
+        This method only check - The 'user_data' contain anything from  set password_keys (above) or not.
+        :return True if it is containing or False
         """
         try:
             bool_list = [
-                True if k in ["password", "password2", "password"] else False
-                for k, _ in user_data.items()
+                True if k in password_keys else False for k, _ in user_data.items()
             ]
 
-            return bool_list[0]
+            return bool_list[0] if bool_list is not None and len(bool_list) else False
         except Exception as e:
-            raise e
+            log_t = (
+                PersonServiceDatabaseAdapter.log_t[:-1]
+                + f"[{PersonServiceDatabaseAdapter.is_password.__name__}]: {e.args[0] if e.args else str(e)}"
+            )
+            raise PersonErrorImproperlyConfigured(log_t) from e
+
+    @staticmethod
+    def hashes_password(password: Optional[str]) -> Optional[str]:
+        """
+        The 'user_data' can contain not only the key 'password' also 'password1' + 'password2' (without 'password').
+        Us need to find an existing key then convert it to the hash.
+
+        Secure password hashing using the PBKDF2 algorithm (recommended)
+        Configured to use PBKDF2 + HMAC + SHA256.
+        The result is a 64 byte binary string. Iterations may be changed
+        safely but you must rename the algorithm if you change SHA256.
+        Current algorithm is: 'pbkdf2_sha256'
+        Template is : "%s$%d$%s$%s" (algorithm,iterations, salt, hash )
+
+        If 'user_data' AND 'password' is None means returning a mistake.
+        :param str password: It is original password from form.
+        :return: str|None or mistake 'PersonErrorImproperlyConfigured'
+        """
+        password_str: Optional[str] = None
+        if password is None:
+            raise PersonErrorImproperlyConfigured(
+                f"[{PersonServiceDatabaseAdapter.hashes_password.__name__}]: \
+            Data is not found,"
+            )
+
+        if password is not None:
+            password_str = password[:]
+        try:
+            # ============================================
+            # HASHING A USER'S PASSWORD
+            # ============================================
+            make_hash = PBKDF2PasswordHasher()
+            password_hashed: str = make_hash.encode(
+                password=password_str, salt=SECRET_KEY[:25]
+            )
+            log.info(
+                f"""\n\t
+            # ============================================
+            # DEBUG HASH {PersonServiceDatabaseAdapter.hashes_password.__name__}:
+            # password_hashed: {password_hashed}
+            # ============================================
+            """
+            )
+            return password_hashed
+        except TypeError as e:
+            log_T = (
+                PersonServiceDatabaseAdapter.log_t[:-1]
+                + f"[{PersonServiceDatabaseAdapter.hashes_password.__name__}]:"
+            )
+            raise PersonErrorImproperlyConfigured(
+                log_T + "Password should be a hashable string. " + e.args[0]
+                if e.args
+                else str(e)
+            ) from e
+        except Exception as e:
+            log_T = (
+                PersonServiceDatabaseAdapter.log_t[:-1]
+                + f"[{PersonServiceDatabaseAdapter.hashes_password.__name__}]:"
+            )
+            raise PersonErrorImproperlyConfigured(
+                log_T + "Password should be a hashable string. " + e.args[0]
+                if e.args
+                else str(e)
+            ) from e
+
+    @staticmethod
+    def change_password(
+        old_password: str, new_password: str, **kwargs: UserPointType
+    ) -> bool:
+        """
+        This method is only checker.
+        It does not to make changes in the database.
+        :param str old_password: Required. It is old the original user's password row from form.
+        :param str new_password:  Required. It is new the original user's password row from form. \
+        :param UserPointType kwargs: Required. '{user_id: str}' or '{user_email: str}'
+        :return: if 'old_password' equal to 'new_password' mean a new password will be saving in database then will be returning a True, or mistake 'PersonErrorImproperlyConfigured'.
+        """
+        from persons.models import Users
+
+        keys = list(kwargs.keys())
+        keys_size = len(keys)
+        if (
+            not isinstance(old_password, str)
+            or not isinstance(new_password, str)
+            or keys_size == 0
+        ):
+            log_t = (
+                PersonServiceDatabaseAdapter.log_t[:-1]
+                + f"[{PersonServiceDatabaseAdapter.change_password.__name__}]:"
+            )
+            raise PersonErrorImproperlyConfigured(
+                log_t + " Data Type Values is not corrected."
+            )
+
+        old_passw_hash = PersonServiceDatabaseAdapter.hashes_password(
+            password=old_password
+        )
+        new_passw_hash = PersonServiceDatabaseAdapter.hashes_password(
+            password=new_password
+        )
+
+        # user = Users.objects.get(id=kwargs.get("user_id")) if "user_id" in keys \
+        #     else Users.objects.get(email=kwargs.get("user_email"))
+
+        queryset = Users.objects.filter(
+            Q(id=kwargs.get("user_id")) | Q(email=kwargs.get("user_email")),
+            password=old_passw_hash,
+        )
+        if not queryset.exists():
+            log_t = (
+                PersonServiceDatabaseAdapter.log_t[:-1]
+                + f"[{PersonServiceDatabaseAdapter.change_password.__name__}]:"
+            )
+            raise PersonErrorImproperlyConfigured(
+                log_t
+                + " There are not anyone user which  will be containing a similar password with 'old_password'."
+            )
+        queryset.update(password=new_passw_hash)
+        return True
 
     @staticmethod
     def create_or_update_in_database(
         user_data: dict,
         user_id: Optional[int] = None,
         user_email: Optional[str] = None,
-    ) -> UsersPydantic:
+    ) -> Optional[dict]:
         """
         TODO: user_data - обязательный атрибут.
             Если user_id или user_email не равно None. Значит данные на обновление,
-            Если user_id и user_email отсутствуют. Значит создаём нового пользователя.,
             Если user_id или user_email не равно None:
              - Создаю нового подльзователя смотрим в кеше по ключу: user:pending:login:<EMAIL> - Проверить работу с кешем .
-             Главно В этом файле работаю только с базой данных
+             Главное В этом файле работаю только с базой данных
              &
              Тут нет проверки паролей. Сравнение паролей - нового и старого хешированного должно проходить вне этого метода
              &
              Сюда пароль поступает в родительском состоянии . Тут хешируется перед сохранением.
 
-        Args:
-            :param user_data: Dictionary with fields to update
-            :param user_id: User ID (optional)
-            :param user_email: User email (optional)
 
-        Returns:
-            Updated user as Pydantic model
+        :param user_data: Dictionary with fields which we want to update. If we are wanted re-write the password
+        :param user_id: User ID (optional)
+        :param user_email: User email (optional)
+
+        return: User's dict without secret data. These are - password and code varification.
         """
         from persons.models import Users
 
-        get_person_model_old: Optional[UsersPydantic] = None
-        em: Optional[str] = user_data.__getitem__("email")
-
-        if user_id is not None:
-            # ============================================
-            # UPDATE USER FROM  DATABASE BY user_id
-            # ============================================
-            try:
-                get_person_model_old = PersonServiceDatabaseAdapter.get_user_by_id(
-                    user_id
-                )
-            except PersonErrorImproperlyConfigured as e:
-                raise PersonErrorImproperlyConfigured(e.args[0] if e.args else str(e))
-        elif user_email is not None:
-            # ============================================
-            # UPDATE USER FROM  DATABASE BY user_email
-            # ============================================
-            try:
-                get_person_model_old = PersonServiceDatabaseAdapter.get_user_by_email(
-                    user_email
-                )
-            except PersonErrorImproperlyConfigured as e:
-                raise PersonErrorImproperlyConfigured(e.args[0] if e.args else str(e))
-        if get_person_model_old is None and em is not None:
-            # ============================================
-            # CREATE NEW USER IN DATABASE
-            # ============================================
-
-            try:
-                is_user: bool = PersonServiceDatabaseAdapter.is_email(em)
-                print(f"TEST DEBUG AFTER is_user: {str(is_user)}")
-
-                if is_user:
-                    """
-                    This mean - user already exists.
-                    Return error message
-                    """
-                    raise PersonErrorImproperlyConfigured(
-                        "User already exists was founded before it. \
-Change the email address."
-                    )
-                keys_ = list(user_data.keys())
-                keys_ = [
-                    k for k in keys_ if k in ["password1", "password2", "password"]
-                ]
-                if len(keys_) == 0:
-                    raise PersonErrorImproperlyConfigured(
-                        "User's password not be found. "
-                    )
-                password_str = user_data.__getitem__(keys_[0])
-
-                try:
-                    # ============================================
-                    # HASHING A USER'S PASSWORD
-                    # ============================================
-                    password_hashed = make_hashable(password_str)
-                    log.info(
-                        f"""\n\t
-                    # ============================================
-                    # TEST DEBUG create_or_update_in_database
-                    # That is user_data: {str(user_data)}
-                    # That is the type of user_data: {type(user_data)}
-                    # ============================================
-                    """
-                    )
-                    user_data.__setitem__("password", password_hashed)
-                    log.info(f"TEST DEBUG user_data: {str(user_data)}")
-                    del password_hashed, password_str
-                    password1 = user_data.get("password1")
-                    log.info(f"TEST DEBUG password1: {str(password1)}")
-                    if password1:
-                        del user_data["password1"]
-                except TypeError as e:
-                    raise TypeError(
-                        "Password should be a hashable object. " + str(e)
-                    ) from e
-                log.info(
-                    f"TEST DEBUG BEFORE DATABASE CREATE user_data: {str(user_data)}"
-                )
-                user_new = Users.objects.create(**user_data)
-
-                log.info(f"TEST DEBUG AFTER DATABASE CREATE user_new: {str(user_new)}")
-                user_new_pydantic = UsersPydantic.model_validate(user_new)
-                """"
-                ЗАпуск из теста
-                ЛОГ: INFO 2026-06-02 18:22:34,272 person_database_adapter 19276 10652 TEST DEBUG AFTER DATABASE CREATE user_new: User: staff_moderator Regisrated was: 2026-06-02 11:22:34.271929+00:00
-                Вроде создал.
-                Но записи базе данных нет. Проверить условия сохранения в модели.
-
-                !! Данные взять из оригинала и обновить параметризацию теста
-
-                Запуск через djangp
-                ЛОГ:
-                INFO 2026-06-02 18:16:45,387 postman_adapter 18556 18092 TEST DEBUG 0
-INFO 2026-06-02 18:16:45,387 postman_adapter 18556 18092 TEST DEBUG 3
-INFO 2026-06-02 18:16:45,387 postman_adapter 18556 18092 TEST DEBUG BEFORE 3: EMAIL moderator@example.com
-INFO 2026-06-02 18:16:45,392 postman_adapter 18556 18092 TEST DEBUG AFTER 3:
-str(type(user_old): <class 'NoneType'>
-UsersPydantic: <class 'persons.interfaces.interface_persons.UsersPydantic'>
-False
-INFO 2026-06-02 18:16:45,392 postman_adapter 18556 18092 TEST DEBUG AFTER TYPE 3: EMAIL <class 'NoneType'>
-WARNING 2026-06-02 18:16:45,392 postman_adapter 18556 18092 [SubPerson][SubPerson]: 'NoneType' object has no attribute 'email'
-INFO 2026-06-02 18:16:45,392 task_send_letter_to_user_email 18556 18092
-                # ============================================
-                # DEBUG
-                # person_list: None
-                # Type: <class 'NoneType'>
-                # ============================================
-
-ERROR 2026-06-02 18:16:45,393 task_send_letter_to_user_email 18556 18092 [task send_letter_to_user_email]:ERROR TEXT => 'NoneType' object is not iterable
-ERROR 2026-06-02 18:16:45,393 loop_async_sync 18556 18092 Writing ASYNC to the cache server failed! TEXT_ERROR: [PersonErrorTasks]:
-[PersonErrorTasks]:'NoneType' object is not iterable
-
-
-
-
-                """
-                log.info(
-                    f"TEST DEBUG AFTER DATABASE CREATE user_new_pydantic: {str(user_new_pydantic)}"
-                )
-                return user_new_pydantic
-            except PersonErrorImproperlyConfigured as e:
-                log.info(f"TEST DEBUG PersonErrorImproperlyConfigured: {str(e)}")
-                raise e
-        if get_person_model_old is None:
-            raise PersonErrorImproperlyConfigured("User not found.")
-
-        try:
-            is_password = PersonServiceDatabaseAdapter.is_password(user_data)
-            # ============================================
-            # UPDATE USER OF DATABASE
-            # ============================================
-            person_model_old_to_dict: dict = json.loads(
-                get_person_model_old.model_dump()
+        if user_id is None and user_email is None:
+            raise PersonErrorImproperlyConfigured(
+                f"{PersonServiceDatabaseAdapter.log_t[:-1]}\
+            [{PersonServiceDatabaseAdapter.create_or_update_in_database.__name__}]: User not found."
             )
-            if is_password:
-                # ============================================
-                # HASHING THE NEW USER'S PASSWORD & UPDATE
-                # ============================================
-                password_new_str: str = user_data.__getitem__("password")
-                password_new_str: str = make_hashable(password_new_str)
-                setattr(person_model_old_to_dict, "password", password_new_str)
 
-            # exclude of fields
-            forbidden_fields = {"id", "created_at", "date_joined"}
-            user_data_list = list(user_data.keys())
+        # Full Person's data from database
+        get_person_pydantic_old: Optional[UsersPydantic] = None
+        # USER ID
+        query_set_object: Optional[QuerySet[Users]] = None
+        if user_id is not None:
+            try:
+                query_set_object = Users.objects.filter(id=user_id)
+            except PersonErrorImproperlyConfigured as e:
+                raise PersonErrorImproperlyConfigured(e.args[0] if e.args else str(e))
+        # USER EMAIL
+        elif user_email is not None:
+            try:
+                query_set_object = Users.objects.filter(email=user_email)
+            except PersonErrorImproperlyConfigured as e:
+                raise PersonErrorImproperlyConfigured(e.args[0] if e.args else str(e))
+        query_object_first = query_set_object.first()
+        # WHAT WE RECEIVED FROM DATABASE
+        if query_object_first is None:
+            raise PersonErrorImproperlyConfigured(
+                f"{PersonServiceDatabaseAdapter.log_t[:-1]}\
+            [{PersonServiceDatabaseAdapter.create_or_update_in_database.__name__}]: User not found."
+            )
+        # WE GET A SIMPLE DICT.
+        query_object_old_validate = UsersPydantic.model_validate(query_object_first)
+        person_model_old_to_dict = (
+            query_object_old_validate.to_dict_without_secret_data()
+        )
+        try:
+
+            log.info(
+                f"""{PersonServiceDatabaseAdapter.log_t[:-1]}[{PersonServiceDatabaseAdapter.create_or_update_in_database.__name__}]:
+            # ============================================
+            # FILTER OF DATA BEFORE UPDATE DATA
+            # Clean data - without: id, passwors*, varification_code.
+            # ============================================"""
+            )
+
+            # CHECKING DATA ON THE SECRET DATA & UPDATE
+            forbidden_fields = ["id", "created_at", "date_joined", "verification_code"]
+            forbidden_fields.extend(password_keys)
+
             update_dict: dict = {
-                k: user_data.pop(k)
-                for k, v in person_model_old_to_dict.items()
-                if k not in forbidden_fields and k in user_data_list
+                k: user_data.get(k)
+                for k, _ in user_data.items()
+                if k not in forbidden_fields
             }
+            quantity_of_result = person_model_old_to_dict.update(update_dict)
+            log.info(
+                f"""{PersonServiceDatabaseAdapter.log_t[:-1]}[{PersonServiceDatabaseAdapter.create_or_update_in_database.__name__}]:
             # ============================================
-            # Here is UPDATING DATA IN DATABASE and return dictionary.
+            # BEFORE UPDATE DATA IN DATABASE.
+            # person_model_old_to_dict: {person_model_old_to_dict}
             # ============================================
-            Users.objects.filter(email=get_person_model_old.id).update(**update_dict)
-            updated_user = Users.objects.get(id=get_person_model_old.id)
-            return UsersPydantic.model_validate(updated_user)
+            """
+            )
+
+            is_password = PersonServiceDatabaseAdapter.is_password(user_data)
+            if is_password:
+                log.info(
+                    f"""{PersonServiceDatabaseAdapter.log_t[:-1]}[{PersonServiceDatabaseAdapter.create_or_update_in_database.__name__}]:
+                # ============================================
+                # BEFORE CHANGING THE PASSWORD IN DATABASE 2
+                #  Before checking password
+                # number_of_result: {quantity_of_result}
+                # ============================================"""
+                )
+                passw_keys: list = [
+                    k for k, _ in user_data.items() if k in password_keys
+                ]
+                passw_len: int = len(passw_keys)
+                if passw_len < 2:
+                    log.info(
+                        f"""{PersonServiceDatabaseAdapter.log_t[:-1]}\
+                    [{PersonServiceDatabaseAdapter.create_or_update_in_database.__name__}]:
+                    # ============================================
+                    # Password's events is all successful!
+                    # It not been changed in database.
+                    # PASSWORD NOT FOUND TO SET '["old_password", "new_password"]'. Check the name of password's key
+                    # ============================================
+"""
+                    )
+                else:
+                    old_password = user_data.get("old_password")
+                    new_password = user_data.get("new_password")
+                    kwargs = {"user_id": get_person_pydantic_old.id}
+                    PersonServiceDatabaseAdapter.change_password(
+                        old_password, new_password, **kwargs
+                    )
+                    log.info(
+                        f"""{PersonServiceDatabaseAdapter.log_t[:-1]}\
+                    [{PersonServiceDatabaseAdapter.create_or_update_in_database.__name__}]: Password's events is all successful!"""
+                    )
+            log.info(
+                f"""{PersonServiceDatabaseAdapter.log_t[:-1]}[{PersonServiceDatabaseAdapter.create_or_update_in_database.__name__}]:
+            # ============================================
+            # AFTER UPDATE ALL DATA IN DATABASE.
+            # number_of_result: {quantity_of_result}
+            # new data of user ID: {update_dict["id"]}
+            # updated_user: {str(update_dict)}
+            # ============================================
+            """
+            )
+
+            queryset_updated = query_set_object.first()
+            queryset_valid = UsersPydantic.model_validate(
+                queryset_updated
+            ).to_public_dict()
+
+            return queryset_valid
         except Exception as e:
             raise PersonErrorImproperlyConfigured(e.args[0] if e.args else str(e))

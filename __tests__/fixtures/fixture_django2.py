@@ -1,5 +1,5 @@
 # ELSE
-def pytest_generate_tests_regisration(metafunc):
+def pytest_generate_tests(metafunc):
     if "new_users_registration" in metafunc.fixturenames:
         generate_regisration(metafunc)
 
