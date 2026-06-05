@@ -19,6 +19,8 @@ task_id = uuid4()
 
 async def cache_user_data(*args, **kwargs) -> bool:
     """
+    TODO: ЗАкомитеть все.
+            Настроить удаление ключей из кеша после отправки писе
     Saving a first cache's data of user after registration.
     :param list or tuple args: This is argument a key of cache. Example: "('user:pending:< USER_EMAIL_without_some_symbols >',)"
     :param dict kwargs: This is argument a value of cache. Example: "{'username': < USER_NAME >, 'email': < EMAIL >}"
@@ -26,14 +28,10 @@ async def cache_user_data(*args, **kwargs) -> bool:
     """
     import asyncio
 
-    # from persons.apps import cachemanager
     from persons import EnumTemplatesREGEX
-
-    # from persons.interfaces import CacheManager as CacheManagerInitialize
     from persons.services import CacheManager
 
     cachemanager = CacheManager()
-    # cachemanager: CacheManagerInitialize = C  acheManager()
 
     PERSON_KEYS_OF_CACHE_IN_REGEX = (
         EnumTemplatesREGEX.PERSON_KEYS_OF_CACHE_IN_REGEX.value

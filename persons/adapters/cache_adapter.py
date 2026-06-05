@@ -10,9 +10,6 @@ from redis import AuthenticationError, ConnectionError, Redis, RedisError, Timeo
 
 from .cache_base import CacherBaseMixin
 
-# from typing import Optional
-
-
 log = logging.getLogger(__name__)
 
 

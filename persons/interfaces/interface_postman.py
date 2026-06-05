@@ -62,7 +62,7 @@ class PersonServiceDatabaseAdapter:
         user_data: dict,
         user_id: Optional[int] = None,
         user_email: Optional[str] = None,
-    ) -> UsersPydantic: ...
+    ) -> dict: ...
 
 
 class PostmanAdapter(Protocol):

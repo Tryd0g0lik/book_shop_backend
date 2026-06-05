@@ -24,34 +24,34 @@ log = logging.getLogger(__name__)
 
 
 class UsersRegistrationForm(SignupForm):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        # We don't know a view of the password1/password2 filed. They could be the 'forms.CharField' or
-        # 'forms.PasswordInput' or anything else.
-        if "password1" in self.fields:
-            field_password1 = self.fields["password1"]
-            field_password2 = self.fields["password2"]
-            for view in [field_password1, field_password2]:
-                if hasattr(view, "validators"):
-                    has_method_length = any(
-                        isinstance(v, MinLengthValidator) for v in view.validators
-                    )
-                    if has_method_length:
-                        view.validators = [
-                            v
-                            for v in view.validators
-                            if not isinstance(v, MinLengthValidator)
-                        ]
-                        view.validators.append(
-                            MinLengthValidator(APP_MINIMUM_PASSWORD_LENGTH)
-                        )
-                else:
-                    # I won't believe if SignupForm.password* doesn't have the validators prop.
-                    view.validators = []
-                    view.validators.append(
-                        MinLengthValidator(APP_MINIMUM_PASSWORD_LENGTH)
-                    )
+    # def __init__(self, *args, **kwargs):
+    #     super().__init__(*args, **kwargs)
+    #
+    #     # We don't know a view of the password1/password2 filed. They could be the 'forms.CharField' or
+    #     # 'forms.PasswordInput' or anything else.
+    #     if "password1" in self.fields:
+    #         field_password1 = self.fields["password1"]
+    #         field_password2 = self.fields["password2"]
+    #         for view in [field_password1, field_password2]:
+    #             if hasattr(view, "validators"):
+    #                 has_method_length = any(
+    #                     isinstance(v, MinLengthValidator) for v in view.validators
+    #                 )
+    #                 if has_method_length:
+    #                     view.validators = [
+    #                         v
+    #                         for v in view.validators
+    #                         if not isinstance(v, MinLengthValidator)
+    #                     ]
+    #                     view.validators.append(
+    #                         MinLengthValidator(APP_MINIMUM_PASSWORD_LENGTH)
+    #                     )
+    #             else:
+    #                 # I won't believe if SignupForm.password* doesn't have the validators prop.
+    #                 view.validators = []
+    #                 view.validators.append(
+    #                     MinLengthValidator(APP_MINIMUM_PASSWORD_LENGTH)
+    #                 )
 
     email = forms.EmailField(
         required=True,

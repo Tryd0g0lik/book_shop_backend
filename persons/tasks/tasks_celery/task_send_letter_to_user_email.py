@@ -6,21 +6,17 @@ import asyncio
 import json
 import logging
 import queue
-import re
 import time
 from typing import Any, Mapping, Optional, Union
 
 from celery import shared_task
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
 
 from persons import EnumEmailLetter, EnumTemplatesKeysCache, EnuSubjectOfLetter
 from persons.exceptions import PersonErrorTasks
-from persons.interfaces import PostmanAdapter
-from persons.interfaces.interface_persons import UsersPydantic, UsersPydanticDict
-
-# from persons.tasks.sub_tasks_celery.sub_task_get_send_letter import (
-#     child_process_emailing,
-#     task_child_process_letter_thanks_for_your_account,
-# )
+from persons.models import Users
+from project.settings_conf.settings_env import APP_DEFAULT_FROM_EMAIL
 
 log = logging.getLogger(__name__)
 
@@ -49,15 +45,19 @@ async def child_process_get_keys_0(
     :param queue.Queue queue: This is the queue.Queue object.
     :return: list
     """
-    from datetime import datetime
 
-    from persons.interfaces import CacheManager as CacheManagerInitialize
+    # from persons.interfaces import CacheManager as CacheManagerInitialize
     from persons.services import AccountManager
 
+    log_t = log_t[:-1] + f"[{child_process_get_keys_0.__name__}]:"
     account_manager = AccountManager()
+    log.info(f"{log_t} 1")
     postman = account_manager.postman
+    log.info(f"{log_t} 2")
     SubPerson = postman.SubPerson
+    log.info(f"{log_t} 3")
     sub_person = SubPerson()
+    log.info(f"{log_t} 4")
     keys: list = []
     try:
         log.info(
@@ -74,7 +74,7 @@ async def child_process_get_keys_0(
             key_pattern=key_pattern,
             collection=keys,
         )
-        log.warning(
+        log.info(
             log_t[:-1]
             + f""""[{child_process_get_keys_0.__name__}]: \n
         # ============================================
@@ -85,7 +85,6 @@ async def child_process_get_keys_0(
 """
             % (key_pattern, str(len(keys)), str(keys), str(result_bool))
         )
-        start_time = datetime.now()
         if result_bool:
             tasks = []
 
@@ -121,34 +120,6 @@ async def child_process_get_keys_0(
             % queue.qsize()
         )
 
-        log.info(
-            log_t[:-1]
-            + f"[{child_process_get_keys_0.__name__}]:\n ====================== DEBUG Review ======================"
-        )
-        end_time = datetime.now()
-        passed_time: datetime.now = end_time - start_time
-        log.info(
-            " ".join([log_t[:-1], f"[{child_process_get_keys_0.__name__}]:", "Time:"])
-        )
-        # Simple the overview by values
-        log_t = " ".join(
-            [
-                log_t[:-1],
-                f"[{child_process_get_keys_0.__name__}]:",
-                f"\nStart: {start_time.strftime('%Y-%m-%d %H:%M:%S')}",
-                f"\nEnd: {end_time.strftime('%Y-%m-%d %H:%M:%S')}",
-                f"\nPassed: {passed_time}",
-                f"\nResult size: {queue.qsize()}",
-                f"\nResult : {str(queue)}",
-            ]
-        )
-
-        log.info(log_t)
-        log.info(
-            log_t[:-1]
-            + f"[{child_process_get_keys_0.__name__}]: \n ====================== /DEBUG Review ======================"
-        )
-
     except Exception as e:
         error_t = log_t[:-1] + "[child_process_get_keys_0] ERORR_TEXT: %s" % str(e)
         log.error(error_t)
@@ -165,7 +136,7 @@ def sub_function(
     subject_: str,
     text_context_: str,
     context_: Optional[Mapping[str, Any]],
-) -> Union[list | bool]:
+) -> Union[list, bool]:
     """
     :param queue keys_queue: Required.
     :param str log_t: Required. It is a prefix for the logs.
@@ -175,23 +146,14 @@ def sub_function(
     :param Optional[Mapping[str, Any]] context_: It is acontext data from the letter body.
     :return:
     """
-    from persons.tasks.sub_tasks_celery.sub_task_get_send_letter import (
-        child_process_emailing,
+    text_context = render_to_string(template_name=text_context_, context=context_)
+    send_mail(
+        subject=subject_,
+        message=text_context,
+        recipient_list=list_of_keys,
+        from_email=APP_DEFAULT_FROM_EMAIL,
     )
-
-    # keys_queue: queue = test_keys_queue
-    log_t = log_t[:-1] + "[test sub_function]:"
-
-    kwargs = {"subject": subject_, "text_context": text_context_, "context": context_}
-    # task_child_process_letter_thanks_for_your_account.delay(*(list_of_keys,), **kwargs)
-    child_process_emailing(*(list_of_keys,), **kwargs)
-    log.info(
-        log_t[:-1]
-        + f"[{sub_function.__name__}]:"
-        + " Data has been transmitted next for sending in a email address."
-    )
-
-    return list_of_keys
+    return True
 
 
 async def send_letter_to_user_email(*args, **kwargs) -> bool:
@@ -204,96 +166,47 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
     :return:
     """
     log_t = f"[task {send_letter_to_user_email.__name__}]:"
-    import asyncio
 
     from persons.services import AccountManager, CacheManager
 
     dict_queue = queue.Queue(2000)
     list_of_keys = []
     lock = asyncio.Lock()
-    result_bool = False
     subject: str = EnuSubjectOfLetter.SUB_TASK_GET_SEND_LETTER_0.value
-    context_: Optional[Mapping[str, Any]] = None
     try:
-        # emails = [v for k, v in kwargs.items() if k == "email"]
-        # key_cache = list(args)[0]
-        # for one_email in emails:
-
-        async with lock:
-            result_bool = await child_process_get_keys_0(
-                key_pattern=EnumTemplatesKeysCache.USER_PENDING.value % "*",
-                queue=dict_queue,
-                log_t=log_t,
-            )
-        log.info(
-            log_t
-            + f"""\n
-            # ============================================
-We have the DATA in QUEUES (the JSON format). These data we above received.
-Below we need t get the token. Then insert in letter and send.
-            # dict_queue: {dict_queue.qsize()}
-            # ============================================
-        """
+        # HERE WE COLLECT CHECKING THE KEYS OF CACHE
+        # async with lock:
+        result_bool = await child_process_get_keys_0(
+            key_pattern=EnumTemplatesKeysCache.USER_PENDING.value % "*",
+            queue=dict_queue,
+            log_t=log_t[:],
         )
-
         qsize = dict_queue.qsize()
-        log.info(f"DDEBUG sub_function: 0 qsize: {qsize}")
+
         if result_bool and qsize:
             while not dict_queue.empty():
                 byte_code = dict_queue.get_nowait()
                 json_code = json.loads(byte_code.decode("utf-8"))
                 list_of_keys.append(json_code)
-        else:
-            return False
         account_manager = AccountManager()
+        generater = account_manager.inisialize_account()
 
-        # Below we are transmitting data for a email verification.
-        postman = account_manager.postman
-
+        # EVERY ONE KEY US IT NEED TO SEND THE TWO LETTER
         for one_dict in list_of_keys:
             one_email = one_dict.get("email")
 
-            # key_cache = EnumTemplatesKeysCache.USER_PENDING_LETTER.value
-            sub_person = postman.SubPerson(
-                person_email=one_email,
-            )
-            database_service = postman.database_service
-            key_cache = EnumTemplatesKeysCache.USER_PENDING.value % re.sub(
-                r"[@.]+", "", one_email
-            )
-            log.info(
-                log_t
-                + f""" \n
-                # ============================================
-                # BEFORE IS RUNNING THE child_process_get_keys_0,
-                # args_str: {one_email}
-                # key_cache: {key_cache}
-                # ============================================
-"""
-            )
-
-            person_list: Optional[list[UsersPydanticDict]] = await sub_person.get_model(
-                database_service, key_cache
-            )
-            log.info(
-                f"""
-                # ============================================
-                # DEBUG
-                # person_list: {str(person_list)}
-                # Type: {type(person_list)}
-                # ============================================
-"""
-            )
-            account_manager = account_manager.inisialize_account()
-            for person_dict in person_list:
+            if one_email is not None:
+                person_queryset_filter = await asyncio.to_thread(
+                    lambda: Users.objects.filter(email=one_email)
+                )
                 # Here we are transmitting data for mailing, Here we are speak obout the new account.
-                log.info(
-                    f"DEBUG person_dict: {str(person_dict)} & Type: {type(person_dict)}"
+                person_object = await asyncio.to_thread(
+                    lambda: person_queryset_filter.first()
                 )
 
                 text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value
                 sub_function(
-                    list_of_keys,
+                    [one_email],
                     log_t,
                     subject,
                     text_context,
@@ -301,15 +214,15 @@ Below we need t get the token. Then insert in letter and send.
                 )
 
                 text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_1.value
-                generate_login_code = account_manager.generate_login_code()
+                generate_login_code = generater.generate_login_code()
                 log.info(f"DEBUG generate_login_code: {generate_login_code}")
                 context_ = {
-                    "user": json.dumps(person_dict),
+                    "user": person_object,
                     "code": generate_login_code,
                 }
                 log.info(f"DEBUG context_: {str(context_)} & Type: {type(context_)}")
                 sub_function(
-                    list_of_keys,
+                    [one_email],
                     log_t,
                     subject,
                     text_context,
@@ -317,6 +230,7 @@ Below we need t get the token. Then insert in letter and send.
                 )
 
                 del result_bool, text_context, context_
+        list_of_keys.clear()
     except queue.Full:
 
         raise

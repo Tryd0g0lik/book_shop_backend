@@ -2,6 +2,7 @@ from typing import TypeAlias, Union
 
 __all__ = [
     "UsersPydantic",
+    "UsersPydanticDict",
     "EmailString",
     "CacherBaseMixin",
     "CacheManager",

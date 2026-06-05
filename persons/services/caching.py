@@ -8,7 +8,7 @@ import logging
 import queue
 import re
 import threading
-from typing import Optional
+from typing import Coroutine, Optional
 
 from persons.adapters import AsyncCacherAdapter, CacherAdapter
 from persons.interfaces import AsyncCacherAdapter as AsyncCacherAdapterInitialize
@@ -39,7 +39,8 @@ class CacheManager:
         :return: bool
         """
         is_connected = await self.asynccacher.is_connected()
-        if not  is_connected is None or not is_connected: await self.asynccacher.related()
+        if not is_connected is None or not is_connected:
+            await self.asynccacher.related()
         log.info(
             """\n
 # ============================================
@@ -174,16 +175,17 @@ class CacheManager:
         :return: Optional[bool] If return the True mean oll successfully or mistake.
         """
         is_connected = await self.asynccacher.is_connected()
-        if not is_connected is None or not is_connected: await self.asynccacher.related()
+        if is_connected is not None or not is_connected:
+            await self.asynccacher.related()
         log.info(
             self.log_t[:-1]
             + "[aget]:"
-            + """\n
-# Here we make caching of data.
-# ============================================
-# GET DATA FROM THE CACHE
-# ============================================
-"""
+            + """
+            # Here we make caching of data.
+            # ============================================
+            # GET DATA FROM THE CACHE
+            # ============================================
+            """
         )
         try:
             log.info(self.log_t[:-1] + "[aget]:" + " Before open the connection.")
@@ -473,29 +475,19 @@ class CacheManager:
                 "exat": exat,
                 "persist": persist,
             }
-            # loop_async_sync = CustomizationSyncAsyncLoop(*args, **qwargs)
-            # loop_async_sync.get_new_function = self.aget
-            # loop_async_sync.is_async = True
-            # if loop_async_sync.is_async:
-            #     loop_async_get = loop_async_sync.get_new_loop()
+            # return self.aget(**qwargs)
+            loop = None
+            try:
+                # Получаем текущий или создаём новый event loop
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                # Нет запущенного цикла — создаём новый
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
 
-            # t = threading.Thread(
-            #     target=loop_async_get,
-            #     daemon=True,
-            # )
-            # t.start()
-            # t.join(timeout=10)
-            # return loop_async_get
-            return self.aget(**qwargs)
-            # log_t = " ".join(
-            #     [
-            #         self.log_t[:-1] + "[save]:",
-            #         "Check a new loop. THe AGET method don't run in the sync loop.",
-            #     ]
-            # )
-            #
-            # log.error(log_t)
-            # raise ValueError(log_t)
+                # Выполняем корутину и получаем результат
+            get_data = loop.run_until_complete(self.aget(**qwargs))
+            return get_data
         except Exception as e:
             log.error(e.args if e.args else str(e))
             raise e

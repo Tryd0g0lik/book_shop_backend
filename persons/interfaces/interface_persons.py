@@ -4,7 +4,7 @@ This a content will use for how auxiliary classes for data typing.
 """
 
 from datetime import datetime
-from typing import Optional, TypedDict
+from typing import Optional, TypedDict, Union
 
 from pydantic import BaseModel, ConfigDict
 
@@ -22,41 +22,41 @@ class UsersDict(TypedDict):
 
 
 class UsersPydanticDict(ConfigDict):
-    id: int
-    last_login: Optional[datetime]
-    is_superuser: bool
-    username: str
-    first_name: str
-    last_name: str
-    email: str
-    is_staff: bool
-    is_active: bool
-    date_joined: datetime
-    category: str
-    password: str
-    is_sent: bool
-    is_verified: bool
+    id: Optional[int]
+    last_login: Optional[Union[datetime, str]]
+    is_superuser: Optional[bool]
+    username: Optional[str]
+    first_name: Optional[str]
+    last_name: Optional[str]
+    email: Optional[str]
+    is_staff: Optional[bool]
+    is_active: Optional[bool]
+    date_joined: Optional[Union[datetime, str]]
+    category: Optional[str]
+    password: Optional[str]
+    is_sent: Optional[bool]
+    is_verified: Optional[bool]
     verification_code: Optional[str]
-    balance: float
-    created_at: datetime
-    updated_at: datetime
+    balance: Optional[float]
+    created_at: Optional[Union[datetime, str]]
+    updated_at: Optional[Union[datetime, str]]
 
 
 class UsersPydantic(BaseModel):
     id: Optional[int]
     last_login: Optional[datetime]
-    is_superuser: bool
+    is_superuser: Optional[bool]
     username: Optional[str]
     first_name: Optional[str]
     last_name: Optional[str]
     email: Optional[str]
-    is_staff: bool
-    is_active: bool
+    is_staff: Optional[bool]
+    is_active: Optional[bool]
     date_joined: Optional[datetime]
     category: Optional[str]
     password: Optional[str]
-    is_sent: Optional[str]
-    is_verified: Optional[str]
+    is_sent: Optional[bool]
+    is_verified: Optional[bool]
     verification_code: Optional[str]
     balance: Optional[float]
     created_at: Optional[datetime]

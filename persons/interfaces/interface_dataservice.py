@@ -26,7 +26,7 @@
 #     def is_password(user_data: dict) -> bool: ...
 #
 #     @staticmethod
-#     def create_or_update_in_database(
+#     def defcreate_or_update_in_database(
 #         user_data: dict,
 #         user_id: Optional[int] = None,
 #         user_email: Optional[str] = None,
