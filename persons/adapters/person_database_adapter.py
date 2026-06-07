@@ -41,17 +41,12 @@ password_keys = [
 class PersonServiceDatabaseAdapter:
     """
     Here we have the two variables for works with the person database.
-     - This service will allow us to get the one user by email or index, or create_or_update  one position from database.
+     - This service will allow us to get the one user by email or index, and update an one position from database.
         Make the check - we have a specific email/index of the person or not.
         For checking we have a two entry point. This is a 'user_id' and 'user_email'.
     """
 
     log_t = "[PersonServiceDatabaseAdapter]:"
-
-    # def __new__(cls, *args, **kwargs):
-    #     initionally = super().__new__(cls, *args, **kwargs)
-    #     initionally.log_t = PersonServiceDatabaseAdapter.__class__.__name__
-    #     return initionally
 
     @staticmethod
     def get_user_by_id(user_id: Optional[int] = None) -> Optional[UsersPydantic]:
@@ -328,7 +323,7 @@ class PersonServiceDatabaseAdapter:
         return True
 
     @staticmethod
-    def create_or_update_in_database(
+    def update_in_database(
         user_data: dict,
         user_id: Optional[int] = None,
         user_email: Optional[str] = None,
@@ -356,7 +351,7 @@ class PersonServiceDatabaseAdapter:
         if user_id is None and user_email is None:
             raise PersonErrorImproperlyConfigured(
                 f"{PersonServiceDatabaseAdapter.log_t[:-1]}\
-            [{PersonServiceDatabaseAdapter.create_or_update_in_database.__name__}]: User not found."
+            [{PersonServiceDatabaseAdapter.update_in_database.__name__}]: User not found."
             )
 
         log.info("# Full Person's data from database")
@@ -378,7 +373,7 @@ class PersonServiceDatabaseAdapter:
         if query_object_first is None:
             raise PersonErrorImproperlyConfigured(
                 f"{PersonServiceDatabaseAdapter.log_t[:-1]}\
-            [{PersonServiceDatabaseAdapter.create_or_update_in_database.__name__}]: User not found."
+            [{PersonServiceDatabaseAdapter.update_in_database.__name__}]: User not found."
             )
         try:
 
@@ -392,7 +387,7 @@ class PersonServiceDatabaseAdapter:
             ]
             is_password = PersonServiceDatabaseAdapter.is_password(user_data)
             log.info(
-                f"""{PersonServiceDatabaseAdapter.log_t[:-1]}[{PersonServiceDatabaseAdapter.create_or_update_in_database.__name__}]:
+                f"""{PersonServiceDatabaseAdapter.log_t[:-1]}[{PersonServiceDatabaseAdapter.update_in_database.__name__}]:
             # ============================================
             # FILTER OF DATA BEFORE UPDATE DATA
             # Clean data - without: id, password*, varification_code.
@@ -412,7 +407,7 @@ class PersonServiceDatabaseAdapter:
 
             if is_password:
                 log.info(
-                    f"""{PersonServiceDatabaseAdapter.log_t[:-1]}[{PersonServiceDatabaseAdapter.create_or_update_in_database.__name__}]:
+                    f"""{PersonServiceDatabaseAdapter.log_t[:-1]}[{PersonServiceDatabaseAdapter.update_in_database.__name__}]:
                 # ============================================
                 # BEFORE CHANGING THE PASSWORD IN DATABASE 2
                 #  Before checking password
@@ -427,11 +422,11 @@ class PersonServiceDatabaseAdapter:
                 )
                 log.info(
                     f"""{PersonServiceDatabaseAdapter.log_t[:-1]}\
-                [{PersonServiceDatabaseAdapter.create_or_update_in_database.__name__}]: Password's events is all successful!"""
+                [{PersonServiceDatabaseAdapter.update_in_database.__name__}]: Password's events is all successful!"""
                 )
 
             log.info(
-                f"""{PersonServiceDatabaseAdapter.log_t[:-1]}[{PersonServiceDatabaseAdapter.create_or_update_in_database.__name__}]:
+                f"""{PersonServiceDatabaseAdapter.log_t[:-1]}[{PersonServiceDatabaseAdapter.update_in_database.__name__}]:
             # ============================================
             # AFTER FIRST.
             # queryset_updated: {query_object_first}
@@ -442,7 +437,7 @@ class PersonServiceDatabaseAdapter:
                 query_object_first
             ).to_public_dict()
             log.info(
-                f"""{PersonServiceDatabaseAdapter.log_t[:-1]}[{PersonServiceDatabaseAdapter.create_or_update_in_database.__name__}]:
+                f"""{PersonServiceDatabaseAdapter.log_t[:-1]}[{PersonServiceDatabaseAdapter.update_in_database.__name__}]:
             # ============================================
             # AFTER UPDATE ALL DATA IN DATABASE.
             # new data of user ID: {queryset_valid["id"]}

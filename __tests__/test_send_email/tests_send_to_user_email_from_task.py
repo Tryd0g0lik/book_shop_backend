@@ -51,7 +51,7 @@
 #         # ============================================
 #         # Mock the person_database_adapter.py::PersonServiceDatabaseAdapter.get_user_by_email()
 #         # and
-#         # Mock the person_database_adapter.py::PersonServiceDatabaseAdapter.create_or_update_in_database()
+#         # Mock the person_database_adapter.py::PersonServiceDatabaseAdapter.update_in_database()
 #         # ============================================
 #         """)
 #         mock_get_user_by_email = mocker.patch(
@@ -81,7 +81,7 @@
 #         mock_Users.update.return_value = mock_update
 #         # mock_filter.object.filter.return_value = lambda *args: 1
 #         # mock_create_or_update_in_database = mocker.patch(
-#         #     "persons.adapters.person_database_adapter.PersonServiceDatabaseAdapter.create_or_update_in_database")
+#         #     "persons.adapters.person_database_adapter.PersonServiceDatabaseAdapter.update_in_database")
 #         # mock_create_or_update_in_database.reset_mock()
 #         #
 #         # def test_create_or_update_in_database_by_id(

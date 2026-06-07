@@ -48,11 +48,11 @@ class TestCreateOrUpdateInDatabase:
     def test_create_or_update_in_database_by_id(self, fixture_create_user):
         """
         The purpose of test - This finding user by USER-INDEX and update the user data. Exclude is the property password.
-        Testing the 'PersonServiceDatabaseAdapter.create_or_update_in_database'.
+        Testing the 'PersonServiceDatabaseAdapter.update_in_database'.
         :param fixture_create_user: It is "[< DICT_NEW_USER_DATA >, < USER_OBJECT_FROM_DB >, < OLD_USER_EMAIL >, < NEW_USER_EMAIL >]".
         :return: Assert what database will be containing two lines.
         """
-        create_or_update_in_database: PersonServiceDatabaseAdapterInitialize = PersonServiceDatabaseAdapter.create_or_update_in_database
+        create_or_update_in_database: PersonServiceDatabaseAdapterInitialize = PersonServiceDatabaseAdapter.update_in_database
         # UPDATE USER
         new_users_data = fixture_create_user[0]
         user = fixture_create_user[1]
@@ -76,12 +76,12 @@ class TestCreateOrUpdateInDatabase:
     def test_create_or_update_in_database_by_email(self, fixture_create_user):
         """
         The purpose of this test - This finding user by EMAIL and update the user data. Exclude is the property password.
-        Testing the 'PersonServiceDatabaseAdapter.create_or_update_in_database'.
+        Testing the 'PersonServiceDatabaseAdapter.update_in_database'.
         :param fixture_create_user: It is "[< DICT_NEW_USER_DATA >, < USER_OBJECT_FROM_DB >, < OLD_USER_EMAIL >, < NEW_USER_EMAIL >]".
         :return: Assert what database will be containing two lines.
         """
         # UPDATING USER
-        create_or_update_in_database: PersonServiceDatabaseAdapterInitialize = PersonServiceDatabaseAdapter.create_or_update_in_database
+        create_or_update_in_database: PersonServiceDatabaseAdapterInitialize = PersonServiceDatabaseAdapter.update_in_database
         new_users_data = fixture_create_user[0]
         user = fixture_create_user[1]
         old_email = fixture_create_user[-2]
@@ -103,12 +103,12 @@ class TestCreateOrUpdateInDatabase:
     def test_create_or_update_in_database_password(self, fixture_create_user):
         """
         The purpose of this test - This finding user by EMAIL and update the user data. Include is the property password.
-        Testing the 'PersonServiceDatabaseAdapter.create_or_update_in_database'.
+        Testing the 'PersonServiceDatabaseAdapter.update_in_database'.
         :param fixture_create_user: It is "[< DICT_NEW_USER_DATA >, < USER_OBJECT_FROM_DB >, < OLD_USER_EMAIL >, < NEW_USER_EMAIL >]".
         :return: Assert what database will be containing two lines.
         """
         # UPDATING USER
-        create_or_update_in_database: PersonServiceDatabaseAdapterInitialize = PersonServiceDatabaseAdapter.create_or_update_in_database
+        create_or_update_in_database: PersonServiceDatabaseAdapterInitialize = PersonServiceDatabaseAdapter.update_in_database
         new_users_data = fixture_create_user[0]
         user = fixture_create_user[1]
         old_email = fixture_create_user[-2]

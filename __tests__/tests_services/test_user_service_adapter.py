@@ -87,8 +87,8 @@ class TestUserServiceAdapter:
 
     # def test_create_user(self, mock_users_database ):
     #     """
-    #     This is a test of the 'create_or_update_in_database' method.
-    #     This test is testing that we send data to the 'PersonServiceAdapter.create_or_update_in_database'
+    #     This is a test of the 'update_in_database' method.
+    #     This test is testing that we send data to the 'PersonServiceAdapter.update_in_database'
     #     The entrypoint contain the three keys:
     #      -  user_data: dict,
     #      -  user_id: Optional[int] = None,
@@ -112,9 +112,9 @@ class TestUserServiceAdapter:
     #     }
     #     '''
     #     It means by conditions, we should create a new user in database.
-    #     In bode of method 'create_or_update_in_database' we have a check (self.is_email() method & 'test_is_email' test )"email" in db.
+    #     In bode of method 'update_in_database' we have a check (self.is_email() method & 'test_is_email' test )"email" in db.
     #     If "email" email not exists in db. user will be created.
-    #     PATH: persons.adapters.person_dabase_adapter.PersonServiceDatabaseAdapter.create_or_update_in_database
+    #     PATH: persons.adapters.person_dabase_adapter.PersonServiceDatabaseAdapter.update_in_database
     #     :param mock_users_database: It is the mock-Users database model. All content of the mock database at the JSON-str
     #     :return: void
     #     """
@@ -138,7 +138,7 @@ class TestUserServiceAdapter:
     #     assert result_email is False
     #
     #     # print("TEST DBUG BEFORE create person: " + str(person))
-    #     mock_user_new:UsersPydantic =  person.create_or_update_in_database(new_user, mock_users_database["id"])
+    #     mock_user_new:UsersPydantic =  person.update_in_database(new_user, mock_users_database["id"])
     #
     #     mock_user_new_json = json.loads(mock_user_new.model_dump_json())
     #     assert type(mock_user_new_json) == dict
