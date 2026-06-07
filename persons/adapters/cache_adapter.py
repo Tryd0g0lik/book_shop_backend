@@ -65,9 +65,12 @@ class CacherAdapter(CacherBaseMixin):
     def related(self) -> bool:
         if self.server_client is None:
             try:
+                log.info(
+                    """
                 # ============================================
                 # CONNECT TO THE CACHE SERVER
-                # ============================================
+                # ============================================"""
+                )
                 self.server_client = self.__get_client()
             except Exception as e:
                 log_t = self.log_t + " %s" % e.args[0] if e.args else str(e)
@@ -77,7 +80,7 @@ class CacherAdapter(CacherBaseMixin):
     @contextmanager
     def connected(self):
         is_connected = self.is_connected
-        if not is_connected is None or not is_connected:
+        if is_connected is not None or not is_connected:
             self.related()
         # ============================================
         # GET REDIS CLIENT
@@ -123,9 +126,12 @@ class CacherAdapter(CacherBaseMixin):
             self._init_pool()
 
     def close(self):
+        log.info(
+            """
         # ============================================
         # EVERY CONNECTION WILL BE CLOSED
-        # ============================================
+        # ============================================"""
+        )
         is_connected = self.is_connected
         if is_connected:
             self.server_client = None

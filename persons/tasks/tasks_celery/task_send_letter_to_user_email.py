@@ -85,19 +85,19 @@ async def child_process_get_keys_0(
 """
             % (key_pattern, str(len(keys)), str(keys), str(result_bool))
         )
+        tasks = []
         if result_bool:
-            tasks = []
 
             for key in keys:
                 log.warning(
                     log_t[:-1]
                     + f"[{child_process_get_keys_0.__name__}]:"
                     + """\n
-        # ============================================
-        # DEBUG REDIS CACHE SERVER - BEFORE  THE GET COLLECTION BY THE KEY of POSITION
-        # THe KEY: %s
-        # ============================================
-        """
+                    # ============================================
+                    # DEBUG REDIS CACHE SERVER - BEFORE  THE GET COLLECTION BY THE KEY of POSITION
+                    # THe KEY: %s
+                    # ============================================
+                    """
                     % (key.decode("utf-8"),),
                 )
                 tasks.append(
@@ -108,20 +108,73 @@ async def child_process_get_keys_0(
                     )
                 )
             await asyncio.gather(*tasks, return_exceptions=True)
+
         log.info(
             log_t[:-1]
             + f"[{child_process_get_keys_0.__name__}]:"
             + """\n
         # ============================================
-        # DEBUG REDIS CACHE SERVER - AFTER  THE GET COLLECTION BY THE KEY of POSITION
+        # DEBUG REDIS CACHE SERVER - AFTER  THE GETS COLLECTION KEYS FROM POSITIONS
         # THe FOUND CACHE'S POSITIONS: %s
         # ============================================
         """
             % queue.qsize()
         )
+        cachemanager = sub_person.cachemanager
+        asyncconnected = cachemanager.asynccacher.asyncconnected
+        tasks_delete = []
+        tasks.clear()
+        async with asyncconnected() as conn:
 
+            async def resave_cache_after_sent_letter(*args) -> bool:
+                """
+                :param str args: It is the one old key of cache.
+
+                :return:
+                """
+                lt = log_t[:-1] + f"[{resave_cache_after_sent_letter.__name__}]:"
+                for k in args:
+                    data_list = []
+                    try:
+                        # It is receiving the user data
+                        await cachemanager.aget(key=k, collection=data_list)
+
+                        # New key for resaves
+                        key: str = (
+                            EnumTemplatesKeysCache.USER_PENDING_LETTER.value
+                            % k.split(":")[-1]
+                        )
+                        user_data = (data_list[0]).encode("utf-8")
+                        # Re-save
+                        response_bool = await cachemanager.asave(key, user_data)
+                        log.info(
+                            lt
+                            + f"User dada Re-saved successfully from old {args} key !"
+                        )
+                        return response_bool
+                    except Exception as e:
+                        log.error(lt + " ERROR => " + e.args[0] if e.args else str(e))
+                        return False
+                return True
+
+            for key in keys:
+
+                tasks.append(resave_cache_after_sent_letter(key))
+                tasks_delete.append(asyncio.create_task(conn.delete(key)))
+
+            log.info(
+                log_t[:-1]
+                + f"""[{child_process_get_keys_0.__name__}]:\n
+            # ============================================
+            # BELOW RE-SAVES THE USER DATA THEN REMOVES KEYS
+            # ============================================"""
+            )
+            await asyncio.gather(*tasks, return_exceptions=True)
+            await asyncio.gather(*tasks_delete, return_exceptions=True)
     except Exception as e:
-        error_t = log_t[:-1] + "[child_process_get_keys_0] ERORR_TEXT: %s" % str(e)
+        error_t = log_t[
+            :-1
+        ] + f"[{child_process_get_keys_0.__name__}]: ERORR_TEXT: %s" % str(e)
         log.error(error_t)
         raise PersonErrorTasks(e.args[0] if len(e.args) else str(e))
     return True
@@ -130,7 +183,7 @@ async def child_process_get_keys_0(
 # ============================================
 # THE SUB FUNCTION IS TO AVOID A CODE DUPLICATION, below/
 # ============================================
-def sub_function(
+def sub_function_send_mail(
     list_of_keys: list,
     log_t: str,
     subject_: str,
@@ -174,24 +227,35 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
     lock = asyncio.Lock()
     subject: str = EnuSubjectOfLetter.SUB_TASK_GET_SEND_LETTER_0.value
     try:
+        log.info(
+            log_t
+            + """
+        # ============================================
         # HERE WE COLLECT CHECKING THE KEYS OF CACHE
-        # async with lock:
-        result_bool = await child_process_get_keys_0(
-            key_pattern=EnumTemplatesKeysCache.USER_PENDING.value % "*",
-            queue=dict_queue,
-            log_t=log_t[:],
+        # ============================================"""
         )
-        qsize = dict_queue.qsize()
+        async with lock:
+            result_bool = await child_process_get_keys_0(
+                key_pattern=EnumTemplatesKeysCache.USER_PENDING.value % "*",
+                queue=dict_queue,
+                log_t=log_t[:],
+            )
+            qsize = dict_queue.qsize()
 
-        if result_bool and qsize:
-            while not dict_queue.empty():
-                byte_code = dict_queue.get_nowait()
-                json_code = json.loads(byte_code.decode("utf-8"))
-                list_of_keys.append(json_code)
-        account_manager = AccountManager()
-        generater = account_manager.inisialize_account()
-
+            if result_bool and qsize:
+                while not dict_queue.empty():
+                    byte_code = dict_queue.get_nowait()
+                    json_code = json.loads(byte_code.decode("utf-8"))
+                    list_of_keys.append(json_code)
+            account_manager = AccountManager()
+            generater = account_manager.inisialize_account()
+        log.info(
+            log_t
+            + """
+        # ============================================
         # EVERY ONE KEY US IT NEED TO SEND THE TWO LETTER
+        # ============================================"""
+        )
         for one_dict in list_of_keys:
             one_email = one_dict.get("email")
 
@@ -205,7 +269,7 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
                 )
 
                 text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value
-                sub_function(
+                sub_function_send_mail(
                     [one_email],
                     log_t,
                     subject,
@@ -220,8 +284,7 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
                     "user": person_object,
                     "code": generate_login_code,
                 }
-                log.info(f"DEBUG context_: {str(context_)} & Type: {type(context_)}")
-                sub_function(
+                sub_function_send_mail(
                     [one_email],
                     log_t,
                     subject,

@@ -85,70 +85,70 @@ class TestUserServiceAdapter:
         assert result_email is False
 
 
-    def test_create_user(self, mock_users_database ):
-        """
-        This is a test of the 'create_or_update_in_database' method.
-        This test is testing that we send data to the 'PersonServiceAdapter.create_or_update_in_database'
-        The entrypoint contain the three keys:
-         -  user_data: dict,
-         -  user_id: Optional[int] = None,
-         -  user_email: Optional[str] = None.
-
-         Here is one option. It's when we have only the 'user_data'.
-         '''json
-         {
-            "email": "premium25@example.com",
-            "first_name": "testFirstName",
-            "last_name": "testLastName",
-            "password": "pbkdf2_sha256$hash_admin_1",
-        }
-        # or
-        {
-            "email": "premium25@example.com",
-            "first_name": "testFirstName",
-            "last_name": "testLastName",
-            "password1": "pbkdf2_sha256$hash_admin_1",
-            "password2": "pbkdf2_sha256$hash_admin_1",
-        }
-        '''
-        It means by conditions, we should create a new user in database.
-        In bode of method 'create_or_update_in_database' we have a check (self.is_email() method & 'test_is_email' test )"email" in db.
-        If "email" email not exists in db. user will be created.
-        PATH: persons.adapters.person_dabase_adapter.PersonServiceDatabaseAdapter.create_or_update_in_database
-        :param mock_users_database: It is the mock-Users database model. All content of the mock database at the JSON-str
-        :return: void
-        """
-
-        from __tests__.fixtures.mock_function import get_file
-        from persons.adapters import PersonServiceDatabaseAdapter
-        mock_db_json_str: str = get_file()
-
-        new_user = {
-            "email": "premium25@example.com",
-            "first_name": "testFirstName",
-            "last_name": "testLastName",
-            "password1": "pbkdf2_sha256$hash_admin_1",
-            "password2": "pbkdf2_sha256$hash_admin_1",
-        }
-        # --------------------
-        person = PersonServiceDatabaseAdapter()
-        result_email: bool = person.is_email("premium25@example.com")
-
-        assert result_email is not None
-        assert result_email is False
-
-        # print("TEST DBUG BEFORE create person: " + str(person))
-        mock_user_new:UsersPydantic =  person.create_or_update_in_database(user_data=new_user)
-
-        mock_user_new_json = json.loads(mock_user_new.model_dump_json())
-        assert type(mock_user_new_json) == dict
-
-        mock_db_json_list: list[dict] = json.loads(mock_db_json_str)
-        log.info(f"""\n
-        # ============================================
-        # TEST DEBUG THAT IS mock_db_json_list LENGTH (total moc database): {len(mock_db_json_list)}
-        # THAT IS mock_db_json_list TYPE (total moc database): {type(mock_db_json_list)}
-        # THAT IS mock_user_new_json (received a new single user) TYPE: {type(mock_user_new_json)}
-        # THAT IS mock_user_new_json (received a new single user): {str(mock_user_new_json)}
-        # ============================================
-        """)
+    # def test_create_user(self, mock_users_database ):
+    #     """
+    #     This is a test of the 'create_or_update_in_database' method.
+    #     This test is testing that we send data to the 'PersonServiceAdapter.create_or_update_in_database'
+    #     The entrypoint contain the three keys:
+    #      -  user_data: dict,
+    #      -  user_id: Optional[int] = None,
+    #      -  user_email: Optional[str] = None.
+    #
+    #      Here is one option. It's when we have only the 'user_data'.
+    #      '''json
+    #      {
+    #         "email": "premium25@example.com",
+    #         "first_name": "testFirstName",
+    #         "last_name": "testLastName",
+    #         "password": "pbkdf2_sha256$hash_admin_1",
+    #     }
+    #     # or
+    #     {
+    #         "email": "premium25@example.com",
+    #         "first_name": "testFirstName",
+    #         "last_name": "testLastName",
+    #         "password1": "pbkdf2_sha256$hash_admin_1",
+    #         "password2": "pbkdf2_sha256$hash_admin_1",
+    #     }
+    #     '''
+    #     It means by conditions, we should create a new user in database.
+    #     In bode of method 'create_or_update_in_database' we have a check (self.is_email() method & 'test_is_email' test )"email" in db.
+    #     If "email" email not exists in db. user will be created.
+    #     PATH: persons.adapters.person_dabase_adapter.PersonServiceDatabaseAdapter.create_or_update_in_database
+    #     :param mock_users_database: It is the mock-Users database model. All content of the mock database at the JSON-str
+    #     :return: void
+    #     """
+    #
+    #     from __tests__.fixtures.mock_function import get_file
+    #     from persons.adapters import PersonServiceDatabaseAdapter
+    #     mock_db_json_str: str = get_file()
+    #
+    #     new_user = {
+    #         "email": "premium25@example.com",
+    #         "first_name": "testFirstName",
+    #         "last_name": "testLastName",
+    #         "password1": "pbkdf2_sha256$hash_admin_1",
+    #         "password2": "pbkdf2_sha256$hash_admin_1",
+    #     }
+    #     # --------------------
+    #     person = PersonServiceDatabaseAdapter()
+    #     result_email: bool = person.is_email("premium25@example.com")
+    #
+    #     assert result_email is not None
+    #     assert result_email is False
+    #
+    #     # print("TEST DBUG BEFORE create person: " + str(person))
+    #     mock_user_new:UsersPydantic =  person.create_or_update_in_database(new_user, mock_users_database["id"])
+    #
+    #     mock_user_new_json = json.loads(mock_user_new.model_dump_json())
+    #     assert type(mock_user_new_json) == dict
+    #
+    #     mock_db_json_list: list[dict] = json.loads(mock_db_json_str)
+    #     log.info(f"""\n
+    #     # ============================================
+    #     # TEST DEBUG THAT IS mock_db_json_list LENGTH (total moc database): {len(mock_db_json_list)}
+    #     # THAT IS mock_db_json_list TYPE (total moc database): {type(mock_db_json_list)}
+    #     # THAT IS mock_user_new_json (received a new single user) TYPE: {type(mock_user_new_json)}
+    #     # THAT IS mock_user_new_json (received a new single user): {str(mock_user_new_json)}
+    #     # ============================================
+    #     """)

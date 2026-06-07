@@ -32,7 +32,10 @@ UserPointType = Union[VerifyUserIdType, VerifyUserEmailType]
 
 # This is  names of keys of passwords.
 # When we want to rewrite password us need to have "old_password" and "new_password"
-password_keys = ["old_password", "new_password"]
+password_keys = [
+    "old_password",
+    "new_password",
+]
 
 
 class PersonServiceDatabaseAdapter:
@@ -44,6 +47,7 @@ class PersonServiceDatabaseAdapter:
     """
 
     log_t = "[PersonServiceDatabaseAdapter]:"
+
     # def __new__(cls, *args, **kwargs):
     #     initionally = super().__new__(cls, *args, **kwargs)
     #     initionally.log_t = PersonServiceDatabaseAdapter.__class__.__name__
@@ -173,17 +177,16 @@ class PersonServiceDatabaseAdapter:
         from persons.services import CustomizationSyncAsyncLoop
 
         try:
-            print(f"\n ------------------ \n DEBUG BEFORE. email:  {str(user_email)}")
-            test_result = Users.objects.get(email=user_email)
+            Users.objects.get(email=user_email)
 
-            return True if test_result is not None else False
+            return True
         except Exception as e:
             log_t = (
                 PersonServiceDatabaseAdapter.log_t[:-1]
                 + f"[{PersonServiceDatabaseAdapter.is_email.__name__}]: {e.args[0] if e.args else str(e)}"
             )
-
-            raise PersonErrorImproperlyConfigured(log_t) from e
+            log.error(log_t)
+            return False
 
     @staticmethod
     def is_password(user_data: dict) -> bool:
@@ -196,7 +199,9 @@ class PersonServiceDatabaseAdapter:
                 True if k in password_keys else False for k, _ in user_data.items()
             ]
 
-            return bool_list[0] if bool_list is not None and len(bool_list) else False
+            return (
+                True if bool_list is not None and bool_list.count(True) == 2 else False
+            )
         except Exception as e:
             log_t = (
                 PersonServiceDatabaseAdapter.log_t[:-1]
@@ -304,9 +309,6 @@ class PersonServiceDatabaseAdapter:
             password=new_password
         )
 
-        # user = Users.objects.get(id=kwargs.get("user_id")) if "user_id" in keys \
-        #     else Users.objects.get(email=kwargs.get("user_email"))
-
         queryset = Users.objects.filter(
             Q(id=kwargs.get("user_id")) | Q(email=kwargs.get("user_email")),
             password=old_passw_hash,
@@ -320,7 +322,9 @@ class PersonServiceDatabaseAdapter:
                 log_t
                 + " There are not anyone user which  will be containing a similar password with 'old_password'."
             )
-        queryset.update(password=new_passw_hash)
+        queryset_fisrt = queryset.first()
+        setattr(queryset_fisrt, "password", new_passw_hash)
+        queryset_fisrt.save()
         return True
 
     @staticmethod
@@ -345,7 +349,7 @@ class PersonServiceDatabaseAdapter:
         :param user_id: User ID (optional)
         :param user_email: User email (optional)
 
-        return: User's dict without secret data. These are - password and code varification.
+        return: User's dict without secret data. THis is without: password and code varification.
         """
         from persons.models import Users
 
@@ -355,114 +359,97 @@ class PersonServiceDatabaseAdapter:
             [{PersonServiceDatabaseAdapter.create_or_update_in_database.__name__}]: User not found."
             )
 
-        # Full Person's data from database
-        get_person_pydantic_old: Optional[UsersPydantic] = None
-        # USER ID
+        log.info("# Full Person's data from database")
         query_set_object: Optional[QuerySet[Users]] = None
         if user_id is not None:
+            log.info("# USER ID")
             try:
                 query_set_object = Users.objects.filter(id=user_id)
             except PersonErrorImproperlyConfigured as e:
                 raise PersonErrorImproperlyConfigured(e.args[0] if e.args else str(e))
-        # USER EMAIL
         elif user_email is not None:
+            log.info("# USER EMAIL")
             try:
                 query_set_object = Users.objects.filter(email=user_email)
             except PersonErrorImproperlyConfigured as e:
                 raise PersonErrorImproperlyConfigured(e.args[0] if e.args else str(e))
         query_object_first = query_set_object.first()
-        # WHAT WE RECEIVED FROM DATABASE
+        log.info("# WHAT WE RECEIVED FROM DATABASE")
         if query_object_first is None:
             raise PersonErrorImproperlyConfigured(
                 f"{PersonServiceDatabaseAdapter.log_t[:-1]}\
             [{PersonServiceDatabaseAdapter.create_or_update_in_database.__name__}]: User not found."
             )
-        # WE GET A SIMPLE DICT.
-        query_object_old_validate = UsersPydantic.model_validate(query_object_first)
-        person_model_old_to_dict = (
-            query_object_old_validate.to_dict_without_secret_data()
-        )
         try:
 
+            log.info("# CHECKING DATA ON THE SECRET DATA & UPDATE")
+            forbidden_fields = [
+                "id",
+                "created_at",
+                "date_joined",
+                "verification_code",
+                "password",
+            ]
+            is_password = PersonServiceDatabaseAdapter.is_password(user_data)
             log.info(
                 f"""{PersonServiceDatabaseAdapter.log_t[:-1]}[{PersonServiceDatabaseAdapter.create_or_update_in_database.__name__}]:
             # ============================================
             # FILTER OF DATA BEFORE UPDATE DATA
-            # Clean data - without: id, passwors*, varification_code.
+            # Clean data - without: id, password*, varification_code.
+            # New user data: {user_data}
+            # is_password: {is_password}
             # ============================================"""
             )
-
-            # CHECKING DATA ON THE SECRET DATA & UPDATE
-            forbidden_fields = ["id", "created_at", "date_joined", "verification_code"]
-            forbidden_fields.extend(password_keys)
-
             update_dict: dict = {
                 k: user_data.get(k)
                 for k, _ in user_data.items()
                 if k not in forbidden_fields
             }
-            quantity_of_result = person_model_old_to_dict.update(update_dict)
-            log.info(
-                f"""{PersonServiceDatabaseAdapter.log_t[:-1]}[{PersonServiceDatabaseAdapter.create_or_update_in_database.__name__}]:
-            # ============================================
-            # BEFORE UPDATE DATA IN DATABASE.
-            # person_model_old_to_dict: {person_model_old_to_dict}
-            # ============================================
-            """
-            )
 
-            is_password = PersonServiceDatabaseAdapter.is_password(user_data)
+            for k, v in update_dict.items():
+                setattr(query_object_first, k, v)
+                query_object_first.save()
+
             if is_password:
                 log.info(
                     f"""{PersonServiceDatabaseAdapter.log_t[:-1]}[{PersonServiceDatabaseAdapter.create_or_update_in_database.__name__}]:
                 # ============================================
                 # BEFORE CHANGING THE PASSWORD IN DATABASE 2
                 #  Before checking password
-                # number_of_result: {quantity_of_result}
                 # ============================================"""
                 )
-                passw_keys: list = [
-                    k for k, _ in user_data.items() if k in password_keys
-                ]
-                passw_len: int = len(passw_keys)
-                if passw_len < 2:
-                    log.info(
-                        f"""{PersonServiceDatabaseAdapter.log_t[:-1]}\
-                    [{PersonServiceDatabaseAdapter.create_or_update_in_database.__name__}]:
-                    # ============================================
-                    # Password's events is all successful!
-                    # It not been changed in database.
-                    # PASSWORD NOT FOUND TO SET '["old_password", "new_password"]'. Check the name of password's key
-                    # ============================================
-"""
-                    )
-                else:
-                    old_password = user_data.get("old_password")
-                    new_password = user_data.get("new_password")
-                    kwargs = {"user_id": get_person_pydantic_old.id}
-                    PersonServiceDatabaseAdapter.change_password(
-                        old_password, new_password, **kwargs
-                    )
-                    log.info(
-                        f"""{PersonServiceDatabaseAdapter.log_t[:-1]}\
-                    [{PersonServiceDatabaseAdapter.create_or_update_in_database.__name__}]: Password's events is all successful!"""
-                    )
+
+                old_password = user_data.get("old_password")
+                new_password = user_data.get("new_password")
+                kwargs = {"user_id": query_object_first.id}
+                PersonServiceDatabaseAdapter.change_password(
+                    old_password, new_password, **kwargs
+                )
+                log.info(
+                    f"""{PersonServiceDatabaseAdapter.log_t[:-1]}\
+                [{PersonServiceDatabaseAdapter.create_or_update_in_database.__name__}]: Password's events is all successful!"""
+                )
+
+            log.info(
+                f"""{PersonServiceDatabaseAdapter.log_t[:-1]}[{PersonServiceDatabaseAdapter.create_or_update_in_database.__name__}]:
+            # ============================================
+            # AFTER FIRST.
+            # queryset_updated: {query_object_first}
+            # ============================================
+            """
+            )
+            queryset_valid = UsersPydantic.model_validate(
+                query_object_first
+            ).to_public_dict()
             log.info(
                 f"""{PersonServiceDatabaseAdapter.log_t[:-1]}[{PersonServiceDatabaseAdapter.create_or_update_in_database.__name__}]:
             # ============================================
             # AFTER UPDATE ALL DATA IN DATABASE.
-            # number_of_result: {quantity_of_result}
-            # new data of user ID: {update_dict["id"]}
-            # updated_user: {str(update_dict)}
+            # new data of user ID: {queryset_valid["id"]}
+            # updated_user: {str(queryset_valid)}
             # ============================================
             """
             )
-
-            queryset_updated = query_set_object.first()
-            queryset_valid = UsersPydantic.model_validate(
-                queryset_updated
-            ).to_public_dict()
-
             return queryset_valid
         except Exception as e:
             raise PersonErrorImproperlyConfigured(e.args[0] if e.args else str(e))

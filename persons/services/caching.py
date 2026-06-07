@@ -39,7 +39,7 @@ class CacheManager:
         :return: bool
         """
         is_connected = await self.asynccacher.is_connected()
-        if not is_connected is None or not is_connected:
+        if is_connected is not None or not is_connected:
             await self.asynccacher.related()
         log.info(
             """\n
@@ -55,11 +55,11 @@ class CacheManager:
         #     await self.asynccacher.related()
         log.info(
             """\n
-# Here we make caching of data.
-# ============================================
-# SAVING DATA ON THE CACHE SERVER
-# ============================================
-            """
+        # Here we make caching of data.
+        # ============================================
+        # SAVING DATA ON THE CACHE SERVER
+        # ============================================
+        """
         )
         try:
             log.info(self.log_t[:-1] + "[asave]:" + " Before open the connection.")
@@ -68,9 +68,9 @@ class CacheManager:
                 existing = await conn.getex(key, ttl)
                 log.info(
                     """\n
-# ============================================
-# WE MAKE A
-# ============================================
+                # ============================================
+                # WE MAKE A
+                # ============================================
                 """
                 )
                 if existing is not None and existing:
