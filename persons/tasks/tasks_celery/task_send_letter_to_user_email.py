@@ -6,6 +6,7 @@ import asyncio
 import json
 import logging
 import queue
+import re
 import time
 from typing import Any, Mapping, Optional, Union
 
@@ -16,6 +17,7 @@ from django.template.loader import render_to_string
 from persons import EnumEmailLetter, EnumTemplatesKeysCache, EnuSubjectOfLetter
 from persons.exceptions import PersonErrorTasks
 from persons.models import Users
+from persons.services import CacheManager
 from project.settings_conf.settings_env import APP_DEFAULT_FROM_EMAIL
 
 log = logging.getLogger(__name__)
@@ -46,14 +48,8 @@ async def child_process_get_keys_0(
     :return: list
     """
 
-    # from persons.interfaces import CacheManager as CacheManagerInitialize
-    from persons.services import AccountManager
-
     log_t = log_t[:-1] + f"[{child_process_get_keys_0.__name__}]:"
-    account_manager = AccountManager()
-    postman = account_manager.postman
-    SubPerson = postman.SubPerson
-    sub_person = SubPerson()
+    cachemanager = CacheManager()
     keys: list = []
     try:
         log.info(
@@ -66,7 +62,7 @@ async def child_process_get_keys_0(
         # ============================================"""
         )
 
-        result_bool: bool = await sub_person.cachemanager.aget(
+        result_bool: bool = await cachemanager.aget(
             key_pattern=key_pattern,
             collection=keys,
         )
@@ -98,7 +94,7 @@ async def child_process_get_keys_0(
                 )
                 tasks.append(
                     asyncio.create_task(
-                        sub_person.cachemanager.aget(
+                        cachemanager.aget(
                             queue_collection=queue, key=key.decode("utf-8")
                         )
                     )
@@ -116,7 +112,6 @@ async def child_process_get_keys_0(
         """
             % queue.qsize()
         )
-        cachemanager = sub_person.cachemanager
         tasks.clear()
         await cachemanager.asynccacher.related()
 
@@ -291,6 +286,23 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
                     text_context,
                     context_,
                 )
+                log.info("# save a verification code")
+                async with lock:
+                    cachemanager = CacheManager()
+                    k: str = EnumTemplatesKeysCache.USER_PENDING_LETTER.value % re.sub(
+                        r"[@.]+", "", one_email
+                    )
+                    collection_: list[bytes] = []
+
+                    user_data_bool: Optional[bool] = await cachemanager.aget(
+                        key=k, collection=collection_
+                    )
+                    if user_data_bool is not None and len(collection_) > 0:
+                        user_data_json = json.loads((collection_[0]).decode("utf-8"))
+                        user_data_json["verification_code"] = generate_login_code
+                        await cachemanager.asave(
+                            key=k, default=user_data_json, ttl=86400
+                        )
                 log.info("# The second letter is gone")
                 del result_bool, text_context, context_
         list_of_keys.clear()
