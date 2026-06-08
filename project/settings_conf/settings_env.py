@@ -50,7 +50,7 @@ APP_EMAIL_HOST_PASSWORD = os.getenv("APP_EMAIL_HOST_PASSWORD", None)
 
 # Redis
 REDIS_PASSWORD: str = os.getenv("REDIS_PASSWORD", "Not_password")
-REDIS_DB: int = int(os.getenv("REDIS_DB", "0"))
+REDIS_DB: int = int(os.getenv("REDIS_DB", "1"))
 REDIS_HOST: str = os.getenv("REDIS_HOST", "127.0.0.1")
 REDIS_PORT: str = os.getenv("REDIS_PORT", "6379")
 REDIS_URL: str = os.getenv("REDIS_URL", "redis://127.0.0.1:6379")

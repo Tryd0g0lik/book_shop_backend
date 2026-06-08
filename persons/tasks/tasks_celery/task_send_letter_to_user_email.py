@@ -51,13 +51,9 @@ async def child_process_get_keys_0(
 
     log_t = log_t[:-1] + f"[{child_process_get_keys_0.__name__}]:"
     account_manager = AccountManager()
-    log.info(f"{log_t} 1")
     postman = account_manager.postman
-    log.info(f"{log_t} 2")
     SubPerson = postman.SubPerson
-    log.info(f"{log_t} 3")
     sub_person = SubPerson()
-    log.info(f"{log_t} 4")
     keys: list = []
     try:
         log.info(
@@ -121,56 +117,59 @@ async def child_process_get_keys_0(
             % queue.qsize()
         )
         cachemanager = sub_person.cachemanager
-        asyncconnected = cachemanager.asynccacher.asyncconnected
-        tasks_delete = []
         tasks.clear()
-        async with asyncconnected() as conn:
+        await cachemanager.asynccacher.related()
 
-            async def resave_cache_after_sent_letter(*args) -> bool:
-                """
-                :param str args: It is the one old key of cache.
+        async def resave_cache_after_sent_letter(*args) -> bool:
+            """
+            :param str args: It is the one old key of cache.
 
-                :return:
-                """
-                lt = log_t[:-1] + f"[{resave_cache_after_sent_letter.__name__}]:"
-                for k in args:
-                    data_list = []
-                    try:
-                        # It is receiving the user data
-                        await cachemanager.aget(key=k, collection=data_list)
+            :return:
+            """
+            lt = log_t[:-1] + f"[{resave_cache_after_sent_letter.__name__}]:"
+            for k in args:
+                assert type(k) == str
+                assert k.count(":") == 2
+                data_list: list = []
+                try:
+                    # It is receiving the user data
+                    await cachemanager.aget(key=k, collection=data_list, exat=1)
+                    # New key for resaves
+                    key: str = (
+                        EnumTemplatesKeysCache.USER_PENDING_LETTER.value
+                        % k.split(":")[-1]
+                    )
+                    user_data_json = json.loads((data_list[0]).decode("utf-8"))
 
-                        # New key for resaves
-                        key: str = (
-                            EnumTemplatesKeysCache.USER_PENDING_LETTER.value
-                            % k.split(":")[-1]
-                        )
-                        user_data = (data_list[0]).encode("utf-8")
-                        # Re-save
-                        response_bool = await cachemanager.asave(key, user_data)
-                        log.info(
-                            lt
-                            + f"User dada Re-saved successfully from old {args} key !"
-                        )
-                        return response_bool
-                    except Exception as e:
-                        log.error(lt + " ERROR => " + e.args[0] if e.args else str(e))
-                        return False
-                return True
+                    data_list.clear()
+                    log.info(lt + "User dada Re-saved user_data_json key !")
+                    # Re-save
+                    response_bool = await cachemanager.asave(
+                        key=key, default=user_data_json, ttl=86400
+                    )
+                    log.info(cachemanager.asynccacher.redis_database)
+                    log.info(lt + "User dada Re-saved successfully from old key !")
+                    assert type(response_bool) in (bool,)
+                    assert response_bool in (True,)
+                    return response_bool
 
-            for key in keys:
+                except Exception as e:
+                    log.error(lt + " ERROR => " + e.args[0] if e.args else str(e))
+                    return False
+            return True
 
-                tasks.append(resave_cache_after_sent_letter(key))
-                tasks_delete.append(asyncio.create_task(conn.delete(key)))
+        for key in keys:
 
-            log.info(
-                log_t[:-1]
-                + f"""[{child_process_get_keys_0.__name__}]:\n
-            # ============================================
-            # BELOW RE-SAVES THE USER DATA THEN REMOVES KEYS
-            # ============================================"""
-            )
-            await asyncio.gather(*tasks, return_exceptions=True)
-            await asyncio.gather(*tasks_delete, return_exceptions=True)
+            tasks.append(resave_cache_after_sent_letter(*(key,)))
+        keys.clear()
+        log.info(
+            log_t[:-1]
+            + f"""[{child_process_get_keys_0.__name__}]:\n
+        # ============================================
+        # BELOW RE-SAVES THE USER DATA THEN REMOVES KEYS
+        # ============================================"""
+        )
+        await asyncio.gather(*tasks, return_exceptions=True)
     except Exception as e:
         error_t = log_t[
             :-1
@@ -263,7 +262,9 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
                 person_queryset_filter = await asyncio.to_thread(
                     lambda: Users.objects.filter(email=one_email)
                 )
-                # Here we are transmitting data for mailing, Here we are speak obout the new account.
+                log.info(
+                    "# Here we are transmitting data for mailing, Here we tell the user obout new account."
+                )
                 person_object = await asyncio.to_thread(
                     lambda: person_queryset_filter.first()
                 )
@@ -276,10 +277,9 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
                     text_context,
                     None,
                 )
-
+                log.info("# The First letter is gone")
                 text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_1.value
                 generate_login_code = generater.generate_login_code()
-                log.info(f"DEBUG generate_login_code: {generate_login_code}")
                 context_ = {
                     "user": person_object,
                     "code": generate_login_code,
@@ -291,7 +291,7 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
                     text_context,
                     context_,
                 )
-
+                log.info("# The second letter is gone")
                 del result_bool, text_context, context_
         list_of_keys.clear()
     except queue.Full:

@@ -35,7 +35,7 @@ class CacheManager:
         :return: bool
         :param key: This is a key of caching. That we use to get the data.
         :param default:
-        :param ttl:  This is a time of caching. That is the cache time of life.
+        :param ttl: Seconds. This is a time of caching. That is the cache time of life.
         :return: bool
         """
         is_connected = await self.asynccacher.is_connected()
@@ -73,7 +73,7 @@ class CacheManager:
                 # ============================================
                 """
                 )
-                if existing is not None and existing:
+                if existing is not None:
                     log.info(
                         self.log_t[:-1]
                         + "[asave]:"
@@ -214,7 +214,7 @@ class CacheManager:
                         )
                         if (
                             key_pattern is not None
-                            or isinstance(key_pattern, str)
+                            and isinstance(key_pattern, str)
                             and re.search(r"[\w:]{1,50}", key_pattern, flags=re.ASCII)
                         ):
                             keys = await conn.keys(key_pattern)
@@ -227,9 +227,11 @@ class CacheManager:
                                         self.log_t[:-1] + "[aget]:"
                                         "Us need to increase the size of queue! There was not enough queue size"
                                     )
+                            else:
+                                return None
                         elif (
                             key is not None
-                            or isinstance(key, str)
+                            and isinstance(key, str)
                             and re.search(r"[\w:]{1,50}", key, flags=re.ASCII)
                         ):
                             log.info(
@@ -242,11 +244,11 @@ class CacheManager:
                                 ex is not None
                                 and isinstance(ex, int)
                                 or px is not None
-                                and isinstance(ex, int)
+                                and isinstance(px, int)
                                 or exat is not None
-                                and isinstance(ex, int)
+                                and isinstance(exat, int)
                                 or persist is not None
-                                and isinstance(ex, int)
+                                and isinstance(persist, int)
                             ):
                                 log.info(
                                     self.log_t[:-1]
@@ -257,15 +259,18 @@ class CacheManager:
                                     key, ex=ex, px=px, exat=exat, persist=persist
                                 )
                                 if value:
-                                    collection.append(value)
+                                    queue_collection.put_nowait(value)
                                     log.info(
                                         self.log_t[:-1]
                                         + "[aget]:"
                                         + " \nCOLLECTION Size: "
-                                        + str(len(collection))
+                                        + str(queue_collection.qsize())
                                         + " \nCOLLECTION Content: "
-                                        + str(collection)
+                                        + str(queue_collection)
                                     )
+                                else:
+                                    return None
+
                             else:
                                 log.info(
                                     self.log_t[:-1]
@@ -283,6 +288,8 @@ class CacheManager:
                                         + " \nQUEUE_COLLECITON Size: "
                                         + str(queue_collection.qsize())
                                     )
+                                else:
+                                    return None
                         else:
                             log_t = (
                                 self.log_t[:-1]
@@ -297,16 +304,6 @@ class CacheManager:
                         and type(collection) is list
                         or type(collection) is tuple
                     ):
-                        log.info(
-                            self.log_t[:-1]
-                            + "[aget]:"
-                            + " Before WORKING WITH A COLLECTION & KEY_PATTERN"
-                        )
-                        log.info(
-                            self.log_t[:-1]
-                            + "[aget]:"
-                            + "# WORKING WITH A LIST OR TUPLE"
-                        )
                         log.info(
                             self.log_t[:-1]
                             + "[aget]:"
@@ -334,7 +331,7 @@ class CacheManager:
                             )
                         elif (
                             key is not None
-                            or isinstance(key, str)
+                            and isinstance(key, str)
                             and re.search(r"[\w:]{1,50}", key, flags=re.ASCII)
                         ):
                             log.info(
@@ -344,9 +341,9 @@ class CacheManager:
                             )
                             if (
                                 (ex is not None and isinstance(ex, int))
-                                or (px is not None and isinstance(ex, int))
-                                or (exat is not None and isinstance(ex, int))
-                                or (persist is not None and isinstance(ex, int))
+                                or (px is not None and isinstance(px, int))
+                                or (exat is not None and isinstance(exat, int))
+                                or (persist is not None and isinstance(persist, int))
                             ):
                                 log.info(
                                     self.log_t[:-1]
@@ -366,6 +363,8 @@ class CacheManager:
                                         + " \nCOLLECTION Content: "
                                         + str(collection)
                                     )
+                                else:
+                                    return None
                             else:
                                 log.info(
                                     self.log_t[:-1]
@@ -384,6 +383,8 @@ class CacheManager:
                                         + " \nCOLLECTION Content: "
                                         + str(collection)
                                     )
+                                else:
+                                    return None
 
                         else:
                             log_t = (
