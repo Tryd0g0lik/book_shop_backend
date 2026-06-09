@@ -25,6 +25,7 @@ from wagtail.documents import urls as wagtaildocs_urls
 from persons.test.get_request.test_get_csrftoken_token import test_get_csrf_token
 from persons.views import UserLoginView, UsersRegistrationView
 from persons.views.test_email import test_email_view
+from persons.views.views_register import UsersVerificationDuringRegistration
 from project import settings
 
 urlpatterns = [
@@ -32,14 +33,18 @@ urlpatterns = [
     path("admin/", include(wagtailadmin_urls), name="admin-panel"),
     path("test-email/", test_email_view, name="test_email"),
     path("test_email/", test_get_csrf_token, name="test_csrf_toke"),
+    path(
+        "register/verification/",
+        UsersVerificationDuringRegistration.as_view(),
+        name="register_token",
+    ),
     re_path(
-        "^register/(moderator|manager|admin)?/?$",
+        "^register/(account/|moderator/|manager/|admin/)?$",
         UsersRegistrationView.as_view(),
         name="management",
     ),  # name="management"
-    # re_path("^register/$", UsersRegistrationView.as_view(), name="register"),
     re_path(
-        "^login/$",
+        "login/$",
         UserLoginView.as_view(),
         name="account_login",
     ),
@@ -63,6 +68,7 @@ urlpatterns += (
         #     "api/v1/dj-rest-auth/registration/account-confirm-email/<str:key>/",
         #     UserLoginView.as_view(),
         # ),
+        # re_path("*", ),
     ],
 )
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

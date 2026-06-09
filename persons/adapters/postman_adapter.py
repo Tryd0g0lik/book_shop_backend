@@ -18,11 +18,9 @@ from persons.interfaces import (
     UsersPydantic,
 )
 
-from .. import EnumTemplatesKeysCache, EnumTemplatesREGEX
+from .. import EnumTemplatesREGEX
 from ..exceptions import PersonErrorImproperlyConfigured
 from ..exceptions.error_postman import PostmanRequiredModelError
-from ..interfaces import EmailString
-from . import CacherAdapter, PersonServiceDatabaseAdapter
 from .person_base import PersonBasisMixin
 
 #

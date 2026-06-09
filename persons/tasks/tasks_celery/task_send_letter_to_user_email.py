@@ -17,7 +17,6 @@ from django.template.loader import render_to_string
 from persons import EnumEmailLetter, EnumTemplatesKeysCache, EnuSubjectOfLetter
 from persons.exceptions import PersonErrorTasks
 from persons.models import Users
-from persons.services import CacheManager
 from project.settings_conf.settings_env import APP_DEFAULT_FROM_EMAIL
 
 log = logging.getLogger(__name__)
@@ -47,6 +46,7 @@ async def child_process_get_keys_0(
     :param queue.Queue queue: This is the queue.Queue object.
     :return: list
     """
+    from persons.services import CacheManager
 
     log_t = log_t[:-1] + f"[{child_process_get_keys_0.__name__}]:"
     cachemanager = CacheManager()
@@ -81,7 +81,10 @@ async def child_process_get_keys_0(
         if result_bool:
 
             for key in keys:
-                log.warning(
+                key = key.decode("utf-8")
+                if key.count(":") != 2:
+                    continue
+                log.info(
                     log_t[:-1]
                     + f"[{child_process_get_keys_0.__name__}]:"
                     + """\n
@@ -90,13 +93,11 @@ async def child_process_get_keys_0(
                     # THe KEY: %s
                     # ============================================
                     """
-                    % (key.decode("utf-8"),),
+                    % (key,),
                 )
                 tasks.append(
                     asyncio.create_task(
-                        cachemanager.aget(
-                            queue_collection=queue, key=key.decode("utf-8")
-                        )
+                        cachemanager.aget(queue_collection=queue, key=key)
                     )
                 )
             await asyncio.gather(*tasks, return_exceptions=True)
@@ -122,14 +123,16 @@ async def child_process_get_keys_0(
             :return:
             """
             lt = log_t[:-1] + f"[{resave_cache_after_sent_letter.__name__}]:"
+            assert len(args) >= 1, "One or more keys"
+            log.info(f"{lt} # test run {args}")
             for k in args:
-                assert type(k) == str
-                assert k.count(":") == 2
+                k = k.decode("utf-8")
                 data_list: list = []
+
                 try:
-                    # It is receiving the user data
+                    log.info(f"{lt} # It is receiving the user data")
                     await cachemanager.aget(key=k, collection=data_list, exat=1)
-                    # New key for resaves
+                    log.info("# New key for resaves")
                     key: str = (
                         EnumTemplatesKeysCache.USER_PENDING_LETTER.value
                         % k.split(":")[-1]
@@ -137,13 +140,12 @@ async def child_process_get_keys_0(
                     user_data_json = json.loads((data_list[0]).decode("utf-8"))
 
                     data_list.clear()
-                    log.info(lt + "User dada Re-saved user_data_json key !")
+                    log.info(lt + " User dada Re-saved user_data_json key !")
                     # Re-save
                     response_bool = await cachemanager.asave(
                         key=key, default=user_data_json, ttl=86400
                     )
-                    log.info(cachemanager.asynccacher.redis_database)
-                    log.info(lt + "User dada Re-saved successfully from old key !")
+                    log.info(lt + " User dada Re-saved successfully from old key !")
                     assert type(response_bool) in (bool,)
                     assert response_bool in (True,)
                     return response_bool
@@ -153,8 +155,11 @@ async def child_process_get_keys_0(
                     return False
             return True
 
-        for key in keys:
+        # assert type(keys) in (list, tuple), "Check the type"
+        # assert len(keys) >= 1, "Check the count keys"
 
+        for key in keys:
+            log.info(f"[{child_process_get_keys_0.__name__}]: key: {key}")
             tasks.append(resave_cache_after_sent_letter(*(key,)))
         keys.clear()
         log.info(
@@ -214,7 +219,7 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
     """
     log_t = f"[task {send_letter_to_user_email.__name__}]:"
 
-    from persons.services import AccountManager, CacheManager
+    from persons.services import AccountManager
 
     dict_queue = queue.Queue(2000)
     list_of_keys = []
@@ -274,7 +279,10 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
                 )
                 log.info("# The First letter is gone")
                 text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_1.value
-                generate_login_code = generater.generate_login_code()
+                generate_login_code = (
+                    generater.generate_email_verification_code()
+                )  # generate_login_code
+
                 context_ = {
                     "user": person_object,
                     "code": generate_login_code,
@@ -286,24 +294,32 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
                     text_context,
                     context_,
                 )
-                log.info("# save a verification code")
-                async with lock:
-                    cachemanager = CacheManager()
-                    k: str = EnumTemplatesKeysCache.USER_PENDING_LETTER.value % re.sub(
-                        r"[@.]+", "", one_email
-                    )
-                    collection_: list[bytes] = []
+                log.info(log_t + "# save a verification code")
+                # async with lock:
+                from persons.services import CacheManager
 
-                    user_data_bool: Optional[bool] = await cachemanager.aget(
-                        key=k, collection=collection_
+                cachemanager = CacheManager()
+                k: str = EnumTemplatesKeysCache.USER_PENDING_LETTER.value % re.sub(
+                    r"[@.]+", "", one_email
+                )
+                collection_: list[bytes] = []
+
+                user_data_bool: Optional[bool] = await cachemanager.aget(
+                    key=k, collection=collection_, exat=1
+                )
+                log.info(
+                    log_t
+                    + f"# save a verification code\nuser_data_bool: {user_data_bool}\nlen(collection_): {len(collection_)}"
+                )
+                if user_data_bool is not None and len(collection_) > 0:
+                    user_data_json: dict = json.loads((collection_[0]).decode("utf-8"))
+                    user_data_json["verification_code"] = generate_login_code
+                    log.info(
+                        log_t
+                        + f"# save a verification code user_data_json: {str(user_data_json)}"
                     )
-                    if user_data_bool is not None and len(collection_) > 0:
-                        user_data_json = json.loads((collection_[0]).decode("utf-8"))
-                        user_data_json["verification_code"] = generate_login_code
-                        await cachemanager.asave(
-                            key=k, default=user_data_json, ttl=86400
-                        )
-                log.info("# The second letter is gone")
+                    await cachemanager.asave(key=k, default=user_data_json, ttl=86400)
+                log.info(log_t + "# The second letter is gone")
                 del result_bool, text_context, context_
         list_of_keys.clear()
     except queue.Full:

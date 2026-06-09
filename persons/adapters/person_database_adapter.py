@@ -339,16 +339,16 @@ class PersonServiceDatabaseAdapter:
              &
              Сюда пароль поступает в родительском состоянии . Тут хешируется перед сохранением.
 
-
-        :param user_data: Dictionary with fields which we want to update. If we are wanted re-write the password
-        :param user_id: User ID (optional)
-        :param user_email: User email (optional)
+        It's working  direct with database.
+        :param user_data: Required. Dictionary with fields which we want to update. If we are wanted re-write the password
+        :param user_id: Required 'user_id' or 'user_email'. User ID (optional)
+        :param user_email: Required ''user_email' or 'user_id.  User email (optional)
 
         return: User's dict without secret data. THis is without: password and code varification.
         """
         from persons.models import Users
 
-        if user_id is None and user_email is None:
+        if not user_data or (user_id is None and user_email is None):
             raise PersonErrorImproperlyConfigured(
                 f"{PersonServiceDatabaseAdapter.log_t[:-1]}\
             [{PersonServiceDatabaseAdapter.update_in_database.__name__}]: User not found."
@@ -382,7 +382,6 @@ class PersonServiceDatabaseAdapter:
                 "id",
                 "created_at",
                 "date_joined",
-                "verification_code",
                 "password",
             ]
             is_password = PersonServiceDatabaseAdapter.is_password(user_data)
