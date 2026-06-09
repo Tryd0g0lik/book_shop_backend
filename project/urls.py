@@ -32,6 +32,8 @@ from persons.views.views_register import UsersVerificationDuringRegistration
 from project import settings
 from project.settings_conf.settings_env import APP_NAME
 
+from .urls_api import urlpatterns as hub_urls
+
 schema_view = get_schema_view(
     openapi.Info(
         title=APP_NAME,
@@ -43,11 +45,14 @@ schema_view = get_schema_view(
     permission_classes=[
         permissions.AllowAny,
     ],
-    patterns=[],
+    patterns=[
+        path("api/", include((hub_urls, "hub_api"), namespace="hub_api")),
+    ],
 )
 
 urlpatterns = [
     # path("admin/", admin.site.urls),
+    path("api/", include((hub_urls, "hub_api"), namespace="hub_api")),
     path("admin/", include(wagtailadmin_urls), name="admin-panel"),
     path("test-email/", test_email_view, name="test_email"),
     path("test_email/", test_get_csrf_token, name="test_csrf_toke"),
