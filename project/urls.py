@@ -18,6 +18,9 @@ Including another URLconf
 from django.conf.urls.static import static
 from django.urls import include, path, re_path
 from django.views.generic import TemplateView
+from drf_yasg import openapi
+from drf_yasg.views import get_schema_view
+from rest_framework import permissions
 from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
@@ -27,6 +30,21 @@ from persons.views import UserLoginView, UsersRegistrationView
 from persons.views.test_email import test_email_view
 from persons.views.views_register import UsersVerificationDuringRegistration
 from project import settings
+from project.settings_conf.settings_env import APP_NAME
+
+schema_view = get_schema_view(
+    openapi.Info(
+        title=APP_NAME,
+        default_version="v1",
+        description="Shop of good sale",
+        contact=openapi.Contact(email="work80@mail.ru"),
+    ),
+    public=True,
+    permission_classes=[
+        permissions.AllowAny,
+    ],
+    patterns=[],
+)
 
 urlpatterns = [
     # path("admin/", admin.site.urls),
@@ -51,7 +69,20 @@ urlpatterns = [
     # path("^login/$", SignupView.as_view(), name='account_signup'),
     # path('my-logout/', LogoutView.as_view(), name='account_logout'),
 ]
+
+
 urlpatterns += (
+    *[
+        path(
+            "swagger/", schema_view.with_ui("swagger", cache_timeout=0), name="swagger"
+        ),
+        path(
+            "swagger<format>/",
+            schema_view.without_ui(cache_timeout=0),
+            name="swagger-format",
+        ),
+        path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="redoc"),
+    ],
     *[
         # path("admin/", admin.site.urls),
         # path("accounts/password/change/", UserLoginView.as_view(), name="admin-panel"),

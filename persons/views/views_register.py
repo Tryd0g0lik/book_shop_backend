@@ -9,8 +9,6 @@ import logging
 import re
 from typing import Optional
 
-from allauth.account.adapter import DefaultAccountAdapter
-from allauth.account.forms import UserTokenForm
 from allauth.account.views import SignupView as AllauthSignupView
 from django.contrib import messages
 from django.http import HttpResponseRedirect
@@ -19,16 +17,14 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.decorators.http import require_GET, require_POST
-from watchfiles import awatch
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 
 from persons import EnumTemplatesKeysCache
 from persons.apps import account_manager, cachemanager
-
-# from persons.apps import personmanager
 from persons.forms import UsersRegistrationForm
 from persons.forms.users_registration_form import UsersCheckCodeVerificationForm
 from persons.tasks.tasks_celery.task_send_letter_to_user_email import task_postman
-from persons.views import UserLoginView
 from project.settings_conf.settings_env import CATEGORY_STATUS
 
 log = logging.getLogger(__name__)
@@ -68,7 +64,13 @@ class UsersRegistrationView(AllauthSignupView):
         *args,
         **kwargs,
     ):
-
+        """
+        It for open the page of registrate .
+        :param request:
+        :param args:
+        :param kwargs:
+        :return:
+        """
         user = request.user
         is_open: bool = self.is_open()
 
@@ -119,6 +121,27 @@ class UsersRegistrationView(AllauthSignupView):
     def post(self, request, *args, **kwargs):
         """
         TODO: В зависимости от того какой pathname в result_list - присваеваем роль.
+        :param request:
+            - request.HEADER Referer: Required. "http://127.0.0.1:8000/register/admin/"
+            - required.< FORM DATA>
+            -- email: Required. This is the email of user. Required of var. Unique. User can  not  change.
+            -- first_name: This is the first name of user.
+            -- username: It is a login or username of user.  If user did not provided his the first name, mean we
+                will resieve  from him email address provided.
+                Exemple: ''sergey_24@mail.ru'  -> 'sergey_24'.
+            -- password1: Required, Password of user
+            -- password2: Required. Password of user too. That is for the checks
+            -- csrfmiddlewaretoken: Required, This is CSRF-token. He provided of automatic.
+            -- check_user: Required. Data can been send only  if user tell us that 'YES, I agree' Example: 'on'
+            -- category:  Required. This is the basis name from the all categories. Next we will
+                be changing  when  user tell us-  that "YES, it is my the email address".
+                He should be showing  us - code of latter.
+
+        It for open the page of registrate and the registration's POST method.
+        :return Status code
+            302: Means - Registration successful! Chek your email,
+            400: Means - Something what wrong
+            500: Means - Server error under user registration
         """
         # form = self.form_class(request.POST)
         pathname = request.path
@@ -133,7 +156,8 @@ class UsersRegistrationView(AllauthSignupView):
                 + _("User on that email already exists.")
             )
             log.warning(log_t + "Authenticated user tried to register")
-            return redirect("/")
+            # return redirect("/")
+            return HttpResponseRedirect(reverse("/"), status=400)
         # ---- END TEST BLOCK
         messages.success(request, _("Registration successful! Chek your email."))
         try:
@@ -150,11 +174,12 @@ class UsersRegistrationView(AllauthSignupView):
                 log_t = (
                     self.log_t[:-1]
                     + f"[{self.post.__name__}]: "
-                    + "User data  before records in database."
+                    + "User data These are before records in database."
                 )
                 log.info(log_t)
                 super().post(request, *args, **kwargs)
-                return render(request, "auth/register.html", status=201)
+                # return render(request, "auth/register.html", status=201)
+                return HttpResponseRedirect(reverse("register/"), status=302)
             elif len(result_list) == 0 and re.search(r"register/$", url_parent):
                 log_t = (
                     self.log_t[:-1]
@@ -167,7 +192,7 @@ class UsersRegistrationView(AllauthSignupView):
                 reverse(
                     "management",
                     kwargs={
-                        "detail": """Something what wrong with the var.'category.\n
+                        "details": """Something what wrong with the var.'category.\n
     It is form of registration by the url %s"""
                         % (pathname,)
                     },
@@ -179,7 +204,7 @@ class UsersRegistrationView(AllauthSignupView):
                 [
                     self.log_t[-1] + f"{self.post.__name__}:",
                     datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    " Server error to the user registration. URL: %s TEXT_ERROR: %s"
+                    " Server error under user registration. URL: %s TEXT_ERROR: %s"
                     % (pathname, e.args[0] if e.args else str(e)),
                 ]
             )
@@ -225,7 +250,6 @@ class UsersRegistrationView(AllauthSignupView):
         return
 
 
-#
 class UsersVerificationDuringRegistration(View):
     form_class = UsersCheckCodeVerificationForm
     success_url = "/register/"
@@ -236,11 +260,17 @@ class UsersVerificationDuringRegistration(View):
     async def post(self, request, *args, **kwargs):
         """
         TODO: Time-live of the verification code must be re-writen
-        Receive the verification code/toke. This toke tell obout email address of user/person. It is correctly.
-        :param request: Hi transmits only one element. It is 'key', Example: DLKK-XTDH
+        Receive the verification code/toke. This code/token tell obout email address of user/person. It is correctly.
+        Here we have a connection with: cache server (get bytes data) and main server when we get a user data and update it.
+        To the entrypoint we receive the 'key'. then look up in the cache data. If we find exactly the current token in cache
+            it means - all OK or not all successfully!
+        :param request: Transmits only one element. It is 'key', Example: DLKK-XTDH
         :param args:
         :param kwargs:
-        :return: {'balance': 0.0, 'email': 'work80@mail.ru', 'first_name': 'Sergey', 'id': 124, 'last_login': None, 'last_name': '', 'username': 'Sergey'}
+        :return: JSON data if all successfully and 201 status code or 302, 400, 500 status code
+            "302": description="All Successfully verified. Revers to the login page.",
+            "500": description="Server vahe error. Open page for registration."
+            "400": description="Bad request. Please check your status. User should be not 'is_authenticated' "
         """
         form = UsersCheckCodeVerificationForm()
         context = {"validation_sent": True, "form": form}
