@@ -1,0 +1,41 @@
+<!--templates/auth/login.html:1-->
+{% extends "wagtailadmin/login.html" %}
+
+
+{% load i18n wagtailadmin_tags %}
+
+{% block fields %}
+    <main class="content-wrapper" id="main">
+        <div class="login-container">
+
+
+            <!-- Block  Login-->
+            <div class="register-section">
+                <form class="register-form" action="{% url 'account_login' %}" method="post" novalidate>
+                    {% csrf_token %}
+                    {{ form.non_field_errors }}
+                    <div class="fieldWrapper">
+                      {{ form.email.as_field_group }}
+                    </div>
+                    {% if form.errors %}
+                        <div class="errorlist">
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                    <div class="error">{{ error }}</div>
+                                {% endfor %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+
+                </form>
+            </div>
+        </div>
+
+    {% if show_password_reset %}
+<!--        <a class="reset-password" href="{ % url 'wagtailadmin_password_reset' %}">{% trans "Forgotten password?" % }</a>-->
+    {% endif %}
+
+
+
+{% endblock %}

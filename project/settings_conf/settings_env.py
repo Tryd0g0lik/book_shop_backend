@@ -1,22 +1,25 @@
 import os
-from pathlib import Path
 
 import dotenv
 
+# from pathlib import Path
+
+
+# from persons.apps import BASE_DIR
+
 dotenv.load_dotenv()
-BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-SECRET_KEY_DJ = os.getenv("SECRET_KEY_DJ", "fr4d6650h0_d")
-IS_DEBUG = os.getenv("IS_DEBUG", "1")
-DEBUG = True if int(IS_DEBUG) == 1 else False
+# DJANGO_SETTINGS_MODULE = os.getenv("DJANGO_SETTINGS_MODULE","project.settings")
 DJANGO_ENV = os.getenv("DJANGO_ENV", "development")
 
 # APP
+APP_NAME = os.getenv("APP_NAME", "BookShop")
 APP_PROTOCOL = os.getenv("APP_PROTOCOL", "http")
 APP_HOST = os.getenv("APP_HOST", "127.0.0.1")
 APP_PORT = os.getenv("APP_PORT", "8003")
 APP_TIME_ZONE = os.getenv("APP_TIME_ZONE", "Asia/Krasnoyarsk")
+APP_MINIMUM_PASSWORD_LENGTH = int(os.getenv("APP_MINIMUM_PASSWORD_LENGTH", "7"))
 
 # DATABASE EXTERNAL
 POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
@@ -37,6 +40,24 @@ CATEGORY_STATUS = [
 ]
 
 # USer Email
-USER_EMAIL_BASIS_MASSAGE = os.getenv(
-    "USER_EMAIL_BASIS_MASSAGE", "Check the your email and follow the link"
+USER_EMAIL_BASIS_MESSAGE = os.getenv(
+    "USER_EMAIL_BASIS_MESSAGE", "Check the your email and follow the link"
 )
+
+APP_EMAIL_HOST = os.getenv("APP_EMAIL_HOST", "mail.ru")
+APP_DEFAULT_FROM_EMAIL = os.getenv("APP_DEFAULT_FROM_EMAIL", None)
+APP_EMAIL_HOST_PASSWORD = os.getenv("APP_EMAIL_HOST_PASSWORD", None)
+
+# Redis
+REDIS_PASSWORD: str = os.getenv("REDIS_PASSWORD", "Not_password")
+REDIS_DB: int = int(os.getenv("REDIS_DB", "1"))
+REDIS_HOST: str = os.getenv("REDIS_HOST", "127.0.0.1")
+REDIS_PORT: str = os.getenv("REDIS_PORT", "6379")
+REDIS_URL: str = os.getenv("REDIS_URL", "redis://127.0.0.1:6379")
+REDIS_MASTER_NAME: str = os.getenv("REDIS_MASTER_NAME", "master")
+
+# Celery + Redis
+# REDIS_MASTER_NAME = os.getenv("REDIS_MASTER_NAME", "root")
+# REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "123")
+CELERY_BROKER_URL = REDIS_URL + "/" + str(REDIS_DB)
+CELERY_RESULT_BACKEND = REDIS_URL + "/" + str(REDIS_DB)

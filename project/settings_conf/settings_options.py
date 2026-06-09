@@ -1,9 +1,11 @@
 import os
 
-from project.settings_conf.settings_env import BASE_DIR, DEBUG
-from project.settings_conf.settings_security import CORS_ALLOWED_ORIGINS
+from persons.apps import DEBUG
+from project import BASE_DIR
 
-# '''WEBPACK_LOADER'''
+# ============================================
+# WEBPACK_LOADER
+# ============================================
 WEBPACK_LOADER = {
     "DEFAULT": {
         "CACHE": not DEBUG,
@@ -23,24 +25,10 @@ WEBPACK_LOADER = {
     }
 }
 
-# '''lOGGING'''
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-        },
-    },
-    "loggers": {
-        "django": {
-            "handlers": ["console"],
-            "level": "INFO",
-        },
-    },
-}
 
-# """SWAGGER"""
+# ============================================
+# SWAGGER
+# ============================================
 # https://drf-yasg.readthedocs.io/en/stable/security.html#security-definitions
 
 SWAGGER_USE_COMPAT_RENDERERS = False

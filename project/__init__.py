@@ -1,5 +1,8 @@
-import logging
+# project/__init__.py
+from pathlib import Path
 
-from logs import configure_logging
+from .celery import celery_app as celery_app
 
-configure_logging(logging.INFO)
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+__all__ = ("celery_app",)

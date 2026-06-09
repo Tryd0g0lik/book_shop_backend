@@ -104,6 +104,10 @@ def check_log_file(
                             len(lines),
                             max_lines,
                         )
+                        return True
+                    else:
+                        pass
+
         except Exception as e:
             logging.error("Error checking log file: %s", str(e), exc_info=True)
 
@@ -130,6 +134,6 @@ class Logger:
 # Он сам управляет ротацией и потокобезопасен.
 # В тестах можно отключать проверку лог-файла:
 # if not os.environ.get("PYTEST_CURRENT_TEST"):
-#     threading.Thread(...).start()
+#     threading.Thread(...).get_new_loop()
 # Главная причина ошибки — закомментированный time.sleep, из-за которого потоки без задержки пытаются одновременно читать файл, блокируя друг друга.
 # ==========================================================
