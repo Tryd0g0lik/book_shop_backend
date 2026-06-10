@@ -17,8 +17,6 @@ from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.decorators.http import require_GET, require_POST
-from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
 
 from persons import EnumTemplatesKeysCache
 from persons.apps import account_manager, cachemanager
