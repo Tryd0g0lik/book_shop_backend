@@ -6,9 +6,9 @@ import json
 import logging
 import re
 
-from allauth.account import adapter
 from allauth.account.forms import SignupForm, UserTokenForm
 from django import forms
+from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.validators import (
     EmailValidator,
     MaxLengthValidator,
@@ -21,6 +21,7 @@ from persons import EnumTemplatesKeysCache
 from persons.apps import cachemanager
 from persons.exceptions.error_forms import ErrorCodeVerificationForm
 from persons.models import Users
+from persons.validators import EmailValidatorPerson
 
 # from persons.services import CacheManager
 from project.settings_conf.settings_env import (
@@ -73,12 +74,17 @@ class UsersRegistrationForm(SignupForm):
             },
         ),
         max_length=50,
-        validators=[MinLengthValidator(5), MaxLengthValidator(50), EmailValidator()],
+        validators=[
+            MinLengthValidator(5),
+            MaxLengthValidator(50),
+            EmailValidatorPerson(),
+        ],
         error_messages={
             "required": _("Please enter the email address in this field."),
             "invalid": _("Please enter the valid email address in this filed."),
         },
     )
+
     category = forms.ChoiceField(
         choices=CATEGORY_STATUS,
         label=_("Category"),
@@ -114,7 +120,18 @@ class UsersRegistrationForm(SignupForm):
         help_text=_("Field is not required"),
         error_messages={"invalid": _("Please enter a valid first name.")},
     )
+    username_validator = UnicodeUsernameValidator()
 
+    username = forms.CharField(
+        label=_("Username"),
+        validators=[
+            MinLengthValidator(2),
+            MaxLengthValidator(50),
+        ],
+        widget=forms.TextInput(
+            attrs={"placeholder": _("Username"), "autocomplete": "username"}
+        ),
+    )
     check_user = forms.BooleanField(
         widget=forms.CheckboxInput(
             attrs={
@@ -143,11 +160,22 @@ class UsersRegistrationForm(SignupForm):
             "password2",
         )
 
-    def clean_email(self):
-        email = self.cleaned_data.get("email")
-        if Users.objects.filter(email=email).exists():
-            raise forms.ValidationError(_("A user with this email already exists."))
-        return email
+    # def clean_email(self):
+    #     email: str = self.cleaned_data.get("email")
+    #     log.info(f"DEBUG VALIDATE EMAIL {email}: 1")
+    #     if Users.objects.filter(email=email).exists():
+    #         log.info(f"DEBUG VALIDATE EMAIL {email}: 2")
+    #         raise forms.ValidationError(_("A user with this email already exists."))
+    #     log.info(f"DEBUG VALIDATE EMAIL {email}: 3")
+    #     if len(email) < 5 or len(email) > 150:
+    #         raise forms.ValidationError(_("The length of name email is not valid."))
+    #     return email
+
+    def clean_dublicate_username(self):
+        username = self.cleaned_data.get("username")
+        if username is not None and Users.objects.filter(username=username).exists():
+            return False
+        return True
 
     def clean_first_name(self):
         first_name = self.cleaned_data.get("first_name")

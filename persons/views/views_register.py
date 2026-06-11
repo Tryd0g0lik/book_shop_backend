@@ -11,7 +11,7 @@ from typing import Optional
 
 from allauth.account.views import SignupView as AllauthSignupView
 from django.contrib import messages
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render, reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
@@ -111,7 +111,7 @@ class UsersRegistrationView(AllauthSignupView):
                 ]
             )
             log.error(ERROR_TEXT)
-            return HttpResponseRedirect("/login", {"detail": ERROR_TEXT})
+            return HttpResponseRedirect("/", {"detail": ERROR_TEXT})
         finally:
             pass
 
@@ -119,6 +119,7 @@ class UsersRegistrationView(AllauthSignupView):
     def post(self, request, *args, **kwargs):
         """
         TODO: В зависимости от того какой pathname в result_list - присваеваем роль.
+            400 ответ в JsonResponse(context_, status=400) - Перехватить черезJavaScript и вывести сообщение об ошибке.
         :param request:
             - request.HEADER Referer: Required. "http://127.0.0.1:8000/register/admin/"
             - required.< FORM DATA>
@@ -175,9 +176,15 @@ class UsersRegistrationView(AllauthSignupView):
                     + "User data These are before records in database."
                 )
                 log.info(log_t)
-                super().post(request, *args, **kwargs)
-                # return render(request, "auth/register.html", status=201)
-                return HttpResponseRedirect(reverse("register/"), status=302)
+                response = super().post(request, *args, **kwargs)
+                if response and response.status_code >= 400:
+                    context_ = {
+                        "details": str(response.context_data["form"].errors),
+                        "validation_sent": False,
+                    }
+                    # return render(request, "auth/register.html",context=context_ , status=400)
+                    return JsonResponse(context_, status=400)
+                return HttpResponseRedirect(reverse("management"), status=302)
             elif len(result_list) == 0 and re.search(r"register/$", url_parent):
                 log_t = (
                     self.log_t[:-1]
@@ -215,15 +222,32 @@ class UsersRegistrationView(AllauthSignupView):
         finally:
             pass
 
+    def form_invalid(self, form):
+        """
+        TODO: https://learn.javascript.ru/xmlhttprequest
+            Емайл - уникальныq емал. Когда получаем ошибку (при заполнени формы) - показываем сообщение!! Остановить перезагрузку
+        :param form:
+        :return:
+        """
+        resp = super().form_invalid(form)
+        resp.status_code = 400
+        return resp
+
     def form_valid(self, form):
+
         from persons.tasks.tasks_celery.task_set_cache import (
             task_of_cache,
         )
 
         username = form.cleaned_data.get("username")
         email = form.cleaned_data.get("email")
-
-        super().form_valid(form)
+        # database_service = account_manager.postman.database_service
+        # user = database_service.get_user_by_email(email)
+        # if user is  None:
+        try:
+            super().form_valid(form)
+        except Exception as e:
+            raise e
 
         if (username is None) or (
             username is not None and isinstance(username, str) and len(username) < 2
@@ -250,7 +274,7 @@ class UsersRegistrationView(AllauthSignupView):
 
 class UsersVerificationDuringRegistration(View):
     form_class = UsersCheckCodeVerificationForm
-    success_url = "/register/"
+    success_url = "register/"
     template_name = "auth/register.html"
     # async def dispatch(self, request, *args, **kwargs):
     #     return super().dispatch(request, *args, **kwargs)
@@ -280,7 +304,8 @@ class UsersVerificationDuringRegistration(View):
             await cachemanager.aget(key_pattern=keys, collection=collection_)
 
             if len(collection_) > 0:
-                for key in collection_:
+                for key in collection_.copy():
+                    key: bytes = key[:]
                     collection_.clear()
                     await cachemanager.aget(key=key.decode(), collection=collection_)
             if len(collection_) > 0:
@@ -288,18 +313,12 @@ class UsersVerificationDuringRegistration(View):
                     try:
                         user_cache_json = json.loads(item.decode())
                         if user_cache_json["verification_code"] == token_key:
+                            user_cache_json["is_verified"] = True
                             collection_.clear()
                             database_service = account_manager.postman.database_service
                             result: Optional[dict] = await asyncio.to_thread(
                                 lambda: database_service.update_in_database(
-                                    {
-                                        "category": "CLIENT",
-                                        "password": "pbkdf2_sha256$hash_admin_1",
-                                        "is_verified": True,
-                                        "verification_code": token_key,
-                                        "is_superuser": False,
-                                        "updated_at": datetime.datetime.now(),
-                                    },
+                                    user_cache_json,
                                     user_email=user_cache_json["email"],
                                 )
                             )

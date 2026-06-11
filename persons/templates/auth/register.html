@@ -58,8 +58,6 @@
                     </form>
                 {%  else %}
                     <h2>{% trans "Confirm" %}</h2>
-
-
                     <form class="register-form"  action="{% url 'register_token' %}"  method="post">
                         {% csrf_token %}
                         {{ form.as_div }}

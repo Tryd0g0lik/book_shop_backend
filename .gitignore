@@ -80,3 +80,4 @@ poetry.lock
 celerybeat-*
 .coverage
 caching
+__tests__/**/screenshots/*

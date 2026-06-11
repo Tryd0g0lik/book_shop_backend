@@ -82,7 +82,10 @@ class PersonServiceDatabaseAdapter:
     def get_user_by_email(
         user_email: Optional[str] = None,
     ) -> Optional[UsersPydantic]:
-        """GEt user from the database and conversion through the Pydantic"""
+        """
+        GEt user from the database and conversion through the Pydantic
+        Here we are not to use a cache
+        """
         from persons.models import Users
 
         log.info(

@@ -1,17 +1,18 @@
 # __tests__/test_playwright/playwright_client.py:1
 import logging
 from contextlib import asynccontextmanager, contextmanager
+from typing import Optional
 
 import playwright.async_api
 from playwright.async_api import Browser, async_playwright
 from playwright.sync_api import Browser as Sync_Browser
 from playwright.sync_api import sync_playwright
-from pytest_playwright.pytest_playwright import browser
-from shtab import Optional
+
+from project.settings_conf.settings_env import HEADLESS_MODE
 
 log = logging.getLogger(__name__)
 browser_option = {
-    "headless":False,
+    "headless":HEADLESS_MODE,
     "args":[
         "--disable-blink-features=AutomationControlled",
         "--disable-dev-shm-usage",  # полезно для Docker/CI
@@ -39,11 +40,8 @@ class PlaywrightManager():
         log_t += f"{log_t[:-1]}[{self.__start.__name__}]:"
         try:
             playwright = sync_playwright()
-            log.info(f"{log_t} DEBUG 3.5")
             p = playwright.start()
-            log.info(f"{log_t} DEBUG 4")
             self.browser: Sync_Browser = p.firefox.launch(**browser_option)
-            log.info(f"{log_t} DEBUG 5")
             log.info(log_t + " Run the playwright chromium")
         except Exception as e:
             error_t = log_t + e.args[0] if e.args else str(e)
@@ -54,11 +52,8 @@ class PlaywrightManager():
         log_t += f"{log_t[:-1]}[{self.__astart.__name__}]:"
         try:
             playwright = async_playwright()
-            log.info(f"{log_t} DEBUG 3.5")
             p = await playwright.start()
-            log.info(f"{log_t} DEBUG 4")
             self.abrowser = await p.firefox.launch(**browser_option)
-            log.info(f"{log_t} DEBUG 5")
             log.info(log_t + " Run the playwright chromium")
         except Exception as e:
             error_t = log_t + e.args[0] if e.args else str(e)
@@ -67,10 +62,14 @@ class PlaywrightManager():
 
     @contextmanager
     def get_page_context_manager(self, log_t: str) -> Browser.new_page:
+        """
+        TODO: https://playwright.dev/python/docs/api/class-apirequestcontext#api-request-context-get
+             надо получить статус код из запроса
+        :param log_t:
+        :return:
+        """
         log_t += f"{log_t[:-1]}[{self.get_page_context_manager.__name__}]: "
-        log.info(f"{log_t} DEBUG 3")
         self.__start(log_t)
-        log.info(f"{log_t} DEBUG 6")
 
         context: Sync_Browser.new_context = self.browser.new_page(
             userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
@@ -83,11 +82,9 @@ class PlaywrightManager():
             bypassCSP=True,
             timezoneId="Asia/Krasnoyarsk",
         )
-        log.info(f"{log_t} DEBUG 7")
         page: playwright.sync_api.Page = context.new_page()
         page.route("**/*kaspersky", lambda route: route.abort())
         page.route("**/*gc.kis.v2.scr*", lambda route: route.abort())
-        log.info(f"{log_t} DEBUG 8")
         try:
             yield page
         except Exception as e:
@@ -101,13 +98,12 @@ class PlaywrightManager():
             if context:
                 context.close()
                 log.info(log_t + " Closed the context")
+            self.sync_stop(log_t)
 
     @asynccontextmanager
     async def get_page_acontext_manager(self, log_t: str) -> Browser.new_page:
         log_t += f"{log_t[:-1]}[{self.get_page_acontext_manager.__name__}]: "
-        log.info(f"{log_t} DEBUG 3")
         await self.__astart(log_t)
-        log.info(f"{log_t} DEBUG 6")
         context: Browser.new_context = await self.abrowser.new_context(
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36",
             extra_http_headers={
@@ -119,11 +115,9 @@ class PlaywrightManager():
             bypass_csp=True,
             timezone_id="Asia/Krasnoyarsk",
         )
-        log.info(f"{log_t} DEBUG 7")
         page: playwright.async_api.Page = await context.new_page()
         await page.route("**/*kaspersky", lambda route: route.abort() )
         await page.route("**/*gc.kis.v2.scr*", lambda route: route.abort())
-        log.info(f"{log_t} DEBUG 8")
         try:
             yield page
         except Exception as e:
@@ -137,6 +131,7 @@ class PlaywrightManager():
             if context:
                 await context.close()
                 log.info(log_t + " Closed the context")
+            await self.async_stop(log_t)
 
     async def async_stop(self, log_t: str) -> None:
         log_t += f"{log_t[:-1]}[{self.async_stop.__name__}]:"
@@ -145,7 +140,8 @@ class PlaywrightManager():
             log.info(f"{log_t} Browser closed")
         if self.async_playwright:
             self.async_playwright.stop()
-        log_t += f"{log_t[:-1]}[{self.async_playwright.__name__}]: closed successfully!"
+        log_t += f"{log_t[:-1]} closed successfully!"
+
     def sync_stop(self, log_t: str) -> None:
         log_t += f"{log_t[:-1]}[{self.sync_stop.__name__}]:"
         if self.browser:

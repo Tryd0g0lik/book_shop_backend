@@ -61,3 +61,5 @@ REDIS_MASTER_NAME: str = os.getenv("REDIS_MASTER_NAME", "master")
 # REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "123")
 CELERY_BROKER_URL = REDIS_URL + "/" + str(REDIS_DB)
 CELERY_RESULT_BACKEND = REDIS_URL + "/" + str(REDIS_DB)
+
+HEADLESS_MODE: bool = bool(os.getenv("HEADLESS_MODE", "False"))

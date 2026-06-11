@@ -25,7 +25,7 @@ from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
-from persons.urls import urlpattern as persons_urls
+from persons.urls import urlpatterns as persons_urls
 from project import settings
 from project.settings_conf.settings_env import APP_NAME
 

@@ -3,7 +3,13 @@ persons/models/models_persons.py:1
 """
 
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import MinLengthValidator, MinValueValidator
+from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.core.validators import (
+    EmailValidator,
+    MaxLengthValidator,
+    MinLengthValidator,
+    MinValueValidator,
+)
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -36,6 +42,30 @@ class Users(AbstractUser):
        all permissions. He is the admin site and only one.
    :param  password: str. Max length of characters is 128 and min is 3.
    """
+
+    username_validator = UnicodeUsernameValidator()
+    username = models.CharField(
+        _("username"),
+        max_length=150,
+        unique=True,
+        help_text=_(
+            "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
+        ),
+        validators=[MinLengthValidator(2), MaxLengthValidator(50), username_validator],
+        error_messages={
+            "unique": _("A user with that username already exists."),
+        },
+    )
+    email = models.EmailField(
+        _("email address"),
+        max_length=150,
+        unique=True,
+        validators=[
+            MaxLengthValidator(150),
+            MinLengthValidator(5),
+            EmailValidator(),
+        ],
+    )
 
     category = models.CharField(default="BASE", choices=CATEGORY_STATUS, max_length=50)
     password = models.CharField(
