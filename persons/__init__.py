@@ -25,7 +25,7 @@ class EnumTemplatesKeysCache(Enum):
     :param 'user:pending:letter:< email >' Message contain a secret code. Code to the verification email.
         TIme live 2 minutes or 120 seconds.
          Example 'user:pending:letter:< email >':'{"username": < USERNAME >, "email": < EMAIL >, ....}'
-    :param 'user:pending:login'  This person must be having a status is_authenticated or not is_nonymous!
+    :param 'user:pending:login'  This person must be having a status 'is_active' and 'is_verified'!
         This is the key under which we are using how session's data. Time live is 24 hours
         or 1440 minutes, or 86400 seconds. It means the value of data (in bytes): bytes'"[{'is_superuser': < bool >,
         'email': < EMAIL >,'category': < user_CATEGORY >},]"'.

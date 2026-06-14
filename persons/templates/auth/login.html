@@ -3,39 +3,81 @@
 
 
 {% load i18n wagtailadmin_tags %}
-
-{% block fields %}
+{% block furniture %}
     <main class="content-wrapper" id="main">
-        <div class="login-container">
+        <h1>{% block branding_login %}{% trans "Sign in to Wagtail" %}{% endblock %}</h1>
 
-
-            <!-- Block  Login-->
-            <div class="register-section">
-                <form class="register-form" action="{% url 'account_login' %}" method="post" novalidate>
-                    {% csrf_token %}
-                    {{ form.non_field_errors }}
-                    <div class="fieldWrapper">
-                      {{ form.email.as_field_group }}
-                    </div>
+        <div class="messages" role="status">
+            {# Always show messages div so it can be appended to by JS #}
+            {% if messages or form.errors %}
+                <ul>
                     {% if form.errors %}
-                        <div class="errorlist">
-                            {% for field, errors in form.errors.items %}
-                                {% for error in errors %}
-                                    <div class="error">{{ error }}</div>
-                                {% endfor %}
-                            {% endfor %}
-                        </div>
+                        {% for error in form.non_field_errors %}
+                            <li class="error">{{ error }}</li>
+                        {% endfor %}
                     {% endif %}
+                    {% for message in messages %}
+                        <li class="{{ message.tags }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        </div>
 
+        {% block above_login %}Привет  мир{% endblock %}
 
+        <div class="login-container">
+                    <!-- Block  Login-->
+            <div class="register-section">
+                <form class="register-form" action="{% url 'persons:login' %}" method="post" novalidate>
+
+        <!--    <main class="content-wrapper" id="main">-->
+                {% block login_form %}
+                        {% csrf_token %}
+                        {{ form.non_field_errors }}
+                    {% block fields %}
+                        <div class="fieldWrapper">
+                          {{ form.as_p }}
+                        </div>
+                        {% if form.errors %}
+                            <div class="errorlist">
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        <div class="error">{{ error }}</div>
+                                    {% endfor %}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endblock fields %}
+                {% endblock %}
+                    <footer class="form-actions">
+                        {% block submit_buttons %}
+                            <button
+                                type="submit"
+                                class="button button-longrunning"
+                                data-controller="w-progress"
+                                data-action="w-progress#activate"
+                                data-w-progress-active-value="{% trans 'Signing in…' %}"
+                            >
+                                {% icon name="spinner" %}
+                                <em data-w-progress-target="label">{% trans 'Sign in' %}</em>
+                            </button>
+                        {% endblock %}
+                    </footer>
                 </form>
             </div>
         </div>
+        {% block below_login %}{% endblock %}
 
-    {% if show_password_reset %}
-<!--        <a class="reset-password" href="{ % url 'wagtailadmin_password_reset' %}">{% trans "Forgotten password?" % }</a>-->
-    {% endif %}
-
-
-
+        {% block branding_logo %}
+            <div class="login-logo">
+                {% include "wagtailadmin/logo.html" with wordmark="True" %}
+            </div>
+        {% endblock %}
+    </main>
 {% endblock %}
+
+
+
+
+
+

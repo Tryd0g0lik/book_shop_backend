@@ -15,7 +15,12 @@ project/settings_conf/settings_first.py:12
 import logging
 
 from persons.apps import DEBUG
-from project.settings_conf.settings_env import APP_TIME_ZONE
+from project.settings_conf.settings_env import (
+    APP_BASIS_URL,
+    APP_NAME,
+    APP_TIME_ZONE,
+    REDIS_URL,
+)
 
 # Build paths inside the backend like this: BASE_DIR / 'subdir'.
 
@@ -85,6 +90,8 @@ INSTALLED_APPS = [
     "wagtail.admin",
     "wagtail.contrib.settings",
     "wagtail",
+    "wagtail.api.v2",
+    "django.contrib.sitemaps",
     # My moduls
     "persons",
 ]
@@ -103,6 +110,19 @@ MIDDLEWARE = [
     "allauth.account.middleware.AccountMiddleware",
 ]
 from project.settings_conf.settings_db import *
+
+# ============================================
+# SESSION SETTINGS
+# ============================================
+# Session's setting the 'http' or 'https' look to the DEBUG setting
+SESSION_ENGIN = "django.contrib.sessions.backends.cache"
+SESSION_COOKIE_AGE = 1209600
+SESSION_EXPIRE_AT_BROWSER_CLOSE = False
+SESSION_SAVE_EVERY_REQUEST = True
+SESSION_COOKIE_NAME = "person_sessionid"
+SESSION_COOKIE_HTTPONLY = False  # CSRF_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SECURE = False  # change to the True - CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SAMESITE = "Lax"  # CSRF_COOKIE_SAMESITE = 'Lax'  # or 'Strict'
 
 # ============================================
 # CLICKJACKING PROTECTION
@@ -154,9 +174,19 @@ CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60
 
 # ============================================
+# CACHES
+# ============================================
+# https://docs.djangoproject.com/en/6.0/ref/settings/#caches
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": f"{REDIS_URL}",
+    }
+}
+# ============================================
 # PASSWORD VALIDATION
 # ============================================
-# https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
+# https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -245,14 +275,6 @@ DEFAULT_CHARSET = "utf-8"
 AUTH_USER_MODEL = "persons.Users"
 SITE_ID = 1
 
-# ============================================
-# LOGING AUTHENTICATION
-# ============================================
-LOGIN_URL = "/"
-LOGIN_REDIRECT_URL = "wagtailadmin_home"
-# LOGOUT_REDIRECT_URL = "/"
-
-WAGTAILADMIN_BASE_URL = "/"
 
 # ============================================
 # DEBUG TOOLBAR - SERVER DAPHNE
@@ -261,27 +283,36 @@ DEBUG_TOOLBAR_CONFIG = {
     "SHOW_TOOLBAR_CALLBACK": lambda request: True,
 }
 
-# ============================================
-# COOKIE
-# ============================================
-SESSION_COOKIE_HTTPONLY = False  # CSRF_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SECURE = False  # change to the True - CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SAMESITE = "Lax"  # CSRF_COOKIE_SAMESITE = 'Lax'  # or 'Strict'
-SESSION_COOKIE_AGE = 86400
 
 # ============================================
 # MODEL OF PAGE
 # ============================================
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10_000
 DATA_UPLOAD_MAX_NUMBER_FILES = 10240
-WAGTAIL_SITE_NAME = "Shop"
 
 # ============================================
 # APPLICATION DEFINITION
 # ============================================
 # file extension
 f_extension = "csv, docx, pdf, rtf, txt, xlsx, zip"
+
+# ============================================
+# WAGTAILSEARCH DEFINITION
+# ============================================
 WAGTAILDOCS_EXTENSIONS = list(f_extension.split(", "))
 WAGTAILADMIN_LOGIN_FORM = "persons.forms.UsersLoginForm"
+WAGTAIL_SITE_NAME = f"{APP_NAME}"
 # WAGTAIL_APPEND_SLASH = "/"
 # USER_MODEL_USERNAME_FIELD = "TEST_USER_MODEL_USERNAME_FIELD"
+
+# ============================================
+# WAGTAILSEARCH LOGING AUTHENTICATION
+# ============================================
+LOGIN_URL = "/accounts/login/"  # "/person/login/"
+WAGTAIL_FRONTEND_LOGIN_TEMPLATE = "auth/login.html"
+WAGTAIL_FRONTEND_LOGIN_URL = "/admin/login/"
+WAGTAILADMIN_LOGIN_URL = WAGTAIL_FRONTEND_LOGIN_URL
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = f"{APP_BASIS_URL}"
+
+WAGTAILADMIN_BASE_URL = f"{APP_BASIS_URL}/account/"

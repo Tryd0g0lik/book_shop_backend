@@ -48,12 +48,17 @@ summary {
 	
 </style>
 
+https://django-allauth.readthedocs.io/en/latest/account/forms.html
+
 https://docs.wagtail.org/en/stable/advanced_topics/i18n.html#configuring-available-languages
 Приложение имеет 3 языка. 
 В зависимости от локации пользователя, контент получает Eng or French or Russian language and the local user'r date.
 
 
 Ниже представлена **техническая документация (Tech Spec)** для интернет-магазина, описывающая ролевую модель и сценарии работы с системой. Документ ориентирован на разработчиков, аналитиков и DevOps.
+
+
+ОЫ
 
 ---
 # Preview
@@ -352,6 +357,8 @@ https://docs.wagtail.org/en/stable/advanced_topics/i18n.html#configuring-availab
 # Техническая документация: Ролевая модель и сценарии работы интернет-магазина
 
 ## 1. Регистрация
+DOTO: https://learn.javascript.ru/xmlhttprequest
+Емайл - уникальныq емал. Когда получаем ошибку (при заполнени формы) - показываем сообщение!! Остановить перезагрузку 
 
 Описывает роли пользователей, их права доступа и бизнес-логику ключевых операций (регистрация, авторизация, работа с корзиной, заказами, историей покупок).
 

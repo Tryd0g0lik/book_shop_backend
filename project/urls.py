@@ -15,22 +15,29 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 
+from allauth.urls import urlpatterns as allauth_urls
+
+# Редирект с /admin/login/ на страницу входа allauth
+# re_path(r'^admin/login/$', lambda request: redirect('/accounts/login/?next=/admin/')),
+# Редирект с внутреннего URL Wagtail
+# path('_util/login/', lambda request: redirect('/accounts/login/')),
 from django.conf.urls.static import static
 from django.urls import include, path, re_path
-from django.views.generic import TemplateView
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
+from wagtail.admin.views import account, home
+from wagtail.contrib.sitemaps.views import sitemap
 from wagtail.documents import urls as wagtaildocs_urls
 
-from persons.test.get_request.test_get_csrftoken_token import test_get_csrf_token
-from persons.views import UserLoginView, UsersRegistrationView
-from persons.views.test_email import test_email_view
-from persons.views.views_register import UsersVerificationDuringRegistration
+from persons.urls import urlpatterns as persons_urls
+from persons.views import UserLoginView
 from project import settings
 from project.settings_conf.settings_env import APP_NAME
+
+# from .urls_api import urlpatterns as hub_urls
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -43,31 +50,19 @@ schema_view = get_schema_view(
     permission_classes=[
         permissions.AllowAny,
     ],
-    patterns=[],
+    patterns=[
+        # path("api/", include(("project.urls_api", "hub_api"), namespace="hub_api")),
+    ],
 )
 
 urlpatterns = [
-    # path("admin/", admin.site.urls),
-    path("admin/", include(wagtailadmin_urls), name="admin-panel"),
-    path("test-email/", test_email_view, name="test_email"),
-    path("test_email/", test_get_csrf_token, name="test_csrf_toke"),
+    re_path(r"^sitemap\.xml$", sitemap),
     path(
-        "register/verification/",
-        UsersVerificationDuringRegistration.as_view(),
-        name="register_token",
+        "person/",
+        include((persons_urls, "persons"), namespace="persons"),
+        name="persons",
     ),
-    re_path(
-        "^register/(account/|moderator/|manager/|admin/)?$",
-        UsersRegistrationView.as_view(),
-        name="management",
-    ),  # name="management"
-    re_path(
-        "login/$",
-        UserLoginView.as_view(),
-        name="account_login",
-    ),
-    # path("^login/$", SignupView.as_view(), name='account_signup'),
-    # path('my-logout/', LogoutView.as_view(), name='account_logout'),
+    re_path(r"^admin/", include(wagtailadmin_urls)),
 ]
 
 
@@ -84,22 +79,15 @@ urlpatterns += (
         path("redoc/", schema_view.with_ui("redoc", cache_timeout=0), name="redoc"),
     ],
     *[
-        # path("admin/", admin.site.urls),
-        # path("accounts/password/change/", UserLoginView.as_view(), name="admin-panel"),
-        path("documents/", include(wagtaildocs_urls)),
-        path("pages/", include(wagtail_urls)),
-        re_path(
-            r"^(?!static/|media/|api/|admin/|redoc/|swagger/).*",
-            TemplateView.as_view(template_name="index.html"),
-        ),
+        path("accounts/", include("allauth.urls")),
     ],
     *[
-        path("accounts/", include("allauth.urls")),
-        # path(
-        #     "api/v1/dj-rest-auth/registration/account-confirm-email/<str:key>/",
-        #     UserLoginView.as_view(),
+        path("documents/", include(wagtaildocs_urls)),
+        path("pages/", include(wagtail_urls)),
+        # re_path(
+        #     r"^(?!static/|media/|api/|redoc/|swagger/).*",
+        #     TemplateView.as_view(template_name="index.html"),
         # ),
-        # re_path("*", ),
     ],
 )
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

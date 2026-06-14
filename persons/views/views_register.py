@@ -11,27 +11,29 @@ from typing import Optional
 
 from allauth.account.views import SignupView as AllauthSignupView
 from django.contrib import messages
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render, reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.decorators.http import require_GET, require_POST
-from drf_yasg import openapi
-from drf_yasg.utils import swagger_auto_schema
 
 from persons import EnumTemplatesKeysCache
 from persons.apps import account_manager, cachemanager
 from persons.forms import UsersRegistrationForm
-from persons.forms.users_registration_form import UsersCheckCodeVerificationForm
+from persons.forms.verification_form import UsersCheckCodeVerificationForm
+from persons.models import Users
 from persons.tasks.tasks_celery.task_send_letter_to_user_email import task_postman
 from project.settings_conf.settings_env import CATEGORY_STATUS
 
+# from project.settings_conf.settings_first import LOGIN_URL
+
 log = logging.getLogger(__name__)
 path_names: list[str] = [
-    "/register/admin/",
-    "/register/moderator/",
-    "/register/manager/",
+    "/person/register/account/",
+    "/person/register/admin/",
+    "/person/register/moderator/",
+    "/person/register/manager/",
 ]
 
 
@@ -44,7 +46,7 @@ class UsersRegistrationView(AllauthSignupView):
 
     template_name = "auth/register.html"
     form_class = UsersRegistrationForm
-    success_url = "register/admin/"
+    success_url = "register/admin"
 
     def __init__(
         self,
@@ -55,74 +57,16 @@ class UsersRegistrationView(AllauthSignupView):
         :param kwargs:
         """
         super().__init__(**kwargs)
+
         self.log_t = "[%s]:" % UsersRegistrationView.__class__.__name__
-
-    @method_decorator(require_GET)
-    def get(
-        self,
-        request,
-        *args,
-        **kwargs,
-    ):
-        """
-        It for open the page of registrate .
-        :param request:
-        :param args:
-        :param kwargs:
-        :return:
-        """
-        user = request.user
-        is_open: bool = self.is_open()
-
-        if not user.is_anonymous or user.id is not None or not is_open:
-            log_t = _("User on that email already exists.")
-            log.warning(log_t)
-            raise ValueError(log_t)
-
-        try:
-            context = {}
-            if request.path in path_names:
-                form = self.get_form()
-                context.update(
-                    {
-                        "form": form,
-                        "category_choices": CATEGORY_STATUS,
-                        "validation_sent": False,  # Code validation hase not been to send.
-                    }
-                )
-                super().get(request, *args, **kwargs)
-                return render(request, "auth/register.html", context, status=200)
-            elif request.path not in path_names and "register" in request.path:
-                form = UsersCheckCodeVerificationForm()
-                context.update({"validation_sent": True, "form": form})
-
-            return render(request, "auth/register.html", context, status=200)
-
-        except Exception as e:
-
-            ERROR_TEXT = " ".join(
-                [
-                    self.log_t[-1] + f"{self.get.__name__}:",
-                    datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                    (
-                        " Server error to the user registration GET. ERROR_TEXT: %s"
-                        % e.args[0]
-                        if e.args
-                        else str(e)
-                    ),
-                ]
-            )
-            log.error(ERROR_TEXT)
-            return HttpResponseRedirect("/login", {"detail": ERROR_TEXT})
-        finally:
-            pass
 
     @method_decorator(require_POST)
     def post(self, request, *args, **kwargs):
         """
         TODO: В зависимости от того какой pathname в result_list - присваеваем роль.
+            400 ответ в JsonResponse(context_, status=400) - Перехватить черезJavaScript и вывести сообщение об ошибке.
         :param request:
-            - request.HEADER Referer: Required. "http://127.0.0.1:8000/register/admin/"
+            - request.HEADER Referer: Required. "http://127.0.0.1:8000/register/admin"
             - required.< FORM DATA>
             -- email: Required. This is the email of user. Required of var. Unique. User can  not  change.
             -- first_name: This is the first name of user.
@@ -158,13 +102,12 @@ class UsersRegistrationView(AllauthSignupView):
             log.warning(log_t + "Authenticated user tried to register")
             # return redirect("/")
             return HttpResponseRedirect(reverse("/"), status=400)
-        # ---- END TEST BLOCK
         messages.success(request, _("Registration successful! Chek your email."))
         try:
             log.info(
                 """\n
             # ============================================
-            # POST'S DATA BEFORE REGISTRATION
+            # POST'S DATA BEFORE SAVING IN DATABASE
             # ============================================
             """
             )
@@ -177,9 +120,26 @@ class UsersRegistrationView(AllauthSignupView):
                     + "User data These are before records in database."
                 )
                 log.info(log_t)
-                super().post(request, *args, **kwargs)
-                # return render(request, "auth/register.html", status=201)
-                return HttpResponseRedirect(reverse("register/"), status=302)
+
+                response = super().post(request, *args, **kwargs)
+                if response and response.status_code >= 400:
+                    context_ = {
+                        "details": str(response.context_data["form"].errors),
+                        "validation_sent": False,
+                    }
+                    # return render(request, "auth/register.html",context=context_ , status=400)
+                    messages.error(request, context_["details"])
+                    log.warning(
+                        self.log_t[:-1]
+                        + f"[{self.post.__name__}]: "
+                        + context_["details"]
+                    )
+                    return JsonResponse(context_, status=400)
+                role_ = result_list[0].split("register/")[-1].split("/")[0]
+
+                return HttpResponseRedirect(
+                    reverse("persons:register_token"), status=302
+                )
             elif len(result_list) == 0 and re.search(r"register/$", url_parent):
                 log_t = (
                     self.log_t[:-1]
@@ -188,9 +148,12 @@ class UsersRegistrationView(AllauthSignupView):
                 )
                 log.info(log_t)
                 # Check of code verification
+                messages.warning(
+                    request, "Something what wrong! Send screenshot to the support."
+                )
             return HttpResponseRedirect(
                 reverse(
-                    "management",
+                    "persons:management",
                     kwargs={
                         "details": """Something what wrong with the var.'category.\n
     It is form of registration by the url %s"""
@@ -217,15 +180,97 @@ class UsersRegistrationView(AllauthSignupView):
         finally:
             pass
 
+    @method_decorator(require_GET)
+    def get(
+        self,
+        request,
+        *args,
+        **kwargs,
+    ):
+        """
+        It for open the page of registrate .
+        :param request:
+        :param args:
+        :param kwargs:
+        :return:
+        """
+        path = request.path
+        user = request.user
+        is_open: bool = self.is_open()
+
+        if not user.is_anonymous or user.id is not None or not is_open:
+            log_t = _("User on that email already exists.")
+            log.warning(log_t)
+            raise ValueError(log_t)
+
+        try:
+            context = {}
+            if request.path in path_names:
+                form = self.get_form()
+                role_ = path.split("register/")[-1].split("/")[0]
+                context.update(
+                    {
+                        "form": form,
+                        "category_choices": CATEGORY_STATUS,
+                        "validation_sent": False,  # Code validation hase not been to send.
+                        "role": role_,
+                    }
+                )
+                # super().get(request, *args, **kwargs)
+                return render(request, "auth/register.html", context, status=200)
+            elif request.path not in path_names and "register" in request.path:
+                form = UsersCheckCodeVerificationForm()
+                context.update({"validation_sent": True, "form": form})
+            return render(request, "auth/register.html", context, status=200)
+
+        except Exception as e:
+            ERROR_TEXT = " ".join(
+                [
+                    self.log_t[-1] + f"{self.get.__name__}:",
+                    datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    (
+                        " Server error to the user registration GET. ERROR_TEXT: %s"
+                        % e.args[0]
+                        if e.args
+                        else str(e)
+                    ),
+                ]
+            )
+            log.error(ERROR_TEXT)
+            return HttpResponseRedirect("/", {"detail": ERROR_TEXT})
+
+    def form_invalid(self, form):
+        """
+        TODO: https://learn.javascript.ru/xmlhttprequest
+            Емайл - уникальныq емал. Когда получаем ошибку (при заполнени формы) - показываем сообщение!! Остановить перезагрузку
+        :param form:
+        :return:
+        """
+        resp = super().form_invalid(form)
+        resp.status_code = 400
+        return resp
+
     def form_valid(self, form):
+        from persons.apps import account_manager
         from persons.tasks.tasks_celery.task_set_cache import (
             task_of_cache,
         )
 
         username = form.cleaned_data.get("username")
         email = form.cleaned_data.get("email")
-
-        super().form_valid(form)
+        database_service = account_manager.postman.database_service
+        # user = database_service.get_user_by_email(email)
+        # if user is  None:
+        try:
+            super().form_valid(form)
+            user = Users.objects.get(email=email)
+            password_hashed = database_service.hashes_password(
+                form.cleaned_data.get("password1")
+            )
+            setattr(user, "password", password_hashed)
+            user.save(update_fields=["password"])
+        except Exception as e:
+            raise e
 
         if (username is None) or (
             username is not None and isinstance(username, str) and len(username) < 2
@@ -245,19 +290,19 @@ class UsersRegistrationView(AllauthSignupView):
             raise ValueError(log_t)
         finally:
             task_postman.delay(*args, **kwargs)
-        messages.success(self.request, message)
+        # messages.success(self.request, message)
 
         return
 
 
 class UsersVerificationDuringRegistration(View):
     form_class = UsersCheckCodeVerificationForm
-    success_url = "/register/"
+    success_url = "register/"
     template_name = "auth/register.html"
     # async def dispatch(self, request, *args, **kwargs):
     #     return super().dispatch(request, *args, **kwargs)
 
-    async def post(self, request, *args, **kwargs):
+    async def get(self, request, *args, **kwargs):
         """
         TODO: Time-live of the verification code must be re-writen
         Receive the verification code/toke. This code/token tell obout email address of user/person. It is correctly.
@@ -275,14 +320,16 @@ class UsersVerificationDuringRegistration(View):
         form = UsersCheckCodeVerificationForm()
         context = {"validation_sent": True, "form": form}
         user = request.user
-        if request.method == "POST" and not user.is_authenticated:
-            token_key = request.POST.get("key")
+        is_authenticated = await asyncio.to_thread(lambda: user.is_authenticated)
+        if request.method == "GET" and not is_authenticated:
+            token_key = request.GET.get("key")
             keys = EnumTemplatesKeysCache.USER_PENDING_LETTER.value % "*"
             collection_ = []
             await cachemanager.aget(key_pattern=keys, collection=collection_)
 
             if len(collection_) > 0:
-                for key in collection_:
+                for key in collection_.copy():
+                    key: bytes = key[:]
                     collection_.clear()
                     await cachemanager.aget(key=key.decode(), collection=collection_)
             if len(collection_) > 0:
@@ -290,18 +337,12 @@ class UsersVerificationDuringRegistration(View):
                     try:
                         user_cache_json = json.loads(item.decode())
                         if user_cache_json["verification_code"] == token_key:
+                            user_cache_json["is_verified"] = True
                             collection_.clear()
                             database_service = account_manager.postman.database_service
                             result: Optional[dict] = await asyncio.to_thread(
                                 lambda: database_service.update_in_database(
-                                    {
-                                        "category": "CLIENT",
-                                        "password": "pbkdf2_sha256$hash_admin_1",
-                                        "is_verified": True,
-                                        "verification_code": token_key,
-                                        "is_superuser": False,
-                                        "updated_at": datetime.datetime.now(),
-                                    },
+                                    user_cache_json,
                                     user_email=user_cache_json["email"],
                                 )
                             )
@@ -311,7 +352,7 @@ class UsersVerificationDuringRegistration(View):
                                 return await asyncio.to_thread(
                                     lambda: HttpResponseRedirect(
                                         reverse(
-                                            "account_login",
+                                            "login/",
                                         ),
                                         status=302,
                                     )

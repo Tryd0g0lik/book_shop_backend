@@ -98,7 +98,7 @@ class TestRegistrationAndSendCodeVerification:
             test_new_user: dict = {k: v for k, v in new_users_registration.items() if
                                    k in ['email', 'first_name', 'username', 'password1', 'password2', 'check_user',
                                          'category']}
-            url = reverse("management")
+            url = reverse("persons:management")
             # url = url + "admin" if "admin" not in url else url
             log.info(f"""\n
                     # ============================================
@@ -107,10 +107,10 @@ class TestRegistrationAndSendCodeVerification:
                     # ============================================
                     """)
             request = requests.post(
-                url="http://127.0.0.1:8000/register/admin/",
+                url="http://127.0.0.1:8000/register/admin",
                 headers={
                     'Content-Type': 'application/x-www-form-urlencoded',
-                    'Referer': 'http://127.0.0.1:8000/register/admin/',
+                    'Referer': 'http://127.0.0.1:8000/register/admin',
                     'Host': '127.0.0.1:8000',
                     'method': "POST",
                 },

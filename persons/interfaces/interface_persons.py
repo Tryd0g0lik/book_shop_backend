@@ -64,11 +64,38 @@ class UsersPydantic(BaseModel):
 
     def to_dict_without_secret_data(self) -> dict:
         """We are excepts the password/ verification_code field from dict"""
-        return self.model_dump(exclude={"password", "verification_code"})
+        data_dict: dict = self.model_dump(
+            exclude={
+                "password",
+                "verification_code",
+                "last_login",
+                "updated_at",
+                "created_at",
+                "date_joined",
+            }
+        )
+        if self.last_login is not None:
+            data_dict.__setitem__(
+                "last_login", self.last_login.strftime("%m-%d-%Y_%H:%M:%S")
+            )
+        if self.updated_at is not None:
+            data_dict.__setitem__(
+                "updated_at", self.updated_at.strftime("%m-%d-%Y_%H:%M:%S")
+            )
+        if self.created_at is not None:
+            data_dict.__setitem__(
+                "created_at", self.created_at.strftime("%m-%d-%Y_%H:%M:%S")
+            )
+        if self.date_joined is not None:
+            data_dict.__setitem__(
+                "date_joined", self.date_joined.strftime("%m-%d-%Y_%H:%M:%S")
+            )
+        return data_dict
 
     def to_public_dict(self) -> dict:
         """Field only for publication"""
-        return self.model_dump(
+
+        data_dict: dict = self.model_dump(
             include={
                 "id",
                 "username",
@@ -76,9 +103,13 @@ class UsersPydantic(BaseModel):
                 "first_name",
                 "last_name",
                 "balance",
-                "last_login",
             }
         )
+        if self.last_login is not None:
+            data_dict.__setitem__(
+                "last_login", self.last_login.strftime("%m-%d-%Y_%H:%M:%S")
+            )
+        return data_dict
 
     # class UsersPydantic(BaseModel):
     #     is_superuser: bool

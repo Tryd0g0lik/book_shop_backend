@@ -3,11 +3,18 @@ persons/models/models_persons.py:1
 """
 
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import MinLengthValidator, MinValueValidator
+from django.contrib.auth.validators import UnicodeUsernameValidator
+from django.core.validators import (
+    EmailValidator,
+    MaxLengthValidator,
+    MinLengthValidator,
+    MinValueValidator,
+)
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from project.settings_conf.settings_env import (
+    APP_MAX_PASSWORD_LENGTH,
     APP_MINIMUM_PASSWORD_LENGTH,
     CATEGORY_STATUS,
 )
@@ -26,7 +33,8 @@ class Users(AbstractUser):
        name of user
    :param first_name: str or None. Max length is 150 characters.
    :param last_name: str or None. Max length is 150 characters.
-   :param last_login: str or None, format date-time.
+   :param last_login: str or N
+   one, format date-time.
    :param email: str. User email. Max length is 320 characters.
    :param is_staff: bool. Designates whether the user can log into \
        this admin site.
@@ -37,10 +45,34 @@ class Users(AbstractUser):
    :param  password: str. Max length of characters is 128 and min is 3.
    """
 
+    username_validator = UnicodeUsernameValidator()
+    username = models.CharField(
+        _("username"),
+        max_length=150,
+        unique=True,
+        help_text=_(
+            "Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only."
+        ),
+        validators=[MinLengthValidator(2), MaxLengthValidator(50), username_validator],
+        error_messages={
+            "unique": _("A user with that username already exists."),
+        },
+    )
+    email = models.EmailField(
+        _("email address"),
+        max_length=150,
+        unique=True,
+        validators=[
+            MaxLengthValidator(150),
+            MinLengthValidator(5),
+            EmailValidator(),
+        ],
+    )
+
     category = models.CharField(default="BASE", choices=CATEGORY_STATUS, max_length=50)
     password = models.CharField(
         _("password"),
-        max_length=255,
+        max_length=APP_MAX_PASSWORD_LENGTH,
         validators=[MinLengthValidator(APP_MINIMUM_PASSWORD_LENGTH)],
     )
     is_sent = models.BooleanField(
@@ -79,3 +111,9 @@ to user's email. User indicates his email at the registrations moment."
             "-id",
         ]
         indexes = [models.Index(fields=["is_active"])]
+
+    def clean_verification_code(self):
+        """Our purpose is to make the verification codes unique. Then we will be use it how the session ID for user."""
+        queryset = self.objects.filter(verification_code__exact=self.verification_code)
+        if queryset.count() > 0:
+            self.verification_code += f"-{queryset.count()}"

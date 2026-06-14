@@ -79,3 +79,5 @@ poetry.lock
 !.github
 celerybeat-*
 .coverage
+caching
+__tests__/**/screenshots/*
