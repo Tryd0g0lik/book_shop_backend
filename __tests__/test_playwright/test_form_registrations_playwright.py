@@ -11,7 +11,7 @@ from __tests__.fixtures.fixture_django3 import TEST_FORM_DATA
 from __tests__.test_playwright.playwright_client import PlaywrightManager
 
 pathname_local = "__tests__/test_playwright/screenshots/"
-url_star = "http://127.0.0.1:8000/register/admin/"
+url_star = "http://127.0.0.1:8000/register/admin"
 log = logging.getLogger(__name__)
 
 def fixture_add_id_attribute():

@@ -17,3 +17,8 @@ class PersonErrorImproperlyConfigured(PersonError):
 class PersonErrorTasks(PersonError):
     def __init__(self, log_message: Optional[str] = "We do not have the valid data!"):
         super().__init__(log_message)
+
+
+class PersonLogingError(PersonError):
+    def __init__(self, log_message: Optional[str] = "We do not have the valid data!"):
+        super().__init__(log_message)

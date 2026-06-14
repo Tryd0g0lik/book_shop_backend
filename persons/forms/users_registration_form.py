@@ -25,6 +25,7 @@ from persons.validators import EmailValidatorPerson
 
 # from persons.services import CacheManager
 from project.settings_conf.settings_env import (
+    APP_MAX_PASSWORD_LENGTH,
     APP_MINIMUM_PASSWORD_LENGTH,
     CATEGORY_STATUS,
 )
@@ -180,15 +181,16 @@ class UsersRegistrationForm(SignupForm):
     def clean_first_name(self):
         first_name = self.cleaned_data.get("first_name")
         first_chars = r"[+\\}{)(0-9\"\' -.]"
-        if re.match(first_chars, first_name):
-            log_t = f'Please inter valid "username". Username does not must begin with {first_name[0]}'
-            log.warning(log_t)
-            raise forms.ValidationError(_(log_t))
+        if first_name is not None and len(first_name) > 0:
+            if re.match(first_chars, first_name):
+                log_t = f'Please inter valid "username". Username does not must begin with {first_name[0]}'
+                log.warning(log_t)
+                raise forms.ValidationError(_(log_t))
 
-        if not re.search(r"[A-Za-z]+", first_name[0:]):
-            log_t = "Please enter the valid first_name. This first_name could be contain the chars: 'A-Za-z'"
-            log.warning(log_t)
-            raise forms.ValidationError(_(log_t))
+            if not re.search(r"[A-Za-z]+", first_name[0:]):
+                log_t = "Please enter the valid first_name. This first_name could be contain the chars: 'A-Za-z'"
+                log.warning(log_t)
+                raise forms.ValidationError(_(log_t))
         return first_name
 
     def clean_username(self):
@@ -204,6 +206,27 @@ class UsersRegistrationForm(SignupForm):
             log.warning(log_t)
             raise forms.ValidationError(_(log_t))
         return username
+
+    def clean_password(self):
+        """
+        :return: Void
+        """
+        password1 = self.cleaned_data.get("password1")
+        password2 = self.cleaned_data.get("password2")
+
+        if not password1 or not password2:
+            log_t = "Password fields were not filled."
+            log.warning(log_t)
+            raise forms.ValidationError(_(log_t))
+
+        if (
+            len(password1) < APP_MINIMUM_PASSWORD_LENGTH
+            or password2 > APP_MAX_PASSWORD_LENGTH
+        ):
+            log_t = f"The length of 'password1' or 'password2' is not valid. MAX is {APP_MAX_PASSWORD_LENGTH} \
+& MIN is {APP_MINIMUM_PASSWORD_LENGTH}. "
+            log.warning(log_t)
+            raise forms.ValidationError(_(log_t))
 
     def save(self, request):
         users = super().save(request)
@@ -233,80 +256,3 @@ class UsersRegistrationForm(SignupForm):
         users.is_active = False
         users.save()
         return users
-
-
-class UsersCheckCodeVerificationForm(UserTokenForm):
-    """
-    Here we get the code verification. We have sent this code to the user's email address for email configuration.
-    """
-
-    uidb36 = None
-
-    def _get_user(self, code_token: str) -> dict:
-        """
-        This code look up to the cache server by the template key from the selection
-            list 'EnumTemplatesKeysCache.USER_PENDING_LETTER.value'.
-        Time live extending on 300000 milliseconds.
-        :param str code_token:
-        :return: VERIFICATION CODE or the mistake name 'ErrorCodeVerificationForm'.
-        """
-        # Get user from cash server
-        log_t = f"[{self.__class__.__name__}][{self._get_user.__name__}]:"
-        cache_key = EnumTemplatesKeysCache.USER_PENDING_LETTER.value % "*"
-        collection_keys = []
-        log.info(
-            f"""{log_t}
-        # ============================================
-        # LOOK UP THE VERIFICATION CODE BY TOKEN
-        # ============================================
-        """
-        )
-        try:
-            # BELOW WE GET A LIST KEYS OF CACHE
-            result_bool = cachemanager.aget(
-                key_pattern=cache_key, collection=collection_keys
-            )
-            if result_bool is not None and len(collection_keys) >= 1:
-                promocodes = []
-                for key_bytes in collection_keys:
-                    key_str = key_bytes.decode()
-                    cachemanager.aget(key=key_str, collection=promocodes)
-                # BELOW WE GET A LIST OF JSON BYTES
-                for view_bytes in promocodes:
-                    view_json: dict = json.loads(view_bytes.decode())
-                    # BELOW WE GET VALUES & LOOK UP THE VERIFICATION TOKEN IN HIM
-                    verification_code: Optional[str] = view_json.get(
-                        "verification_code"
-                    )
-                    if (
-                        verification_code is not None
-                        and verification_code == code_token
-                    ):
-                        promocodes.clear()
-                        k = re.sub(
-                            r"[@.]+", "", (cache_key[:-1] + view_json.get("email"))
-                        )
-                        cachemanager.aget(key=k, collection=promocodes, ex=300000)
-                        # THE CODE VERIFICATION WAS FOUND & THE USER JSON DATA WE RETURN
-
-                        return view_json
-
-            raise ErrorCodeVerificationForm("Code verification invalid.")
-        except Exception as e:
-            raise ErrorCodeVerificationForm(e.args[0] if e.args else str(e)) from e
-
-    def clean(self) -> dict:
-        """
-        TODO: Checking logic
-        :return:
-        """
-        cleaned_data = super().clean()
-        code_token = cleaned_data.get("code_token")
-
-        if not code_token:
-            raise ErrorCodeVerificationForm("Code was not found")
-        try:
-            result_json: dict = self._get_user(code_token)
-            return result_json
-        except Exception as e:
-            raise e

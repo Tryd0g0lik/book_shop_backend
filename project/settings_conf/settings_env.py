@@ -20,6 +20,10 @@ APP_HOST = os.getenv("APP_HOST", "127.0.0.1")
 APP_PORT = os.getenv("APP_PORT", "8003")
 APP_TIME_ZONE = os.getenv("APP_TIME_ZONE", "Asia/Krasnoyarsk")
 APP_MINIMUM_PASSWORD_LENGTH = int(os.getenv("APP_MINIMUM_PASSWORD_LENGTH", "7"))
+APP_MAX_PASSWORD_LENGTH = int(os.getenv("APP_MAX_PASSWORD_LENGTH", "255"))
+APP_BASIS_URL = (
+    f"{APP_PROTOCOL}://" + f"{APP_HOST}:{APP_PORT}" if APP_PORT else f"{APP_HOST}"
+)
 
 # DATABASE EXTERNAL
 POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")

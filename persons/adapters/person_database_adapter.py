@@ -85,6 +85,7 @@ class PersonServiceDatabaseAdapter:
         """
         GEt user from the database and conversion through the Pydantic
         Here we are not to use a cache
+        :return None or Pydantic
         """
         from persons.models import Users
 
@@ -148,19 +149,43 @@ class PersonServiceDatabaseAdapter:
 
     @staticmethod
     def save(user_dict: dict) -> list[UsersPydantic]:
-        """Save data users by email"""
+        """
+        Save data users by email
+        Creates new user or updating an exists data.
+        Cache does not use, here it works directly with database.
+        """
         from persons.models import Users
 
-        user_list = []
-        try:
-            user = Users.objects.create(**user_dict)
-            user_list.append(user)
 
-            return (
-                [UsersPydantic.model_validate(user_list[0])]
-                if len(user_list) > 0
-                else []
-            )
+
+        user: Optional[Users] = None
+        id_: Optional[int] = user_dict.get("id", None)
+        if id_ is not None:
+            # User exists by ID
+            user_queryset = Users.objects.filter(id=id_)
+            if not user_queryset.exists():
+                log_t = (
+                    PersonServiceDatabaseAdapter.log_t[:-1]
+                    + f"[{PersonServiceDatabaseAdapter.save.__name__}]: Something what wrong! \
+{PersonServiceDatabaseAdapter.save.__name__}: Data don't update in database!"
+                )
+                raise PersonErrorImproperlyConfigured(log_t)
+            user_queryset.update(**user_dict)
+        else:
+            try:
+                user_new: Users = Users.objects.create(**user_dict)
+                id_ = user_new.id
+            except Exception as e:
+                log_t = (
+                    PersonServiceDatabaseAdapter.log_t[:-1]
+                    + f"[{PersonServiceDatabaseAdapter.save.__name__}]: {e.args[0] if e.args else str(e)}"
+                )
+                raise PersonErrorImproperlyConfigured(log_t) from e
+
+        try:
+            user = Users.objects.filter(id=id_).first()
+            return [UsersPydantic.model_validate(user)]
+
         except Exception as e:
             log_t = (
                 PersonServiceDatabaseAdapter.log_t[:-1]

@@ -13,8 +13,12 @@
             <!-- Блок регистрации -->
             <div class="register-section">
                 {%  if not validation_sent %}
+
                     <h2>{% trans "Create New Account" %}</h2>
-                    <form class="register-form" action="{% url 'management' %}" method="post">
+
+
+                    <form class="register-form" action="{% url 'persons:management'  role %}" method="post">
+
                         {% csrf_token %}
                         {{ form.non_field_errors }}
                         <div class="fieldWrapper">
@@ -58,7 +62,7 @@
                     </form>
                 {%  else %}
                     <h2>{% trans "Confirm" %}</h2>
-                    <form class="register-form"  action="{% url 'register_token' %}"  method="post">
+                    <form class="register-form"  action="{% url 'persons:register_token' %}"  method="get">
                         {% csrf_token %}
                         {{ form.as_div }}
 

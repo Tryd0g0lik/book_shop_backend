@@ -125,12 +125,12 @@ ACCOUNT_MAX_EMAIL_ADDRESSES = 2
 # # The user is blocked from logging in until the email address is verified
 # ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 # Defense from  lot quantity  entering  the password
-ACCOUNT_RATE_LIMITS = {
-    "reset_password": "3/20/ip",
-    "login": "3/10m/ip",
-    "login_failed": "5/5m",  # 5 incorrect re-entries 5m.
-    "email_confirmation": "3/10m",  # 3 configuration an email on the 10м.
-}
+# ACCOUNT_RATE_LIMITS = {
+#     "reset_password": "3/20/ip",
+#     "login": "3/10m/ip",
+#     "login_failed": "5/5m",  # 5 incorrect re-entries 5m.
+#     "email_confirmation": "3/10m",  # 3 configuration an email on the 10м.
+# }
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = False
 # Controls whether password reset is performed by means of following a link in \
 # the email (False), or by entering a code (True).
@@ -146,4 +146,5 @@ ACCOUNT_EMAIL_CONFIRMATION_HMAC = True
 
 ACCOUNT_FORMS = {
     "signup": "persons.forms.users_registration_form.UsersRegistrationForm",
+    "login": "persons.forms.login_form.UsersLoginForm",
 }
