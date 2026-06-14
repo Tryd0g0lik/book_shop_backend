@@ -308,12 +308,10 @@ WAGTAIL_SITE_NAME = f"{APP_NAME}"
 # ============================================
 # WAGTAILSEARCH LOGING AUTHENTICATION
 # ============================================
-# LOGIN_URL = "wagtailadmin:wagtailadmin_login"  # "/person/login/"
+LOGIN_URL = "/accounts/login/"  # "/person/login/"
 WAGTAIL_FRONTEND_LOGIN_TEMPLATE = "auth/login.html"
 WAGTAIL_FRONTEND_LOGIN_URL = "/admin/login/"
 WAGTAILADMIN_LOGIN_URL = WAGTAIL_FRONTEND_LOGIN_URL
-# WAGTAIL_FRONTEND_LOGIN_URL = "wagtailadmin_login"
-# WAGTAIL_FRONTEND_LOGIN_URL = "admin_panel:wagtailadmin_login" # "/accounts/login/"
 LOGIN_REDIRECT_URL = "/"
 LOGOUT_REDIRECT_URL = f"{APP_BASIS_URL}"
 

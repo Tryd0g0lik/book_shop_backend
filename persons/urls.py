@@ -2,6 +2,8 @@
 from django.urls import path, re_path
 
 from persons.views import UserLoginView, UsersRegistrationView
+
+# from persons.views import  UsersRegistrationView
 from persons.views.views_register import UsersVerificationDuringRegistration
 
 urlpatterns = [
@@ -20,9 +22,9 @@ urlpatterns = [
         UsersVerificationDuringRegistration.as_view(),
         name="register_token",
     ),
-    # path(
-    #     "login/",
-    #     UserLoginView.as_view(),
-    #     name="login",#wagtailadmin_login
-    # ),
+    path(
+        "login/",
+        UserLoginView.as_view(),
+        name="login",  # wagtailadmin_login
+    ),
 ]
