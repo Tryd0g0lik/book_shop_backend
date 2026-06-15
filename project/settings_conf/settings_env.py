@@ -36,13 +36,6 @@ JWT_ACCESS_TOKEN_LIFETIME_MINUTES = os.getenv("JWT_ACCESS_TOKEN_LIFETIME_MINUTES
 JWT_REFRESH_TOKEN_LIFETIME_DAYS = os.getenv("JWT_REFRESH_TOKEN_LIFETIME_DAYS", "0")
 
 
-CATEGORY_STATUS = [
-    ("BASE", "Base"),
-    ("ADMIN", "Admin"),
-    ("MANAGER", "Manager"),
-    ("CLIENT", "Client"),
-]
-
 # USer Email
 USER_EMAIL_BASIS_MESSAGE = os.getenv(
     "USER_EMAIL_BASIS_MESSAGE", "Check the your email and follow the link"

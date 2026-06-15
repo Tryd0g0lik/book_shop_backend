@@ -62,11 +62,7 @@ urlpatterns = [
         include((persons_urls, "persons"), namespace="persons"),
         name="persons",
     ),
-    # path("sprite/", home.sprite, name="wagtailadmin_sprite"),
-    #     path("admin/login/", account.LoginView.as_view(), name="wagtailadmin_login"),
     re_path(r"^admin/", include(wagtailadmin_urls)),
-    re_path(r"^admin/login/S", UserLoginView.as_view(), name="wagtailadmin_login"),
-    # re_path(r'^django-admin/', include(admin.site.urls)),
 ]
 
 
@@ -84,7 +80,6 @@ urlpatterns += (
     ],
     *[
         path("accounts/", include("allauth.urls")),
-        path("account_one/", include(allauth_urls)),
     ],
     *[
         path("documents/", include(wagtaildocs_urls)),

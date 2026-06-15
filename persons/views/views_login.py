@@ -76,7 +76,7 @@ class UserLoginView(LoginView):
 
     def post(self, request, *args, **kwargs):
         """
-        TODO: Сохранение в базу данных!
+        TODO: С авторизацией  удалить запись из кеша!!!!!!
         :param request:
         :return:
         """

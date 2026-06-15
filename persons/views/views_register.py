@@ -11,6 +11,7 @@ from typing import Optional
 
 from allauth.account.views import SignupView as AllauthSignupView
 from django.contrib import messages
+from django.db.models import Q
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render, reverse
 from django.utils.decorators import method_decorator
@@ -18,13 +19,12 @@ from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.decorators.http import require_GET, require_POST
 
-from persons import EnumTemplatesKeysCache
+from persons import CATEGORY_STATUS, EnumTemplatesKeysCache
 from persons.apps import account_manager, cachemanager
 from persons.forms import UsersRegistrationForm
 from persons.forms.verification_form import UsersCheckCodeVerificationForm
 from persons.models import Users
 from persons.tasks.tasks_celery.task_send_letter_to_user_email import task_postman
-from project.settings_conf.settings_env import CATEGORY_STATUS
 
 # from project.settings_conf.settings_first import LOGIN_URL
 
@@ -100,7 +100,6 @@ class UsersRegistrationView(AllauthSignupView):
                 + _("User on that email already exists.")
             )
             log.warning(log_t + "Authenticated user tried to register")
-            # return redirect("/")
             return HttpResponseRedirect(reverse("/"), status=400)
         messages.success(request, _("Registration successful! Chek your email."))
         try:
@@ -114,20 +113,12 @@ class UsersRegistrationView(AllauthSignupView):
             result_list = [item for item in path_names if item in url_parent]
 
             if len(result_list) > 0:
-                log_t = (
-                    self.log_t[:-1]
-                    + f"[{self.post.__name__}]: "
-                    + "User data These are before records in database."
-                )
-                log.info(log_t)
-
                 response = super().post(request, *args, **kwargs)
                 if response and response.status_code >= 400:
                     context_ = {
                         "details": str(response.context_data["form"].errors),
                         "validation_sent": False,
                     }
-                    # return render(request, "auth/register.html",context=context_ , status=400)
                     messages.error(request, context_["details"])
                     log.warning(
                         self.log_t[:-1]
@@ -135,7 +126,6 @@ class UsersRegistrationView(AllauthSignupView):
                         + context_["details"]
                     )
                     return JsonResponse(context_, status=400)
-                role_ = result_list[0].split("register/")[-1].split("/")[0]
 
                 return HttpResponseRedirect(
                     reverse("persons:register_token"), status=302
@@ -256,11 +246,10 @@ class UsersRegistrationView(AllauthSignupView):
             task_of_cache,
         )
 
-        username = form.cleaned_data.get("username")
-        email = form.cleaned_data.get("email")
+        username: str = form.cleaned_data.get("username")
+        email: str = form.cleaned_data.get("email")
         database_service = account_manager.postman.database_service
-        # user = database_service.get_user_by_email(email)
-        # if user is  None:
+        role: str = form.cleaned_data.get("category")
         try:
             super().form_valid(form)
             user = Users.objects.get(email=email)
@@ -268,7 +257,49 @@ class UsersRegistrationView(AllauthSignupView):
                 form.cleaned_data.get("password1")
             )
             setattr(user, "password", password_hashed)
-            user.save(update_fields=["password"])
+            # Note: Below the 'category' we will be caching.
+            # User will get own role/category when pass a verification.
+            setattr(user, "category", list(CATEGORY_STATUS[0])[0])
+            queryset = Users.objects.filter(is_superuser=False, is_staff=True)
+            # We can have a (count):
+            # - Superadmin before 1;
+            # - Admin ... 1;
+            # - Manager ... 0-3;
+            # - Client more.
+            if role.upper() in CATEGORY_STATUS[1]:
+                queryset_superadmin = Users.objects.filter(is_superuser=True)
+
+                if queryset_superadmin.count() == 0:
+                    # Superuser
+                    setattr(user, "is_superuser", True)
+                    setattr(user, "is_staff", True)
+                elif queryset.count() == 0:
+                    # Admins
+                    setattr(user, "is_superuser", False)
+                    setattr(user, "is_staff", True)
+            elif (
+                role.upper() in CATEGORY_STATUS[2]
+                and queryset.count() >= 0
+                and queryset.count() <= 3
+            ):
+                # Managers
+                setattr(user, "is_superuser", False)
+                setattr(user, "is_staff", True)
+            else:
+                # Clients
+                setattr(user, "is_superuser", False)
+                setattr(user, "is_staff", False)
+
+            setattr(user, "updated_at", datetime.datetime.now())
+            user.save(
+                update_fields=[
+                    "password",
+                    "category",
+                    "updated_at",
+                    "is_superuser",
+                    "is_staff",
+                ]
+            )
         except Exception as e:
             raise e
 
@@ -276,15 +307,14 @@ class UsersRegistrationView(AllauthSignupView):
             username is not None and isinstance(username, str) and len(username) < 2
         ):
             setattr(form, "username", email.split("@")[0])
-            username = form.cleaned_data.get("username")
+
         args = (EnumTemplatesKeysCache.USER_PENDING.value % re.sub(r"[@.]", "", email),)
         # args = (email,)
         # ------------------------------------
-        kwargs = {"username": username, "email": email}
+        kwargs = {"category": role, "email": email}
         try:
             # CELERY + REDIS
             task_of_cache.delay(*args, **kwargs)
-            message = _("Registration is almost complete! Check your email.")
         except Exception as e:
             log_t = f"[UsersRegistrationView]: {e.args[0] if e.args else str(e)}"
             raise ValueError(log_t)
@@ -349,10 +379,21 @@ class UsersVerificationDuringRegistration(View):
 
                             if result is not None:
                                 log.info("Verification code updated successfully")
+                                category: str = result["category"]
+                                admin_ = list(CATEGORY_STATUS[1])[0]
+                                manager_ = list(CATEGORY_STATUS[2])[0]
+                                url = "person:login"
+                                if (
+                                    category.lower() == admin_.lower()
+                                    or category.lower() == manager_.lower()
+                                ):
+                                    # url = f"{admin_.lower()}/login/"
+                                    url = "wagtailadmin_login"
+
                                 return await asyncio.to_thread(
                                     lambda: HttpResponseRedirect(
                                         reverse(
-                                            "login/",
+                                            url,
                                         ),
                                         status=302,
                                     )

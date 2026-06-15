@@ -4,6 +4,7 @@ project/celery.py:1
 
 import os
 import sys
+import warnings
 from pathlib import Path
 
 from celery import Celery, group
@@ -11,6 +12,9 @@ from celery.schedules import crontab
 from kombu import Exchange, Queue
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "project.settings")
+warnings.filterwarnings(
+    "ignore", message=".*worker_cancel_long_running_tasks_on_connection_loss.*"
+)
 celery_app = Celery(
     "person",
     group="signup",

@@ -103,6 +103,12 @@ class UsersPydantic(BaseModel):
                 "first_name",
                 "last_name",
                 "balance",
+                "is_superuser",
+                "is_staff",
+                "is_active",
+                "category",
+                "is_sent",
+                "is_verified",
             }
         )
         if self.last_login is not None:

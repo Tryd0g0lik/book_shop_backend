@@ -153,10 +153,10 @@ class PersonServiceDatabaseAdapter:
         Save data users by email
         Creates new user or updating an exists data.
         Cache does not use, here it works directly with database.
+        :param dict user_dict: Example '{"id": < USER_ID >, .... }'
+        :return  list[UsersPydantic]: [...view]
         """
         from persons.models import Users
-
-
 
         user: Optional[Users] = None
         id_: Optional[int] = user_dict.get("id", None)
