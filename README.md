@@ -58,7 +58,12 @@ https://docs.wagtail.org/en/stable/advanced_topics/i18n.html#configuring-availab
 Ниже представлена **техническая документация (Tech Spec)** для интернет-магазина, описывающая ролевую модель и сценарии работы с системой. Документ ориентирован на разработчиков, аналитиков и DevOps.
 
 
-ОЫ
+# Сделано
+
+```bash
+py manage.py user_groups_db # Создаст дополнительные имена для групп пользователей 
+py manage.py runserver
+```
 
 ---
 # Preview
