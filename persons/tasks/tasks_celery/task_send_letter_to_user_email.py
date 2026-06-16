@@ -16,7 +16,6 @@ from django.template.loader import render_to_string
 
 from persons import EnumEmailLetter, EnumTemplatesKeysCache, EnuSubjectOfLetter
 from persons.exceptions import PersonErrorTasks
-from persons.models import Users
 from project.settings_conf.settings_env import APP_DEFAULT_FROM_EMAIL
 
 log = logging.getLogger(__name__)
@@ -219,7 +218,10 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
     log_t = f"[task {send_letter_to_user_email.__name__}]:"
     from datetime import datetime
 
-    from persons.interfaces import UsersPydantic
+    from django.contrib.auth import get_user_model
+
+    Users = get_user_model()
+
     from persons.services import AccountManager, CacheManager
 
     dict_queue = queue.Queue(2000)
@@ -250,8 +252,8 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
                     account_manager = AccountManager()
                     generater = account_manager.inisialize_account()
                     log.info(
-                    log_t
-                    + """
+                        log_t
+                        + """
                     # ============================================
                     # EVERY ONE KEY - IT NEED TO SEND THE TWO LETTER
                     # ============================================"""

@@ -89,11 +89,16 @@ INSTALLED_APPS = [
     "wagtail.locales",
     "wagtail.admin",
     "wagtail.contrib.settings",
+    # 'wagtail.core',
     "wagtail",
     "wagtail.api.v2",
     "django.contrib.sitemaps",
     # My moduls
     "persons",
+    "cart",
+    "catalog",
+    "content_pages",
+    "profiles",
 ]
 
 
@@ -108,6 +113,8 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    # "wagtail.core.middleware.SiteMiddleware",
+    # "wagtail.contrib.redirects.middleware.RedirectMiddleware",
 ]
 from project.settings_conf.settings_db import *
 
@@ -241,7 +248,7 @@ WAGTAIL_CONTENT_LANGUAGES = LANGUAGES = [
 USE_TZ = True
 
 DATE_FORMAT = "d.m.Y"
-DATETIME_FORMAT = "d.m.Y H:i"
+# DATETIME_FORMAT = "d.m.Y H:i"
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
 # Dates and numbers display in the user’s local format
 USE_L10N = True
