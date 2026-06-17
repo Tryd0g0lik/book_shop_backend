@@ -1,3 +1,3 @@
 __all__ = ["CatalogModel"]
 
-from catalog.models.models_catalog import CatalogModel
+from catalog.models.model_catalog import CatalogModel
