@@ -17,7 +17,7 @@ from django.core.validators import (
 from django.utils.translation import gettext_lazy as _
 from shtab import Optional
 
-from persons import EnumTemplatesKeysCache
+from persons import CATEGORY_STATUS, EnumTemplatesKeysCache
 from persons.apps import cachemanager
 from persons.exceptions.error_forms import ErrorCodeVerificationForm
 from persons.models import Users
@@ -27,7 +27,6 @@ from persons.validators import EmailValidatorPerson
 from project.settings_conf.settings_env import (
     APP_MAX_PASSWORD_LENGTH,
     APP_MINIMUM_PASSWORD_LENGTH,
-    CATEGORY_STATUS,
 )
 
 log = logging.getLogger(__name__)

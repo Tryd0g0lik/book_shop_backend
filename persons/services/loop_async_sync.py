@@ -101,7 +101,11 @@ class CustomizationSyncAsyncLoop:
                 # ASYNC CALLBACK
                 # ============================================
                 def async_wrapper():
-                    log.info("Start ASYNC writing to the cache server")
+                    log.info(
+                        self.log_t[:-1]
+                        + "[async_wrapper]:"
+                        + f"Start ASYNC writing to the cache server kwargs: {kwargs}"
+                    )
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
                     try:
@@ -109,13 +113,19 @@ class CustomizationSyncAsyncLoop:
                         return loop.run_until_complete(callback(*args, **kwargs))
                     except Exception as e:
                         log.error(
-                            "Writing ASYNC to the cache server failed! TEXT_ERROR: %s"
+                            self.log_t[:-1]
+                            + "[async_wrapper]:"
+                            + "Writing ASYNC to the cache server failed! TEXT_ERROR: %s"
                             % e.args[0]
                             if e.args
                             else str(e)
                         )
                     finally:
-                        log.info("Finish ASYNC writing to the cache server,")
+                        log.info(
+                            self.log_t[:-1]
+                            + "[async_wrapper]:"
+                            + "Finish ASYNC writing to the cache server,"
+                        )
                         loop.close()
 
                 return async_wrapper
@@ -150,7 +160,7 @@ class CustomizationSyncAsyncLoop:
             # ============================================
             def sync_wrapper():
                 try:
-                    log.info("Start SYNC writing to the cache server")
+                    log.info(f"Start SYNC writing to the cache server kwargs: {kwargs}")
                     return callback(*args, **kwargs)
                 except Exception as e:
                     log.error(

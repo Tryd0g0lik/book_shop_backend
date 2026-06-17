@@ -13,10 +13,10 @@ from django.core.validators import (
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from persons import CATEGORY_STATUS
 from project.settings_conf.settings_env import (
     APP_MAX_PASSWORD_LENGTH,
     APP_MINIMUM_PASSWORD_LENGTH,
-    CATEGORY_STATUS,
 )
 
 
@@ -69,7 +69,7 @@ class Users(AbstractUser):
         ],
     )
 
-    category = models.CharField(default="BASE", choices=CATEGORY_STATUS, max_length=50)
+    # category = models.CharField(default="BASE", choices=CATEGORY_STATUS, max_length=50)
     password = models.CharField(
         _("password"),
         max_length=APP_MAX_PASSWORD_LENGTH,

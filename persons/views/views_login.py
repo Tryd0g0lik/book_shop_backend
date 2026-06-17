@@ -8,6 +8,7 @@ import datetime
 import json
 import logging
 
+from allauth.account.models import EmailAddress, EmailConfirmation
 from allauth.account.views import LoginView
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
@@ -17,6 +18,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from rest_framework import status
+from watchfiles import awatch
 
 from persons.exceptions.error_person import PersonLogingError
 from persons.forms import UsersLoginForm
@@ -76,7 +78,10 @@ class UserLoginView(LoginView):
 
     def post(self, request, *args, **kwargs):
         """
-        TODO: Сохранение в базу данных!
+        TODO: После авторизации:
+          - удалить запись из кеша!!!!!!
+          - Создать (редирект для клиента) маршрут в аккаунт или в каталог
+         Функцию - восстановить пароль - проверить после настройки посты на внешний провайдер.
         :param request:
         :return:
         """
@@ -86,11 +91,9 @@ class UserLoginView(LoginView):
         from persons.models import Users
 
         ERROR_TEXT = f"{self.log_t[:-1]}[{self.post.__name__}]: Error =>"
-        database_service = account_manager.postman.database_service
         user_request = request.user
         email = request.POST.get("email")
         password = request.POST.get("password")
-
         user = None
         is_anonymous: bool = user_request.is_anonymous
         if is_anonymous:
@@ -109,8 +112,8 @@ class UserLoginView(LoginView):
                 )
             try:
                 user = user_queryset.first()
-                password_hashed = database_service.hashes_password(password)
-                if user.password != password_hashed:
+                password_hashed = user.check_password(password)
+                if not password_hashed:
                     t = "User's password is invalid!"
                     log.warning(ERROR_TEXT + f" {t}")
                     messages.warning(request, t)
@@ -128,14 +131,49 @@ class UserLoginView(LoginView):
                 )
 
             try:
-
+                # --- Person
                 dtime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 user.is_active = True
+                user.is_verified = True
                 user.date_joined = dtime
                 user.updated_at = dtime
-                user.save(update_fields=["is_active", "date_joined", "updated_at"])
-                # user_json: json = UsersPydantic.model_validate(user).to_public_dict()
+                user.save(
+                    update_fields=[
+                        "is_active",
+                        "date_joined",
+                        "updated_at",
+                        "is_verified",
+                    ]
+                )
+                # --- Allauth
+                queryset = EmailAddress.objects.filter(user=user)
+                if queryset.exists():
+                    account_email = queryset.first()
+                    email_conf = None
+                    if account_email.email == user.email:
+                        setattr(account_email, "verified", True)
+                        account_email.save(update_fields=["verified"])
+                        email_conf = EmailConfirmation.objects.filter(
+                            email_address_id=account_email.id,
+                        )
+                    else:
+                        log.warning(
+                            self.log_t[-1]
+                            + f"[{self.post.__name__}]:"
+                            + "Allauth did not save new verified!"
+                        )
+                    email_obj = email_conf.first() if email_conf.exists() else None
+                    if email_obj is not None:
+                        email_obj.verified = True
+                        email_obj.save()
+                    else:
+                        log.warning(
+                            self.log_t[-1]
+                            + f"[{self.post.__name__}]:"
+                            + "Allauth did not save new email!"
+                        )
 
+                # ---
                 request.session.save()
                 user_auth = authenticate(
                     request=request, email=email, password=password
@@ -146,13 +184,16 @@ class UserLoginView(LoginView):
                     session_data_json_str = json.dumps(
                         {
                             "username": user.username,
-                            "category": user.category,
+                            "category": ", ".join(
+                                user.groups.values_list("name", flat=True)
+                            ),
                             "email": user.email,
                         }
                     )
                     request.session[user.verification_code] = session_data_json_str
+
                     return redirect(
-                        "wagtailadmin:wagtailcore_login",
+                        "wagtailadmin_home",
                     )
                 messages.warning(request, "User login or password is invalid!")
                 return render(
@@ -163,7 +204,7 @@ class UserLoginView(LoginView):
             except Exception as e:
                 ERROR_TEXT = " ".join(
                     [
-                        self.log_t[-2],
+                        self.log_t[-1] + f"[{self.post.__name__}]:",
                         ".%s]: %s Error => %s"
                         % (
                             self.post.__name__,
@@ -179,6 +220,3 @@ class UserLoginView(LoginView):
                     {"details": ERROR_TEXT},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
-
-
-# DFMN-HTJB

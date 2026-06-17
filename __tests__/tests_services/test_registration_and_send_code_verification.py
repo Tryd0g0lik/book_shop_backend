@@ -72,7 +72,7 @@ class TestRegistrationAndSendCodeVerification:
             # sub_person.get_person_model Type: {type(sub_person.get_person_model)}
             # ============================================
             """)
-            value: str = EnumTemplatesKeysCache.USER_PENDING.value % re.sub(r'[@.]', "", email)
+            value: str = EnumTemplatesKeysCache.USER_PENDING_ZERO.value % re.sub(r'[@.]', "", email)
             await sub_person.cachemanager.asave(value, {"username": username, "email": email})
             log.info(f"""\n
             # ============================================

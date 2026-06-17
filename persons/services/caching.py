@@ -38,23 +38,24 @@ class CacheManager:
         :param ttl: Seconds. This is a time of caching. That is the cache time of life.
         :return: bool
         """
+        log.info(self.log_t[:-1] + "[asave]:" + f" DEBUG Defsult 1: {default}")
         is_connected = await self.asynccacher.is_connected()
         if is_connected is not None or not is_connected:
             await self.asynccacher.related()
         log.info(
-            """\n
+            self.log_t[:-1]
+            + "[asave]:"
+            + """\n
 # ============================================
 # CACHE SERVER ASAVE
 # ============================================
 # Checking of connection
             """
         )
-        #
-        # is_connected = await self.asynccacher.is_connected()
-        # if is_connected is None or not is_connected:
-        #     await self.asynccacher.related()
         log.info(
-            """\n
+            self.log_t[:-1]
+            + "[asave]:"
+            + """\n
         # Here we make caching of data.
         # ============================================
         # SAVING DATA ON THE CACHE SERVER
@@ -67,7 +68,9 @@ class CacheManager:
                 log.info(self.log_t[:-1] + "[asave]:" + " Before caching the new data")
                 existing = await conn.getex(key, ttl)
                 log.info(
-                    """\n
+                    self.log_t[:-1]
+                    + "[asave]:"
+                    + """\n
                 # ============================================
                 # WE MAKE A
                 # ============================================
@@ -80,17 +83,22 @@ class CacheManager:
                         + " Cache's key: %s exists. TTL extended." % (key,)
                     )
                 else:
+                    log.info(
+                        self.log_t[:-1] + "[asave]:" + f" DEBUG Defsul 2: {default}"
+                    )
                     if default is not None:
                         await conn.setex(
                             key,
                             ttl,
                             json.dumps(default, ensure_ascii=False).encode("utf-8"),
                         )
+                        log.info(
+                            self.log_t[:-1]
+                            + "[asave]:"
+                            + " Data was cached successfully!"
+                        )
                 # The clean storage
                 del existing
-                log.info(
-                    self.log_t[:-1] + "[asave]:" + " Data was cached successfully!"
-                )
 
         except Exception as e:
             log_t = " ".join(

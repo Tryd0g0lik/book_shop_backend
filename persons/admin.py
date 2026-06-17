@@ -23,7 +23,6 @@ class PanelAdmin(BasicAdmin):
         "email",
         "first_name",
         "last_name" "username",
-        "category",
     ]
     list_filter = ["username", "email", "first_name", "last_name"]
     ordering = (

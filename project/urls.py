@@ -62,6 +62,7 @@ urlpatterns = [
         include((persons_urls, "persons"), namespace="persons"),
         name="persons",
     ),
+    re_path("admin/login/", UserLoginView.as_view(), name="wagtailadmin_login"),
     re_path(r"^admin/", include(wagtailadmin_urls)),
 ]
 

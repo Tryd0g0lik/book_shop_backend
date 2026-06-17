@@ -25,7 +25,8 @@
                           {{ form.email.as_field_group }}
                         </div>
                         <div class="fieldWrapper">
-                            {{ form.category }}
+
+                            <input type="hidden" name="category" value="{{role|upper}}">
                         </div>
                         <div class="fieldWrapper">
                              {{ form.first_name.as_field_group }}

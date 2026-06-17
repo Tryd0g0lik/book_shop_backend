@@ -5,7 +5,9 @@ This a content will use for how auxiliary classes for data typing.
 
 from datetime import datetime
 from typing import Optional, TypedDict, Union
+from unicodedata import category
 
+# from django.contrib.auth.models import Group
 from pydantic import BaseModel, ConfigDict
 
 from persons.interfaces.interface_emailStr import EmailString
@@ -53,7 +55,6 @@ class UsersPydantic(BaseModel):
     is_staff: Optional[bool]
     is_active: Optional[bool]
     date_joined: Optional[datetime]
-    category: Optional[str]
     password: Optional[str]
     is_sent: Optional[bool]
     is_verified: Optional[bool]
@@ -64,6 +65,7 @@ class UsersPydantic(BaseModel):
 
     def to_dict_without_secret_data(self) -> dict:
         """We are excepts the password/ verification_code field from dict"""
+
         data_dict: dict = self.model_dump(
             exclude={
                 "password",
@@ -74,6 +76,14 @@ class UsersPydantic(BaseModel):
                 "date_joined",
             }
         )
+        category = self.get_category()
+
+        data_dict.__setitem__("category", category if category is not None else None)
+
+        if self.last_login is not None:
+            data_dict.__setitem__(
+                "last_login", self.last_login.strftime("%m-%d-%Y_%H:%M:%S")
+            )
         if self.last_login is not None:
             data_dict.__setitem__(
                 "last_login", self.last_login.strftime("%m-%d-%Y_%H:%M:%S")
@@ -103,28 +113,23 @@ class UsersPydantic(BaseModel):
                 "first_name",
                 "last_name",
                 "balance",
+                "category",
+                "is_superuser",
+                "is_staff",
+                "is_active",
+                "is_sent",
+                "is_verified",
             }
         )
+        category = self.get_category()
+
+        data_dict.__setitem__("category", category if category is not None else None)
+
         if self.last_login is not None:
             data_dict.__setitem__(
                 "last_login", self.last_login.strftime("%m-%d-%Y_%H:%M:%S")
             )
         return data_dict
-
-    # class UsersPydantic(BaseModel):
-    #     is_superuser: bool
-    #     username: str
-    #     first_name: str
-    #     last_name: str
-    #     email: str
-    #     is_staff: bool
-    #     is_active: bool
-    #     category: str
-    #     password: str
-    #     is_sent: bool
-    #     is_verified: bool
-    #     verification_code: Optional[str]
-    #     balance: float
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -148,3 +153,17 @@ class UsersPydantic(BaseModel):
     ) -> None:
         """Send an email to this user."""
         pass
+
+    def get_category(self) -> Optional[str]:
+        # from persons.models import Users
+        from django.contrib.auth import get_user_model
+
+        Users = get_user_model()
+        if self.id:
+            queryset = Users.objects.filter(id=self.id)
+            user = queryset.first() if queryset.count() > 0 else None
+            if user:
+                group_names = user.groups.values_list("name", flat=True)
+                group_names_str = ",".join(group_names)
+                return group_names_str
+        return None

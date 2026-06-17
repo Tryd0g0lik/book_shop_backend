@@ -59,7 +59,6 @@ async def cache_user_data(*args, **kwargs) -> bool:
                 key=str(k),
                 ttl=300,
                 default=kwargs,
-                # default=json.dumps(kwargs, ensure_ascii=False).encode("utf-8"),
             )
         )
         try:
@@ -122,7 +121,7 @@ def task_of_cache(self, *args, **kwargs) -> None:
     log_t = "[task_of_cache]:"
 
     try:
-
+        log.info(log_t + f" DEBUG Defsult 0: {kwargs}")
         custom_loop = CustomizationSyncAsyncLoop(*args, **kwargs)
         custom_loop.get_new_function = cache_user_data
         custom_loop.is_async = True

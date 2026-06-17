@@ -64,6 +64,9 @@ class PersonServiceDatabaseAdapter:
         user_email: Optional[str] = None,
     ) -> dict: ...
 
+    @staticmethod
+    def save(user_dict: dict) -> list[UsersPydantic]: ...
+
 
 class PostmanAdapter(Protocol):
     lock: ClassVar[Optional[asyncio.Lock]]

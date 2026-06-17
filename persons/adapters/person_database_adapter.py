@@ -10,7 +10,6 @@ from typing import Optional, TypeAlias, TypedDict, Union
 
 from django.contrib.auth.hashers import PBKDF2PasswordHasher
 from django.db.models import Q, QuerySet
-from kombu.transport.sqlalchemy.models import Queue
 
 from persons.exceptions import PersonErrorImproperlyConfigured
 from persons.interfaces import UsersPydantic
@@ -153,10 +152,10 @@ class PersonServiceDatabaseAdapter:
         Save data users by email
         Creates new user or updating an exists data.
         Cache does not use, here it works directly with database.
+        :param dict user_dict: Example '{"id": < USER_ID >, .... }'
+        :return  list[UsersPydantic]: [...view]
         """
         from persons.models import Users
-
-
 
         user: Optional[Users] = None
         id_: Optional[int] = user_dict.get("id", None)
@@ -374,8 +373,11 @@ class PersonServiceDatabaseAdapter:
 
         return: User's dict without secret data. THis is without: password and code varification.
         """
+        from django.contrib.auth.models import Group
+
         from persons.models import Users
 
+        is_category = False
         if not user_data or (user_id is None and user_email is None):
             raise PersonErrorImproperlyConfigured(
                 f"{PersonServiceDatabaseAdapter.log_t[:-1]}\
@@ -410,6 +412,7 @@ class PersonServiceDatabaseAdapter:
                 "id",
                 "created_at",
                 "date_joined",
+                "category",
                 "password",
             ]
             is_password = PersonServiceDatabaseAdapter.is_password(user_data)
@@ -427,11 +430,23 @@ class PersonServiceDatabaseAdapter:
                 for k, _ in user_data.items()
                 if k not in forbidden_fields
             }
+            # ---- CATEGORY
+            if "category" in user_data:
+
+                query_object_first.groups.clear()
+                category_str: str = user_data.get("category")
+
+                for item in list(category_str.split(", ")):
+                    group = Group.objects.filter(name=item.title())
+                    if group.exists():
+                        u = group.first()
+                        query_object_first.groups.add(u.id)
+            # ----
 
             for k, v in update_dict.items():
                 setattr(query_object_first, k, v)
                 query_object_first.save()
-
+            # ---- PASSWORD
             if is_password:
                 log.info(
                     f"""{PersonServiceDatabaseAdapter.log_t[:-1]}[{PersonServiceDatabaseAdapter.update_in_database.__name__}]:
@@ -441,12 +456,14 @@ class PersonServiceDatabaseAdapter:
                 # ============================================"""
                 )
 
-                old_password = user_data.get("old_password")
+                # old_password = user_data.get("old_password")
                 new_password = user_data.get("new_password")
-                kwargs = {"user_id": query_object_first.id}
-                PersonServiceDatabaseAdapter.change_password(
-                    old_password, new_password, **kwargs
-                )
+                # kwargs = {"user_id": query_object_first.id}
+                query_object_first.set_password(new_password)
+                query_object_first.save()
+                # PersonServiceDatabaseAdapter.change_password(
+                #     old_password, new_password, **kwargs
+                # )
                 log.info(
                     f"""{PersonServiceDatabaseAdapter.log_t[:-1]}\
                 [{PersonServiceDatabaseAdapter.update_in_database.__name__}]: Password's events is all successful!"""

@@ -23,7 +23,7 @@ class TestResaveCacheAfterSentLetter:
         sub_person = SubPerson()
         cachemanager = sub_person.cachemanager
         await sub_person.cachemanager.asynccacher.related()
-        k1 =re.sub(r'[@.]+', repl="", string=f"user:pending:{new_users_registration["email"]}", flags=re.ASCII)
+        k1 =re.sub(r'[@.]+', repl="", string=f"user:pending:zero:{new_users_registration["email"]}", flags=re.ASCII)
         k2 = re.sub(r'[@.]+', repl="", string=f"user:pending:letter:{new_users_registration["email"]}", flags=re.ASCII)
         assert k1.count(":") == 2
         assert k2.count(":") == 3

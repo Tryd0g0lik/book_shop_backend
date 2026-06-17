@@ -10,13 +10,13 @@ import re
 import time
 from typing import Any, Mapping, Optional, Union
 
+from allauth.account.models import EmailAddress, EmailConfirmation
 from celery import shared_task
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 
 from persons import EnumEmailLetter, EnumTemplatesKeysCache, EnuSubjectOfLetter
 from persons.exceptions import PersonErrorTasks
-from persons.models import Users
 from project.settings_conf.settings_env import APP_DEFAULT_FROM_EMAIL
 
 log = logging.getLogger(__name__)
@@ -82,7 +82,7 @@ async def child_process_get_keys_0(
 
             for key in keys:
                 key = key.decode("utf-8")
-                if key.count(":") != 2:
+                if ":letter:" in key:
                     continue
                 log.info(
                     log_t[:-1]
@@ -138,7 +138,9 @@ async def child_process_get_keys_0(
                         % k.split(":")[-1]
                     )
                     user_data_json = json.loads((data_list[0]).decode("utf-8"))
-
+                    if "verification_code" in user_data_json:
+                        data_list.clear()
+                        continue
                     data_list.clear()
                     log.info(lt + " User dada Re-saved user_data_json key !")
                     # Re-save
@@ -146,8 +148,6 @@ async def child_process_get_keys_0(
                         key=key, default=user_data_json, ttl=86400
                     )
                     log.info(lt + " User dada Re-saved successfully from old key !")
-                    assert type(response_bool) in (bool,)
-                    assert response_bool in (True,)
                     return response_bool
 
                 except Exception as e:
@@ -218,8 +218,13 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
     :return:
     """
     log_t = f"[task {send_letter_to_user_email.__name__}]:"
+    from datetime import datetime
 
-    from persons.services import AccountManager
+    from django.contrib.auth import get_user_model
+
+    Users = get_user_model()
+
+    from persons.services import AccountManager, CacheManager
 
     dict_queue = queue.Queue(2000)
     list_of_keys = []
@@ -235,93 +240,141 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
         )
         async with lock:
             result_bool = await child_process_get_keys_0(
-                key_pattern=EnumTemplatesKeysCache.USER_PENDING.value % "*",
+                key_pattern=EnumTemplatesKeysCache.USER_PENDING_ZERO.value % "*",
                 queue=dict_queue,
                 log_t=log_t[:],
             )
-            qsize = dict_queue.qsize()
+        qsize = dict_queue.qsize()
 
-            if result_bool and qsize:
-                while not dict_queue.empty():
-                    byte_code = dict_queue.get_nowait()
-                    json_code = json.loads(byte_code.decode("utf-8"))
-                    list_of_keys.append(json_code)
-            account_manager = AccountManager()
-            generater = account_manager.inisialize_account()
-        log.info(
-            log_t
-            + """
-        # ============================================
-        # EVERY ONE KEY US IT NEED TO SEND THE TWO LETTER
-        # ============================================"""
-        )
-        for one_dict in list_of_keys:
-            one_email = one_dict.get("email")
+        if result_bool and qsize > 0:
+            while not dict_queue.empty():
+                byte_code = dict_queue.get_nowait()
+                list_of_keys = json.loads(byte_code.decode("utf-8"))
 
-            if one_email is not None:
-                person_queryset_filter = await asyncio.to_thread(
-                    lambda: Users.objects.filter(email=one_email)
-                )
-                log.info(
-                    "# Here we are transmitting data for mailing, Here we tell the user obout new account."
-                )
-                person_object = await asyncio.to_thread(
-                    lambda: person_queryset_filter.first()
-                )
-
-                text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value
-                sub_function_send_mail(
-                    [one_email],
-                    log_t,
-                    subject,
-                    text_context,
-                    None,
-                )
-                log.info("# The First letter is gone")
-                text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_1.value
-                generate_login_code = (
-                    generater.generate_email_verification_code()
-                )  # generate_login_code
-
-                context_ = {
-                    "user": person_object,
-                    "code": generate_login_code,
-                }
-                sub_function_send_mail(
-                    [one_email],
-                    log_t,
-                    subject,
-                    text_context,
-                    context_,
-                )
-                log.info(log_t + "# save a verification code")
-                # async with lock:
-                from persons.services import CacheManager
-
-                cachemanager = CacheManager()
-                k: str = EnumTemplatesKeysCache.USER_PENDING_LETTER.value % re.sub(
-                    r"[@.]+", "", one_email
-                )
-                collection_: list[bytes] = []
-
-                user_data_bool: Optional[bool] = await cachemanager.aget(
-                    key=k, collection=collection_, exat=1
-                )
+                # list_of_keys.append(json_code)
+                account_manager = AccountManager()
+                generater = account_manager.inisialize_account()
                 log.info(
                     log_t
-                    + f"# save a verification code\nuser_data_bool: {user_data_bool}\nlen(collection_): {len(collection_)}"
+                    + f"""
+                # ============================================
+                # EVERY ONE KEY - IT NEED TO SEND THE TWO LETTER
+                {list_of_keys}
+                # ============================================"""
                 )
-                if user_data_bool is not None and len(collection_) > 0:
-                    user_data_json: dict = json.loads((collection_[0]).decode("utf-8"))
-                    user_data_json["verification_code"] = generate_login_code
-                    log.info(
-                        log_t
-                        + f"# save a verification code user_data_json: {str(user_data_json)}"
+                for one_dict in (
+                    list_of_keys
+                    if type(list_of_keys) in (list, tuple)
+                    else [list_of_keys]
+                ):
+                    if "verification_code" in one_dict:
+                        continue
+                    one_email = one_dict.get("email")
+
+                    person_queryset_filter = await asyncio.to_thread(
+                        lambda: Users.objects.filter(email=one_email)
                     )
-                    await cachemanager.asave(key=k, default=user_data_json, ttl=86400)
-                log.info(log_t + "# The second letter is gone")
-                del result_bool, text_context, context_
-        list_of_keys.clear()
+                    log.info(
+                        "# Here we are transmitting data for mailing, Here we tell the user obout new account."
+                    )
+                    person_object: Users = await asyncio.to_thread(
+                        lambda: person_queryset_filter.first()
+                    )
+
+                    text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value
+                    async with lock:
+                        sub_function_send_mail(
+                            [one_email],
+                            log_t,
+                            subject,
+                            text_context,
+                            None,
+                        )
+                        log.info("# The First letter is gone")
+                        text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_1.value
+                        generate_login_code = (
+                            generater.generate_email_verification_code()
+                        )
+
+                        context_ = {
+                            "user": person_object,
+                            "code": generate_login_code,
+                        }
+                        sub_function_send_mail(
+                            [one_email],
+                            log_t,
+                            subject,
+                            text_context,
+                            context_,
+                        )
+
+                        log.info(log_t + "# save a verification code")
+                        # --- Allauth
+                        email_address = await asyncio.to_thread(
+                            lambda: EmailAddress.objects.get(email=one_email)
+                        )
+                        email_conf = EmailConfirmation(
+                            created=datetime.now(),
+                            sent=datetime.now(),
+                            key=generate_login_code,
+                            email_address_id=email_address.id,
+                        )
+                        await email_conf.asave()
+                        # ---
+
+                        log.info(
+                            log_t
+                            + """
+                        # ============================================
+                        # INITIAL DATA WILL BE SAVING IN CACHE
+                        # ============================================"""
+                        )
+                        cachemanager = CacheManager()
+                        k: str = (
+                            EnumTemplatesKeysCache.USER_PENDING_LETTER.value
+                            % re.sub(r"[@.]+", "", one_email)
+                        )
+                        collection_: list[bytes] = []
+                        # ---
+                        await cachemanager.aget(key=k, collection=collection_, exat=1)
+                        await cachemanager.asynccacher.close()
+
+                        # ---
+                        for one_dict in collection_:
+                            user_data_json: dict = json.loads(
+                                (one_dict).decode("utf-8")
+                            )
+
+                            user_data_json["verification_code"] = generate_login_code
+                            log.info(
+                                log_t
+                                + f"# save a verification code user_data_json: {str(user_data_json)}"
+                            )
+                            await cachemanager.asave(
+                                key=k, default=user_data_json, ttl=86400
+                            )
+                            await cachemanager.asynccacher.close()
+                        # ---
+                        log.info(
+                            log_t
+                            + """
+                        # ============================================
+                        # SAME DATA WILL BE SAVING IN DATABASE
+                        # ============================================"""
+                        )
+                        person_object.is_sent = True
+                        person_object.updated_at = datetime.now()
+                        await asyncio.to_thread(
+                            lambda: person_object.save(
+                                update_fields=["is_sent", "updated_at"]
+                            )
+                        )
+                        # ---
+
+                        log.info(log_t + "# The second letter is gone")
+
+                        # ---
+                        del result_bool, text_context, context_
     except queue.Full:
 
         raise
@@ -357,6 +410,7 @@ def task_postman(self, *args, **kwargs) -> None:
 
     log_t = "[task_postman]:"
     try:
+        log.info(log_t + " start.")
         custom_loop = CustomizationSyncAsyncLoop(*args, **kwargs)
         custom_loop.get_new_function = send_letter_to_user_email
         wrapper = custom_loop.get_new_loop()
