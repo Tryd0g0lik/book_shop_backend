@@ -69,7 +69,7 @@ class Users(AbstractUser):
         ],
     )
 
-    category = models.CharField(default="BASE", choices=CATEGORY_STATUS, max_length=50)
+    # category = models.CharField(default="BASE", choices=CATEGORY_STATUS, max_length=50)
     password = models.CharField(
         _("password"),
         max_length=APP_MAX_PASSWORD_LENGTH,

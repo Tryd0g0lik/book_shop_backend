@@ -102,7 +102,9 @@ class CustomizationSyncAsyncLoop:
                 # ============================================
                 def async_wrapper():
                     log.info(
-                        f"Start ASYNC writing to the cache server kwargs: {kwargs}"
+                        self.log_t[:-1]
+                        + "[async_wrapper]:"
+                        + f"Start ASYNC writing to the cache server kwargs: {kwargs}"
                     )
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
@@ -111,13 +113,19 @@ class CustomizationSyncAsyncLoop:
                         return loop.run_until_complete(callback(*args, **kwargs))
                     except Exception as e:
                         log.error(
-                            "Writing ASYNC to the cache server failed! TEXT_ERROR: %s"
+                            self.log_t[:-1]
+                            + "[async_wrapper]:"
+                            + "Writing ASYNC to the cache server failed! TEXT_ERROR: %s"
                             % e.args[0]
                             if e.args
                             else str(e)
                         )
                     finally:
-                        log.info("Finish ASYNC writing to the cache server,")
+                        log.info(
+                            self.log_t[:-1]
+                            + "[async_wrapper]:"
+                            + "Finish ASYNC writing to the cache server,"
+                        )
                         loop.close()
 
                 return async_wrapper

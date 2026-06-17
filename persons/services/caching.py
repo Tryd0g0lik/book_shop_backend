@@ -43,7 +43,9 @@ class CacheManager:
         if is_connected is not None or not is_connected:
             await self.asynccacher.related()
         log.info(
-            """\n
+            self.log_t[:-1]
+            + "[asave]:"
+            + """\n
 # ============================================
 # CACHE SERVER ASAVE
 # ============================================
@@ -51,7 +53,9 @@ class CacheManager:
             """
         )
         log.info(
-            """\n
+            self.log_t[:-1]
+            + "[asave]:"
+            + """\n
         # Here we make caching of data.
         # ============================================
         # SAVING DATA ON THE CACHE SERVER
@@ -64,7 +68,9 @@ class CacheManager:
                 log.info(self.log_t[:-1] + "[asave]:" + " Before caching the new data")
                 existing = await conn.getex(key, ttl)
                 log.info(
-                    """\n
+                    self.log_t[:-1]
+                    + "[asave]:"
+                    + """\n
                 # ============================================
                 # WE MAKE A
                 # ============================================

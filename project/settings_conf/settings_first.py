@@ -190,6 +190,7 @@ CACHES = {
         "LOCATION": f"{REDIS_URL}",
     }
 }
+WAGTAILFRONTENDCACHE = {**CACHES}
 # ============================================
 # PASSWORD VALIDATION
 # ============================================

@@ -41,7 +41,7 @@ class EnumTemplatesKeysCache(Enum):
 
     """
 
-    USER_PENDING = "user:pending:%s"
+    USER_PENDING_ZERO = "user:pending:zero:%s"
     USER_PENDING_LETTER = "user:pending:letter:%s"
     USER_PENDING_LOGIN = "user:pending:login"
 
@@ -56,8 +56,7 @@ class EnumTemplatesREGEX(Enum):
     PERSON_KEYS_OF_CACHE_IN_REGEX = re.compile(
         r"""^(
             (?P<name_expanded>user:pending:(login|letter_1):[a-zA-Z0-9_]{1,24}[a-zA-Z0-9])|
-            (?P<name>user:pending:[a-zA-Z0-9_]{1,24}[a-zA-Z0-9])|
-            (?P<name_all>user:pending:\*)
+            (?P<name>user:pending:(zero|letter):[a-zA-Z0-9_]{1,24}[a-zA-Z0-9])
             )$""",
         re.VERBOSE | re.I,
     )

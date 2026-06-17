@@ -7,10 +7,12 @@ import datetime
 import json
 import logging
 import re
+from threading import Thread
 from typing import Optional
 
 from allauth.account.views import SignupView as AllauthSignupView
 from django.contrib import messages
+from django.contrib.auth.models import Group
 from django.db.models import Q
 from django.http import HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render, reverse
@@ -248,18 +250,20 @@ class UsersRegistrationView(AllauthSignupView):
 
         username: str = form.cleaned_data.get("username")
         email: str = form.cleaned_data.get("email")
-        database_service = account_manager.postman.database_service
         role: str = form.cleaned_data.get("category")
         try:
             super().form_valid(form)
             user = Users.objects.get(email=email)
-            password_hashed = database_service.hashes_password(
-                form.cleaned_data.get("password1")
-            )
-            setattr(user, "password", password_hashed)
+            user.set_password(form.cleaned_data.get("password1"))
+            user.save()
             # Note: Below the 'category' we will be caching.
             # User will get own role/category when pass a verification.
-            setattr(user, "category", list(CATEGORY_STATUS[0])[0])
+            group, created = Group.objects.get_or_create(
+                name=list(CATEGORY_STATUS[0])[1]
+            )
+            user.groups.add(group)
+            user.save()
+
             queryset = Users.objects.filter(is_superuser=False, is_staff=True)
             # We can have a (count):
             # - Superadmin before 1;
@@ -294,7 +298,6 @@ class UsersRegistrationView(AllauthSignupView):
             user.save(
                 update_fields=[
                     "password",
-                    "category",
                     "updated_at",
                     "is_superuser",
                     "is_staff",
@@ -308,7 +311,9 @@ class UsersRegistrationView(AllauthSignupView):
         ):
             setattr(form, "username", email.split("@")[0])
 
-        args = (EnumTemplatesKeysCache.USER_PENDING.value % re.sub(r"[@.]", "", email),)
+        args = (
+            EnumTemplatesKeysCache.USER_PENDING_ZERO.value % re.sub(r"[@.]", "", email),
+        )
         # args = (email,)
         # ------------------------------------
         kwargs = {"category": role, "email": email}
@@ -382,7 +387,7 @@ class UsersVerificationDuringRegistration(View):
                                 category: str = result["category"]
                                 admin_ = list(CATEGORY_STATUS[1])[0]
                                 manager_ = list(CATEGORY_STATUS[2])[0]
-                                url = "person:login"
+                                url = "persons:login"
                                 if (
                                     category.lower() == admin_.lower()
                                     or category.lower() == manager_.lower()
