@@ -98,7 +98,7 @@ INSTALLED_APPS = [
     # My moduls
     "persons",
     "cart",
-    "catalog",
+    "catalog.apps.CatalogConfig",
     "content_pages",
     "profiles",
 ]

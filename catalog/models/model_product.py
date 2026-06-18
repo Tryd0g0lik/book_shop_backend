@@ -13,9 +13,8 @@ from django.core.validators import (
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from wagtail.fields import RichTextField
-from wagtail.images.models import Image
 
-from catalog.models.model_abstract import AbstractModel
+from .model_abstract import AbstractModel
 
 # from wagtail.images.image_operations import
 
@@ -31,6 +30,7 @@ class ProductModel(AbstractModel):
         ],
         unique=True,
         help_text=_("The name of the product"),
+        db_index=True,
     )
     describe_preview = RichTextField(
         null=True,
@@ -55,6 +55,7 @@ class ProductModel(AbstractModel):
         null=True,
         on_delete=models.SET_NULL,
         help_text=_("The category of the product"),
+        db_index=True,
     )
     brand = models.ForeignKey(
         "BrandModel",
@@ -69,7 +70,7 @@ class ProductModel(AbstractModel):
         validators=[
             MinValueValidator(Decimal("0.00")),
             MaxValueValidator(Decimal("99999999.99")),
-            DecimalValidator(),
+            DecimalValidator(max_digits=10, decimal_places=2),
         ],
         help_text=_("The price of the product"),
     )
@@ -80,15 +81,37 @@ class ProductModel(AbstractModel):
         validators=[
             MinValueValidator(Decimal("0.00")),
             MaxValueValidator(Decimal("99.99")),
-            DecimalValidator(),
+            DecimalValidator(max_digits=4, decimal_places=2),
         ],
         help_text=_("The discount percentage of the product"),
     )
     stock_quantity = models.IntegerField(
-        default=0, help_text=_("The quantity of the product")
+        default=0,
+        help_text=_("The quantity of the product"),
+        db_index=True,
+    )
+    attributes = models.ForeignKey(
+        "ProductCharacteristics",
+        help_text=_("Commons characteristics of the ont product."),
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        verbose_name="+",
+    )
+    attributes_additional = models.JSONField(
+        default=dict,
+        blank=True,
+        null=True,
+        db_comment=_("Additional characteristics of the one product."),
+        help_text=_("Uniquer (for product) characteristics of the one product."),
     )
 
     panels = ["__all__"]
+
+    class Meta:
+        verbose_name = _("Product")
+        db_table = "product_model"
+        unique_together = (("name", "category"),)
 
     def clean_descriptions(self):
         if self.description is not None:
