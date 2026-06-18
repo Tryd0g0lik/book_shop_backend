@@ -1,3 +1,5 @@
+# catalog/models/model_product.py:20
+# Model of Product
 from decimal import Decimal
 
 from django.core.validators import (
@@ -9,9 +11,7 @@ from django.core.validators import (
     RegexValidator,
 )
 from django.db import models
-from django.db.models import TextField
 from django.utils.translation import gettext_lazy as _
-from wagtail.admin.panels import FieldPanel
 from wagtail.fields import RichTextField
 from wagtail.images.models import Image
 
@@ -87,8 +87,8 @@ class ProductModel(AbstractModel):
     stock_quantity = models.IntegerField(
         default=0, help_text=_("The quantity of the product")
     )
-    # imges = models.JSONField(default=list, help_text=_("The images of the product"))
-    images = ImageChooserPanel
+
+    panels = ["__all__"]
 
     def clean_descriptions(self):
         if self.description is not None:
