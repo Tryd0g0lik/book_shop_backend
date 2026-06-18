@@ -2,6 +2,7 @@
 # Model of Product
 from decimal import Decimal
 
+from allauth.account.models import EmailAddress
 from django.core.validators import (
     DecimalValidator,
     MaxLengthValidator,

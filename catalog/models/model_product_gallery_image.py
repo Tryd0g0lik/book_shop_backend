@@ -3,7 +3,6 @@
 # from allauth.account.models import EmailAddress
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from wagtail.images.models import Image
 
 from catalog.models.model_abstract import AbstractModel
 
@@ -26,20 +25,6 @@ class ProductGalleryImageModel(AbstractModel):
         blank=True, max_length=250, null=True, help_text=_("The caption of the image")
     )
 
-    # created_by = models.ForeignKey(
-    #     EmailAddress,
-    #     on_delete=models.SET_NULL,
-    #     help_text=_("THe user who created the position"),
-    #     null=True,
-    #     blank=True,
-    # )
-    # updated_by = models.ForeignKey(
-    #     EmailAddress,
-    #     on_delete=models.SET_NULL,
-    #     help_text=_("The user who last updated the position"),
-    #     null=True,
-    #     blank=True,
-    # )
     # panels = [Image("image"), "product", "caption"]
 
     class Meta:

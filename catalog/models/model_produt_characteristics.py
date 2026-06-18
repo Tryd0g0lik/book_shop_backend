@@ -1,4 +1,5 @@
 # catalog/models/model_produt_characteristics.py:1
+
 from django.core.validators import (
     MaxLengthValidator,
     MinLengthValidator,

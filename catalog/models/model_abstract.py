@@ -1,6 +1,7 @@
 # catalog/models/model_bstract.py:1
 from datetime import datetime
 
+from allauth.account.models import EmailAddress
 from django.core.validators import (
     MaxLengthValidator,
     MinLengthValidator,
@@ -9,6 +10,8 @@ from django.core.validators import (
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from project.settings_conf.settings_first import DATETIME_FORMAT
+
 
 class AbstractModel(models.Model):
     created_at = models.DateTimeField(
@@ -16,6 +19,22 @@ class AbstractModel(models.Model):
     )
     updated_at = models.DateTimeField(
         auto_now=True, help_text=_("The last update date")
+    )
+    created_by = models.ForeignKey(
+        EmailAddress,
+        on_delete=models.SET_NULL,
+        help_text=_("THe user who created the position"),
+        null=True,
+        blank=True,
+        related_name="%(app_label)s_%(class)s_product_characteristics_created",
+    )
+    updated_by = models.ForeignKey(
+        EmailAddress,
+        on_delete=models.SET_NULL,
+        help_text=_("The user who last updated the position"),
+        null=True,
+        blank=True,
+        related_name="%(app_label)s_%(class)s_product_characteristics_updated",
     )
 
     class Meta:
