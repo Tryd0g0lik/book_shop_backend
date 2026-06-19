@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% load wagtailcore_tags %}
+
+{% block body_class %}My template Category page  {% endblock body_class %}
+{% block content %}
+<div class="container">Category page - {{ page.name }}</div>
+
+<p class="meta">Created_at: {{ page.created_at}} Updated_at: {{ page.updated_at }}</p>
+<div class="container">
+    <p>Name: {{ page.name }}</p>
+    <div class="descriptions">{{page.descriptions}}</div>
+</div>
+
+{% endblock content %}

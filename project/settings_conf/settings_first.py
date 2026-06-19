@@ -160,6 +160,7 @@ TEMPLATES = [
         "DIRS": [
             os.path.join(BASE_DIR, "persons/templates"),
             os.path.join(BASE_DIR, "templates"),
+            os.path.join(BASE_DIR, "catalog/templates"),
         ],
         "APP_DIRS": True,
         "OPTIONS": {
@@ -168,6 +169,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "wagtail.contrib.settings.context_processors.settings",
             ],
         },
     },

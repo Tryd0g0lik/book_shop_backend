@@ -27,7 +27,6 @@ class ProductModel(AbstractModel):
         validators=[
             MinLengthValidator(3),
             MaxLengthValidator(80),
-            RegexValidator(r"[\w., \-_]{3:100}"),
         ],
         unique=True,
         help_text=_("The name of the product"),
@@ -37,7 +36,9 @@ class ProductModel(AbstractModel):
         null=True,
         blank=True,
         help_text=_("The preview description of the product"),
-        validators=[MaxLengthValidator(150), RegexValidator(r"[\w., \-_]{0:150}")],
+        validators=[
+            MaxLengthValidator(150),
+        ],
         features=["bold", "italic", "link"],
     )
 
@@ -47,7 +48,6 @@ class ProductModel(AbstractModel):
         help_text=_("The description of the product"),
         validators=[
             MaxLengthValidator(1000),
-            RegexValidator(r"[\w., \-_]{0:150}"),
         ],
         features=["bold", "italic", "link", "ol", "ul", "image", "embed"],
     )
@@ -106,36 +106,50 @@ class ProductModel(AbstractModel):
         db_comment=_("Additional characteristics of the one product."),
         help_text=_("Uniquer (for product) characteristics of the one product."),
     )
-
-    panels = ["__all__"]
+    panels = [
+        "name",
+        "describe_preview",
+        "description",
+        "category",
+        "brand",
+        "price",
+        "stock_quantity",
+        "discount_percent",
+        "attributes ",
+        "attributes_additional ",
+        "created_at",
+    ]
 
     class Meta:
         verbose_name = _("Product")
         db_table = "product_model"
         unique_together = (("name", "category"),)
 
-    def clean_descriptions(self):
-        if self.description is not None:
-            if len(self.description) > 0 and (
-                self.describe_preview is None or len(self.describe_preview) == 0
-            ):
-                max_length = self.describe_preview.max_length
-                self.describe_preview = self.description[: max_length - 4]
+    def __str__(self):
+        return f"{self.name} - {self.created_at}"
 
-                self.describe_preview = (
-                    self.describe_preview[: max_length - 4] + " ..."
-                    if len(self.describe_preview) == max_length
-                    else self.describe_preview
-                )
+    # def clean_descriptions(self):
+    #     if self.description is not None:
+    #         if self.description > 0 and (
+    #             self.describe_preview is None or self.describe_preview == 0
+    #         ):
+    #             max_length = self.describe_preview
+    #             self.describe_preview = self.description[: max_length - 4]
+    #
+    #             self.describe_preview = (
+    #                 self.describe_preview[: max_length - 4] + " ..."
+    #                 if len(self.describe_preview) == max_length
+    #                 else self.describe_preview
+    #             )
 
     def clean_price(self):
         if self.price is None or self.price < 0:
             self.price = 0
 
-    def clean_discount(self):
-        if (
-            (self.discount_percent is None or int(self.discount_percent) < 0)
-            if type(self.discount_percent) in (str,)
-            else self.discount_percent < 0
-        ):
-            self.discount_percent = 0
+    # def clean_discount(self):
+    #     if (
+    #         (self.discount_percent is None or int(self.discount_percent) < 0)
+    #         if type(self.discount_percent) in (str,)
+    #         else self.discount_percent < 0
+    #     ):
+    #         self.discount_percent = 0

@@ -9,6 +9,7 @@ from django.core.validators import (
 )
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from wagtail.admin.panels import FieldPanel
 
 from project.settings_conf.settings_first import DATETIME_FORMAT
 
@@ -35,6 +36,9 @@ class AbstractModel(models.Model):
         null=True,
         blank=True,
         related_name="%(app_label)s_%(class)s_product_characteristics_updated",
+    )
+    is_active = models.BooleanField(
+        default=False, help_text=_("Designates whether this item is used or not")
     )
 
     class Meta:
