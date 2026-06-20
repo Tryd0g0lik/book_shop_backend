@@ -1,4 +1,5 @@
 # catalog/admin/admin_product_group/admin_category.py:1
+from django.utils.translation import gettext_lazy as _
 from wagtail.admin.panels import FieldPanel
 from wagtail_modeladmin.options import ModelAdmin
 
@@ -15,7 +16,7 @@ class CategoryAdmin(ModelAdmin):
     list_filter = ["created_at"]
     icon = "tag"
     add_to_admin_menu = True
-    menu_label = "Categories"
+    menu_label = _("Categories")
     menu_order = 300
 
     panels = {

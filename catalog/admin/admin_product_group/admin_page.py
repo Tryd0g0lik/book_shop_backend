@@ -1,4 +1,5 @@
 # catalog/admin/admin_product_group/admin_page.py:1
+from django.utils.translation import gettext_lazy as _
 from wagtail.admin.panels import FieldPanel, FieldRowPanel, MultiFieldPanel
 
 # from wagtail.snippets.models import register_snippet
@@ -13,7 +14,7 @@ class PageAdmin(ModelAdmin):
     icon = "title"
     menu_icon = "title"
     menu_order = 100
-    menu_label = "Page"
+    menu_label = _("Page")
     list_display = [
         "is_active",
         "name",

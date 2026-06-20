@@ -1,10 +1,11 @@
 # catalog/admin/admin_product_group/admmin_product_gallery_Image.py:1
 from django.forms import ChoiceField, Select, SelectMultiple
+from django.utils.translation import gettext_lazy as _
 from wagtail.admin.panels import FieldPanel, FieldRowPanel, MultiFieldPanel
 
 # from wagtail.images.blocks import ImageChooserBlock
-from wagtail.snippets.models import register_snippet
-from wagtail.snippets.views.snippets import SnippetViewSet
+# from wagtail.snippets.models import register_snippet
+# from wagtail.snippets.views.snippets import SnippetViewSet
 from wagtail_modeladmin.options import ModelAdmin
 
 from catalog.models import ProductGalleryImageModel
@@ -26,7 +27,7 @@ class ProductGalleryImageAdmin(ModelAdmin):
     menu_order = 400
     icon = "product"
     menu_icon = "product"
-    menu_label = "Product Image Page"
+    menu_label = _("Product Image Page")
 
     list_display = [
         "is_active",
@@ -69,6 +70,7 @@ class ProductGalleryImageAdmin(ModelAdmin):
                         ),
                     ]
                 ),
+                FieldPanel("product_characteristic", widget=SelectMultiple),
                 FieldRowPanel(
                     [
                         FieldPanel("created_at", read_only=True),

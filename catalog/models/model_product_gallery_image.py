@@ -55,8 +55,14 @@ class ProductGalleryImageModel(AbstractModel):
         limit_choices_to={"is_active": True},
         related_query_name="product_related",
     )
+
     caption = models.CharField(
         blank=True, max_length=250, null=True, help_text=_("The caption of the image")
+    )
+    product_characteristic = models.ManyToManyField(
+        "ProductCharacteristics",
+        related_name="+",
+        related_query_name="product_characteristics_related",
     )
     version = models.IntegerField(
         default=0,

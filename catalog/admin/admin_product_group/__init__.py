@@ -6,6 +6,7 @@ __all__ = (
     "CategoryAdmin",
     "BrandAdmin",
     "ProductGalleryImageAdmin",
+    "ProductCharacteristicsAdmin",
 )
 
 from catalog.admin.admin_product_group.admin_brand import BrandAdmin
@@ -14,6 +15,9 @@ from catalog.admin.admin_product_group.admin_category import CategoryAdmin
 # Product Group
 from catalog.admin.admin_product_group.admin_page import PageAdmin
 from catalog.admin.admin_product_group.admin_product import ProductAdmin
+from catalog.admin.admin_product_group.admin_product_characteristics import (
+    ProductCharacteristicsAdmin,
+)
 from catalog.admin.admin_product_group.admmin_product_gallery_Image import (
     ProductGalleryImageAdmin,
 )
@@ -31,6 +35,7 @@ class ProductGroup(ModelAdminGroup):
         PageAdmin,
         BrandAdmin,
         CategoryAdmin,
+        ProductCharacteristicsAdmin,
         ProductGalleryImageAdmin,
     )
 

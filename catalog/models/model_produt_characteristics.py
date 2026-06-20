@@ -22,7 +22,6 @@ class ProductCharacteristics(AbstractCategoryPage):
     id = models.AutoField(primary_key=True)
     name = models.CharField(
         max_length=80,
-        unique=True,
         validators=[
             MinLengthValidator(3),
             MaxLengthValidator(80),
@@ -38,5 +37,9 @@ class ProductCharacteristics(AbstractCategoryPage):
     class Meta:
         db_table = "product_characteristics"
         verbose_name_plural = "Product Characteristics"
+        unique_together = (("name", "value"),)
         ordering = ["name"]
         verbose_name = "Product Characteristic"
+
+    def __str__(self):
+        return f"{self.name} - {self.value}"

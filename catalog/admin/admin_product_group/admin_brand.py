@@ -1,6 +1,7 @@
 # catalog/admin/admin_pages/admin_test_pages.py:4
-from wagtail.snippets.models import register_snippet
-from wagtail.snippets.views.snippets import SnippetViewSet
+# from wagtail.snippets.models import register_snippet
+# from wagtail.snippets.views.snippets import SnippetViewSet
+from django.utils.translation import gettext_lazy as _
 from wagtail_modeladmin.options import ModelAdmin, modeladmin_register
 
 from catalog.models import BrandModel
@@ -8,11 +9,11 @@ from catalog.models import BrandModel
 
 class BrandAdmin(ModelAdmin):
     model = BrandModel
-    menu_label = "Brands"
+    menu_label = _("Brand")
     menu_icon = "tag"
     menu_order = 300
-    add_to_settings_menu = False
-    exclude_from_explorer = False
+    add_to_settings_menu = True
+    exclude_from_explorer = True
 
     list_display = ["name", "description", "created_at"]
     list_filter = ["created_at"]
