@@ -103,7 +103,7 @@ to user's email. User indicates his email at the registrations moment."
     updated_at = models.DateTimeField(_("updated_at"), auto_now=True)
 
     def __str__(self):
-        return "User: %s Regisrated was: %s" % (self.username, self.created_at)
+        return "User: %s Registered was: %s" % (self.username, self.created_at)
 
     class Meta(AbstractUser.Meta):
         db_table = "person"

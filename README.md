@@ -1069,3 +1069,200 @@ CREATE TABLE review_moderation (
                             status=500,
                         )
 ```
+# Каталог
+
+<details closed>
+<summary>Первичная логика формирования DB каталога</summary>
+
+Структура данных товара — это сложная иерархическая модель, которая обычно делится на три основные группы: **публичные**, **административные** и **аналитические**. Вот полная классификация:
+
+---
+
+## 📦 **1. Публичные данные (доступны пользователю)**
+
+| Группа | Поля | Описание |
+|--------|------|----------|
+| **Идентификация** | `SKU`, `Vendor Code` | Уникальный артикул товара в системе и поставщика |
+| **Основная информация** | `name`, `slug`, `description` | Название, URL-адрес и подробное описание |
+| **Категоризация** | `category`, `brand`, `tags` | Категория, бренд, теги для поиска и фильтрации |
+| **Медиа** | `images`, `videos`, `3d-model` | Основное изображение, галерея, видеообзоры |
+| **Цена и скидки** | `price`, `old_price`, `discount` | Текущая цена, старая цена, процент скидки |
+| **Характеристики** | `attributes` (JSON) | Хранит все технические параметры (вес, размер, цвет, материал) |
+| **Отзывы** | `rating`, `reviews_count` | Рейтинг и количество отзывов |
+| **Наличие** | `stock_quantity` | Количество товара на складе (если доступно для просмотра) |
+
+---
+
+## 🛠️ **2. Административные данные (НЕ доступны пользователю)**
+
+Эти данные нужны для внутренней работы и управления.
+
+### **2.1. Техническая информация**
+| Поля                       | Описание                                              |
+|----------------------------|-------------------------------------------------------|
+| `created_at`, `updated_at` | Дата создания и последнего обновления карточки товара |
+| `created_by`, `updated_by` | Кто создал или изменил товар (ID пользователя)        |
+| `version`                  | Номер версии товара (для отслеживания изменений)      |
+| `is_active`                | Статус публикации (опубликован/черновик/архив)        |
+| ~~`is_deleted`~~           | ~~Мягкое удаление (soft delete)~~                     |
+| `published_at`             | Дата публикации (если отличается от даты создания)    |
+
+### **2.2. Управление складом и ценами**
+| Поля | Описание |
+|------|----------|
+| `cost_price` | Закупочная цена (себестоимость) |
+| `wholesale_price` | Оптовая цена |
+| `min_stock_level` | Минимальный остаток для заказа |
+| `max_stock_level` | Максимальный остаток |
+| `supplier_id` | ID поставщика |
+| `supplier_sku` | Артикул поставщика |
+| `warehouse_location` | Местоположение на складе (стеллаж, ячейка) |
+| `reserved_quantity` | Зарезервированный товар (для отложенных заказов) |
+
+### **2.3. Маркетинг и SEO**
+| Поля | Описание |
+|------|----------|
+| `meta_title`, `meta_description`, `meta_keywords` | SEO-теги для поисковых систем |
+| `seo_score` | Оценка SEO-оптимизации |
+| `promotion_status` | Участие в акциях и промо-кампаниях |
+| `views_count` | Количество просмотров карточки товара |
+| `sales_count` | Количество продаж за всё время |
+| `conversion_rate` | Конверсия из просмотра в покупку |
+
+### **2.4. Модерация и безопасность**
+| Поля | Описание |
+|------|----------|
+| `moderation_status` | Статус модерации (ожидает, одобрено, отклонено) |
+| `moderation_comment` | Комментарий модератора |
+| `blocked` | Заблокирован ли товар |
+| `blocked_reason` | Причина блокировки |
+| `flagged_by_users` | Количество жалоб на товар |
+
+---
+
+## 📊 **3. Аналитические данные (для отчётов и прогнозов)**
+
+Эти данные используются для внутренней аналитики и не показываются пользователям.
+
+| Поля | Описание |
+|------|----------|
+| `profit_margin` | Маржинальность (разница между ценой продажи и себестоимостью) |
+| `turnover_rate` | Оборачиваемость товара |
+| `return_rate` | Процент возвратов |
+| `average_rating` | Средний рейтинг (вычисляется на основе отзывов) |
+| `purchase_frequency` | Частота покупок одним пользователем |
+| `abandoned_cart_rate` | Процент брошенных корзин с этим товаром |
+| `seasonality` | Сезонность (лето/зима/новогодние праздники) |
+| `stock_turnover_days` | Сколько дней товар хранится на складе до продажи |
+| `sales_prediction` | Прогноз продаж на основе истории |
+
+---
+
+## 🧩 **4. Пример структуры модели (Django)**
+
+```python
+from django.db import models
+from django.contrib.auth.models import User
+import json
+
+class Product(models.Model):
+    # === Публичные данные ===
+    name = models.CharField(max_length=255)
+    slug = models.SlugField(unique=True)
+    description = models.TextField()
+    category = models.ForeignKey('Category', on_delete=models.SET_NULL, null=True)
+    brand = models.ForeignKey('Brand', on_delete=models.SET_NULL, null=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    discount_percent = models.IntegerField(default=0)
+    stock_quantity = models.IntegerField(default=0)
+    images = models.JSONField(default=list)  # Список URL изображений
+    attributes = models.JSONField(default=dict)  # JSON с характеристиками
+    
+    # === Административные данные ===
+    cost_price = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    supplier = models.ForeignKey('Supplier', on_delete=models.SET_NULL, null=True)
+    warehouse_location = models.CharField(max_length=50, blank=True)
+    is_active = models.BooleanField(default=True)
+    is_deleted = models.BooleanField(default=False)
+    moderation_status = models.CharField(
+        max_length=20,
+        choices=[
+            ('pending', 'Ожидает модерации'),
+            ('approved', 'Одобрено'),
+            ('rejected', 'Отклонено')
+        ],
+        default='pending'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    published_at = models.DateTimeField(null=True, blank=True)
+    
+    # === Аналитические данные ===
+    views_count = models.IntegerField(default=0)
+    sales_count = models.IntegerField(default=0)
+    avg_rating = models.DecimalField(max_digits=3, decimal_places=2, default=0)
+    return_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['name']),
+            models.Index(fields=['category']),
+            models.Index(fields=['is_active', 'is_deleted']),
+        ]
+```
+
+---
+
+## 🔐 **Уровни доступа к данным**
+
+| Уровень | Данные | Кто видит |
+|---------|--------|-----------|
+| **Публичный** | `name`, `price`, `description`, `images` | Все пользователи |
+| **Авторизованный** | `stock_quantity`, `attributes` | Авторизованные пользователи |
+| **Менеджер** | `cost_price`, `supplier`, `wholesale_price` | Менеджеры, администраторы |
+| **Администратор** | `created_by`, `updated_by`, `moderation_status` | Администраторы |
+| **Только система** | `is_deleted`, `blocked`, `sales_prediction` | Внутренние сервисы |
+
+---
+
+## 💡 **Как защитить административные данные**
+
+```python
+# Serializer для публичного API
+class PublicProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ['name', 'price', 'description', 'images', 'rating']
+
+# Serializer для менеджеров
+class ManagerProductSerializer(PublicProductSerializer):
+    class Meta:
+        model = Product
+        fields = PublicProductSerializer.Meta.fields + ['cost_price', 'supplier', 'stock_quantity']
+
+# Serializer для администраторов
+class AdminProductSerializer(ManagerProductSerializer):
+    class Meta:
+        model = Product
+        fields = ManagerProductSerializer.Meta.fields + ['is_active', 'moderation_status', 'created_at']
+```
+
+---
+
+## 📋 **Дополнительные типы данных**
+
+| Тип | Пример | Хранение |
+|-----|--------|----------|
+| **Динамические характеристики** | `{"color": "red", "size": "XL", "material": "cotton"}` | JSON поле в модели |
+| **Медиа-файлы** | `["image1.jpg", "video.mp4", "3d-model.glb"]` | Отдельные модели или JSON |
+| **Связи с другими товарами** | `related_products`, `accessories`, `bundles` | Many-to-Many связи |
+| **Цены для разных валют** | `{"USD": 100, "EUR": 85, "RUB": 7500}` | JSON или отдельная модель |
+| **История изменений** | `field_name`, `old_value`, `new_value`, `changed_by` | Отдельная модель логов |
+
+---
+
+## 🎯 **Итог**
+
+Категория данных — это не просто поля, а **стратегия управления**. Публичные данные формируют **витрину**, административные — **складской учёт и ценообразование**, аналитические — **инструменты для роста продаж**. Разделение этих слоёв через сериализаторы, права доступа и индексы позволяет создать гибкую и безопасную систему управления товарами.
+</details>

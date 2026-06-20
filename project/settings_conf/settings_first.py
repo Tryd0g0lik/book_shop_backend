@@ -79,6 +79,8 @@ INSTALLED_APPS = [
     # Wagtail
     "wagtail.contrib.forms",
     "wagtail.contrib.redirects",
+    # "wagtail.contrib.modeladmin",
+    "wagtail_modeladmin",
     "wagtail.embeds",
     "wagtail.sites",
     "wagtail.users",
@@ -96,7 +98,7 @@ INSTALLED_APPS = [
     # My moduls
     "persons",
     "cart",
-    "catalog",
+    "catalog.apps.CatalogConfig",
     "content_pages",
     "profiles",
 ]
@@ -158,6 +160,7 @@ TEMPLATES = [
         "DIRS": [
             os.path.join(BASE_DIR, "persons/templates"),
             os.path.join(BASE_DIR, "templates"),
+            os.path.join(BASE_DIR, "catalog/templates"),
         ],
         "APP_DIRS": True,
         "OPTIONS": {
@@ -166,6 +169,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "wagtail.contrib.settings.context_processors.settings",
             ],
         },
     },
