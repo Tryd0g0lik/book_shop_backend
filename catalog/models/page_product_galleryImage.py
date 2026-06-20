@@ -3,6 +3,7 @@ from django.db import models
 from modelcluster.fields import ParentalKey
 from wagtail.admin.panels import FieldPanel
 from wagtail.models import Orderable, Page
+from wagtail.snippets.models import register_snippet
 
 
 class ProductGalleryImagePage(Orderable):
@@ -19,6 +20,10 @@ class ProductGalleryImagePage(Orderable):
 
     panels = [
         FieldPanel("caption"),
+        FieldPanel("caption"),
         FieldPanel("image"),
         FieldPanel("product"),
     ]
+
+
+register_snippet(ProductGalleryImagePage)

@@ -119,7 +119,6 @@ class Migration(migrations.Migration):
             name="attributes_additional",
             field=models.JSONField(
                 blank=True,
-                db_comment="Additional characteristics of the one product.",
                 default=dict,
                 help_text="Uniquer (for product) characteristics of the one product.",
                 null=True,

@@ -103,7 +103,6 @@ class ProductModel(AbstractModel):
         default=dict,
         blank=True,
         null=True,
-        db_comment=_("Additional characteristics of the one product."),
         help_text=_("Uniquer (for product) characteristics of the one product."),
     )
     panels = [

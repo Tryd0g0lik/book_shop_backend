@@ -11,7 +11,6 @@ class CategoryModel(AbstractCategoryPage):
     class Meta:
         verbose_name = _("Category")
         db_table = "category"
-        app_label = "catalog"
 
     panels = [
         FieldPanel("name"),
@@ -40,8 +39,3 @@ class BrandModel(AbstractCategoryPage):
 
     def __str__(self):
         return self.name
-
-    def save(self, request, obj, form, change):
-        if change:
-            obj.update_by = request.user.username
-        super().save()

@@ -3,15 +3,14 @@
 # from allauth.account.models import EmailAddress
 from datetime import datetime
 
+from django.core.exceptions import ValidationError
 from django.core.validators import (
     MaxLengthValidator,
     MaxValueValidator,
     MinValueValidator,
 )
 from django.db import models
-from django.forms import SelectMultiple
 from django.utils.translation import gettext_lazy as _
-from wagtail.admin.panels import FieldPanel
 
 from catalog.models.model_abstract import AbstractModel
 
@@ -31,15 +30,30 @@ class ProductGalleryImageModel(AbstractModel):
     """
     id = models.AutoField(primary_key=True)
     page = models.ForeignKey(
-        "ProductPageModel", related_name="+", on_delete=models.CASCADE
+        "ProductPageModel",
+        related_name="+",
+        on_delete=models.CASCADE,
+        limit_choices_to={"is_active": True},
     )
+    # image = models.ForeignKey(
+    #     "wagtailimages.Image",
+    #     on_delete=models.CASCADE,
+    #     limit_choices_to={},
+    #     related_name="+",
+    #
+    # )
     image = models.ManyToManyField(
         "wagtailimages.Image",
         limit_choices_to={},
         related_name="+",
+        related_query_name="image_query_related",
     )
     product = models.ForeignKey(
-        "ProductModel", on_delete=models.CASCADE, related_name="+"
+        "ProductModel",
+        on_delete=models.CASCADE,
+        related_name="+",
+        limit_choices_to={"is_active": True},
+        related_query_name="product_related",
     )
     caption = models.CharField(
         blank=True, max_length=250, null=True, help_text=_("The caption of the image")
@@ -56,15 +70,15 @@ class ProductGalleryImageModel(AbstractModel):
     published_at = models.DateTimeField(
         null=True, blank=True, help_text=_("Designates when this item was published")
     )
-    panels = [
-        FieldPanel("caption"),
-        FieldPanel("image"),
-        FieldPanel("product"),
-        FieldPanel("version"),
-        FieldPanel("is_active"),
-        FieldPanel("published_at", read_only=True),
-        FieldPanel("updated_by", required_on_save=True),
-    ]
+    # panels = [
+    #     FieldPanel("caption"),
+    #     FieldPanel("image"),
+    #     FieldPanel("product"),
+    #     FieldPanel("version"),
+    #     FieldPanel("is_active"),
+    #     FieldPanel("published_at", read_only=True),
+    #     FieldPanel("updated_by", required_on_save=True),
+    # ]
     # panels = [Image("image"), "product", "caption"]
 
     class Meta:
@@ -94,6 +108,8 @@ class ProductGalleryImageModel(AbstractModel):
         using=None,
         update_fields=None,
     ) -> None:
+        from wagtail.images.views.images import Image
+
         if self.is_active:
             controller = False
             if self.version == 0:
@@ -107,13 +123,18 @@ class ProductGalleryImageModel(AbstractModel):
 
             if controller:
                 self.published_at = datetime.now()
+        elif not self.is_active and (
+            isinstance(update_fields, list | tuple)
+            and self.is_active.__name__ not in update_fields
+        ):
+            self.published_at = None
         else:
             if (
                 isinstance(update_fields, list | tuple)
                 and self.is_active.__name__ not in update_fields
             ):
                 del update_fields[self.published_at.__name__]
-                self.published_at = None
+                # self.published_at = None
         super().save(
             using=using,
             force_insert=force_insert,
