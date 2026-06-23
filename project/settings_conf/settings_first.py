@@ -237,14 +237,14 @@ PBKDF2_ITERATIONS = 720000
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
-LANGUAGE_CODE = "en"
+LANGUAGE_CODE = "ru"  # "en"
 TIME_ZONE = f"{APP_TIME_ZONE.strip()}"
 
 USE_I18N = True
 WAGTAIL_I18N_ENABLED = True
 # LANGUAGES - This sets which languages are available on the frontend of the site.
 # WAGTAIL_CONTENT_LANGUAGES - This sets which the languages Wagtail content can be authored in.
-LANGUAGE_CODE = "en"
+
 WAGTAIL_CONTENT_LANGUAGES = LANGUAGES = [
     ("en", "English"),
     ("fr", "French"),
@@ -264,6 +264,7 @@ USE_L10N = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
+    os.path.join(BASE_DIR / "catalog/static"),
 ]
 STATIC_ROOT = os.path.join(BASE_DIR, "collectstatic/")
 STATIC_URL = "/static/"

@@ -7,6 +7,7 @@ from django.core.validators import (
 )
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from modelcluster.fields import ParentalKey
 
 from catalog.models.model_abstract import AbstractCategoryPage
 
@@ -19,7 +20,6 @@ class ProductCharacteristics(AbstractCategoryPage):
 
     """
 
-    id = models.AutoField(primary_key=True)
     name = models.CharField(
         max_length=80,
         validators=[
@@ -27,11 +27,21 @@ class ProductCharacteristics(AbstractCategoryPage):
             MaxLengthValidator(80),
             RegexValidator(r"^[\w \-_]{3,80}$"),
         ],
-        help_text=_("The name of the category"),
+        help_text=_("The name of the property"),
         db_index=True,
     )
     value = models.CharField(
-        default="-", max_length=10, validators=[MaxLengthValidator(10)]
+        default="-",
+        max_length=10,
+        validators=[MaxLengthValidator(10)],
+        help_text=_("The value of the property"),
+    )
+    product = ParentalKey(
+        "ProductGalleryImageModel",
+        related_name="properties",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
     )
 
     class Meta:

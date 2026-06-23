@@ -39,7 +39,7 @@ class ProductModel(AbstractModel):
         validators=[
             MaxLengthValidator(150),
         ],
-        features=["bold", "italic", "link"],
+        features=["html", "bold", "italic", "link", "ol", "ul", "image", "embed"],
     )
 
     description = RichTextField(
@@ -49,7 +49,7 @@ class ProductModel(AbstractModel):
         validators=[
             MaxLengthValidator(1000),
         ],
-        features=["bold", "italic", "link", "ol", "ul", "image", "embed"],
+        features=["html", "bold", "italic", "link", "ol", "ul", "image", "embed"],
     )
     category = models.ForeignKey(
         "CategoryModel",
@@ -105,7 +105,9 @@ class ProductModel(AbstractModel):
         null=True,
         help_text=_("Uniquer (for product) characteristics of the one product."),
     )
+
     panels = [
+        "is_active",
         "name",
         "describe_preview",
         "description",
@@ -144,6 +146,31 @@ class ProductModel(AbstractModel):
     def clean_price(self):
         if self.price is None or self.price < 0:
             self.price = 0
+
+    def clean_attributes_additional(self):
+        if self.attributes_additional is None:
+            pass
+
+    def clean(self):
+        super().clean()
+
+    def save(
+        self,
+        *,
+        force_insert=False,
+        force_update=False,
+        using=None,
+        update_fields=None,
+    ):
+
+        if update_fields:
+            pass
+        return super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
+        )
 
     # def clean_discount(self):
     #     if (

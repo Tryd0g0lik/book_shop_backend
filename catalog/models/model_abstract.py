@@ -60,7 +60,11 @@ class AbstractCategoryPage(models.Model):
         ],
         help_text=_("The name of the category"),
     )
-    description = models.TextField(max_length=250, null=True, blank=True)
+    description = models.TextField(
+        max_length=250,
+        null=True,
+        blank=True,
+    )
     created_at = models.DateTimeField(
         auto_now_add=True, help_text=_("The creation date")
     )
