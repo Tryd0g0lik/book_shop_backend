@@ -15,15 +15,5 @@ class OneImageAdmin(ModelAdmin):
     list_display = ["title", "image", "describe"]
     search_fields = ["title", "describe"]
 
-    # panels = [
-    #     FieldPanel("title"),
-    #     FieldPanel("image"),
-    #     FieldPanel("describe"),
-    #     FieldPanel("label"),
-    #     FieldPanel("x"),
-    #     FieldPanel("y"),
-    #     FieldPanel("product"),  # This will show the parent relation
-    # ]
-
 
 modeladmin_register(OneImageAdmin)

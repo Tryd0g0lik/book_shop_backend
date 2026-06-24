@@ -1,10 +1,9 @@
 # catalog/admin/admin_product_group/admmin_product_gallery_Image.py:1
 
 from django import forms
-from django.forms import CheckboxInput, Select, SelectMultiple, TextInput
+from django.forms import Select, TextInput
 from django.utils.translation import gettext_lazy as _
 from wagtail.admin.panels import FieldPanel, FieldRowPanel, InlinePanel, MultiFieldPanel
-from wagtail.admin.telepath import register as register_telepath_adapter
 from wagtail_modeladmin.options import ModelAdmin, modeladmin_register
 
 from catalog.models import ProductGalleryImageModel
@@ -22,7 +21,7 @@ class ProductGalleryImageAdmin(ModelAdmin):
     model = ProductGalleryImageModel
     icon = "product"
     menu_icon = "product"
-    menu_label = _("Catalog")
+    menu_label = _("One product")
     menu_item_name = _("Catalog_item_name")
     menu_item_title = _("Catalog_item_title")
     menu_order = 1002
@@ -101,12 +100,24 @@ class ProductGalleryImageAdmin(ModelAdmin):
                     heading=_("Images"),
                     classname="custom-property-value",
                     panels=[
-                        FieldPanel("title"),
-                        FieldPanel("image"),
-                        FieldPanel("describe"),
-                        FieldPanel("label"),
-                        FieldPanel("x"),
-                        FieldPanel("y"),
+                        MultiFieldPanel(
+                            [
+                                FieldPanel("title"),
+                                FieldPanel("image"),
+                                FieldRowPanel(
+                                    [
+                                        FieldPanel("describe"),
+                                        FieldPanel("label"),
+                                    ]
+                                ),
+                                FieldRowPanel(
+                                    [
+                                        FieldPanel("x"),
+                                        FieldPanel("y"),
+                                    ]
+                                ),
+                            ]
+                        )
                     ],
                 ),
             ]
