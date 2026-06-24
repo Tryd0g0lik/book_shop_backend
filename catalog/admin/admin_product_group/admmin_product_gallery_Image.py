@@ -99,6 +99,7 @@ class ProductGalleryImageAdmin(ModelAdmin):
                     "images",  # This is the related_name from OneImageModels
                     label=_("Image"),
                     heading=_("Images"),
+                    classname="custom-property-value",
                     panels=[
                         FieldPanel("title"),
                         FieldPanel("image"),
@@ -107,7 +108,6 @@ class ProductGalleryImageAdmin(ModelAdmin):
                         FieldPanel("x"),
                         FieldPanel("y"),
                     ],
-                    classname="close",
                 ),
             ]
         ),
