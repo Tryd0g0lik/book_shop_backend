@@ -1,15 +1,15 @@
 {
   "status": "done",
   "assets": {
-    "admin_dowload_792_9f1be9cf400f81bb6a12.js": {
-      "name": "admin_dowload_792_9f1be9cf400f81bb6a12.js",
-      "path": "E:\\OpenServer\\domains\\book_shop\\backend\\download\\static\\scripts\\wagtail-admin\\admin_dowload_792_9f1be9cf400f81bb6a12.js",
-      "publicPath": "/static/download/scripts/wagtail-admin/admin_dowload_792_9f1be9cf400f81bb6a12.js"
+    "admin_dowload_792_7a675bf0332e75218e94.js": {
+      "name": "admin_dowload_792_7a675bf0332e75218e94.js",
+      "path": "E:\\OpenServer\\domains\\book_shop\\backend\\download\\static\\scripts\\wagtail-admin\\admin_dowload_792_7a675bf0332e75218e94.js",
+      "publicPath": "/static/download/scripts/wagtail-admin/admin_dowload_792_7a675bf0332e75218e94.js"
     }
   },
   "chunks": {
     "main": [
-      "admin_dowload_792_9f1be9cf400f81bb6a12.js"
+      "admin_dowload_792_7a675bf0332e75218e94.js"
     ]
   },
   "publicPath": "/static/download/scripts/wagtail-admin/"

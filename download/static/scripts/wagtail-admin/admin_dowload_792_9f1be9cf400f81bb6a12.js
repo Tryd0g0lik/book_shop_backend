@@ -1,1 +1,0 @@
-document.addEventListener("DOMContentLoaded",()=>{try{!function(){const t=/(admin\/catalog\/\products\/)/,o=/((admin\/catalog\/products\/)(edit\/[0-1]+\/?))/,a=document.querySelector("[data-name='download-catalog']");try{if(!a)return;window.location.href.match(t)||window.location.href.match(o)||a.remove()}catch(t){throw t}}()}catch(t){console.error(t)}});

@@ -1,10 +1,10 @@
 {
   "status": "done",
   "assets": {
-    "admin_catalog_792_fccf9167ccafffec4da9.js": {
-      "name": "admin_catalog_792_fccf9167ccafffec4da9.js",
-      "path": "E:\\OpenServer\\domains\\book_shop\\backend\\catalog\\static\\scripts\\wagtail-admin\\admin_catalog_792_fccf9167ccafffec4da9.js",
-      "publicPath": "/static/scripts/wagtail-admin/admin_catalog_792_fccf9167ccafffec4da9.js"
+    "admin_catalog_792_26c775ca9f9a25c7fa12.js": {
+      "name": "admin_catalog_792_26c775ca9f9a25c7fa12.js",
+      "path": "E:\\OpenServer\\domains\\book_shop\\backend\\catalog\\static\\scripts\\wagtail-admin\\admin_catalog_792_26c775ca9f9a25c7fa12.js",
+      "publicPath": "/static/scripts/wagtail-admin/admin_catalog_792_26c775ca9f9a25c7fa12.js"
     },
     "index.html": {
       "name": "index.html",
@@ -14,7 +14,7 @@
   },
   "chunks": {
     "main": [
-      "admin_catalog_792_fccf9167ccafffec4da9.js"
+      "admin_catalog_792_26c775ca9f9a25c7fa12.js"
     ]
   },
   "publicPath": "/static/scripts/wagtail-admin/"
