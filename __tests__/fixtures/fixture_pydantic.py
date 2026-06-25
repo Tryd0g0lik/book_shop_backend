@@ -6,9 +6,11 @@ from __tests__.fixtures.fixture_django import mock_user_django
 
 log = logging.getLogger(__name__)
 
+
 @pytest.fixture
 def mock_pydantic_user(mock_user_django):
     from persons.interfaces import UsersPydantic
+
     log.info("""
         # ============================================
         # FIXTURE TEST"S MOCK OF UsersPydantic.model_validate()

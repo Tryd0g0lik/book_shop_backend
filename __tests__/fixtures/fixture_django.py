@@ -1,6 +1,7 @@
 """
 __test__/fixtures/fixture_django.py:1
 """
+
 import logging
 from datetime import datetime, timedelta
 from unittest.mock import Mock
@@ -11,6 +12,8 @@ import pytest
 from persons.views import UsersRegistrationView
 
 log = logging.getLogger(__name__)
+
+
 @pytest.fixture(scope="session")
 def django_setup():
     import os
@@ -22,6 +25,7 @@ def django_setup():
     django.setup()
     return True
 
+
 # ============================================
 # BELOW ARE DJNAGO's AUTH MODEL OF ABSTRACT USERS
 # ============================================
@@ -29,6 +33,7 @@ def django_setup():
 def mock_user_django():
     # from django.contrib.auth.models import AbstractUser
     from persons.models import Users
+
     log.info("""
     # ============================================
     # FIXTURE TEST"S MOCK - ONE DJNAGO's AUTH MODEL OF ABSTRACT USER
@@ -72,6 +77,7 @@ def mock_user_django():
 def pytest_generate_tests(metafunc):
     if "users_model_data" in metafunc.fixturenames:
         generate_users(metafunc)
+
 
 def generate_users(metafunc):
     if "users_model_data" in metafunc.fixturenames:
@@ -258,28 +264,24 @@ def generate_users(metafunc):
                 "updated_at": base_time - timedelta(days=10),
             },
             {
-            "id": 10,
-            "last_login": base_time - timedelta(days=0, hours=6),
-            "is_superuser": False,
-            "username": "test_user_10",
-            "first_name": "Test",
-            "last_name": "UserTen",
-            "email": "test10@example.com",
-            "is_staff": False,
-            "is_active": True,
-            "date_joined": base_time - timedelta(days=45),
-            "category": "BASE",
-            "password": "pbkdf2_sha256$hash_test10",
-            "is_sent": True,
-            "is_verified": True,
-            "verification_code": None,
-            "balance": 50.00,
-            "created_at": base_time - timedelta(days=45),
-            "updated_at": base_time - timedelta(days=0, hours=6),
-        },
+                "id": 10,
+                "last_login": base_time - timedelta(days=0, hours=6),
+                "is_superuser": False,
+                "username": "test_user_10",
+                "first_name": "Test",
+                "last_name": "UserTen",
+                "email": "test10@example.com",
+                "is_staff": False,
+                "is_active": True,
+                "date_joined": base_time - timedelta(days=45),
+                "category": "BASE",
+                "password": "pbkdf2_sha256$hash_test10",
+                "is_sent": True,
+                "is_verified": True,
+                "verification_code": None,
+                "balance": 50.00,
+                "created_at": base_time - timedelta(days=45),
+                "updated_at": base_time - timedelta(days=0, hours=6),
+            },
         ]
-        metafunc.parametrize(
-            "users_model_data",
-            users,
-            ids=[s['email'] for s in users]
-        )
+        metafunc.parametrize("users_model_data", users, ids=[s["email"] for s in users])

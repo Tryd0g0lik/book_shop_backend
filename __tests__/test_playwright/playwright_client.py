@@ -12,24 +12,24 @@ from project.settings_conf.settings_env import HEADLESS_MODE
 
 log = logging.getLogger(__name__)
 browser_option = {
-    "headless":HEADLESS_MODE,
-    "args":[
+    "headless": HEADLESS_MODE,
+    "args": [
         "--disable-blink-features=AutomationControlled",
         "--disable-dev-shm-usage",  # полезно для Docker/CI
         "--no-sandbox",  # необходимо для некоторых Linux окружений
         "--disable-setuid-sandbox",
         "--disable-gpu",  # отключает GPU (ускоряет headless)
         "--disable-software-rasterizer",
-    ]
+    ],
 }
 
-class PlaywrightManager():
+
+class PlaywrightManager:
     def __init__(self):
         self.async_playwright: Optional[async_playwright] = None
         self.sync_playwright: Optional[sync_playwright] = None
         self.abrowser: Optional[Browser] = None
         self.browser: Optional[Sync_Browser] = None
-
 
     def __new__(cls, *args, **kwargs):
         initiakize = super().__new__(cls, *args, **kwargs)
@@ -116,7 +116,7 @@ class PlaywrightManager():
             timezone_id="Asia/Krasnoyarsk",
         )
         page: playwright.async_api.Page = await context.new_page()
-        await page.route("**/*kaspersky", lambda route: route.abort() )
+        await page.route("**/*kaspersky", lambda route: route.abort())
         await page.route("**/*gc.kis.v2.scr*", lambda route: route.abort())
         try:
             yield page

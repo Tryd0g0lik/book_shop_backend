@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     "adrf",
     "webpack_loader",
     "taggit",
+    "django_bootstrap5",
     # Standard application
     "django.contrib.admin",
     "django.contrib.auth",
@@ -101,6 +102,8 @@ INSTALLED_APPS = [
     "catalog.apps.CatalogConfig",
     "content_pages",
     "profiles",
+    # additional
+    "download",
 ]
 
 
@@ -161,6 +164,7 @@ TEMPLATES = [
             os.path.join(BASE_DIR, "persons/templates"),
             os.path.join(BASE_DIR, "templates"),
             os.path.join(BASE_DIR, "catalog/templates"),
+            os.path.join(BASE_DIR, "download/templates"),
         ],
         "APP_DIRS": True,
         "OPTIONS": {
@@ -265,6 +269,7 @@ USE_L10N = True
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
     os.path.join(BASE_DIR / "catalog/static"),
+    os.path.join(BASE_DIR / "download/static"),
 ]
 STATIC_ROOT = os.path.join(BASE_DIR, "collectstatic/")
 STATIC_URL = "/static/"

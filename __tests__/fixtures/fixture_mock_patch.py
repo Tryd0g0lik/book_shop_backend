@@ -31,14 +31,19 @@ def mock_mixin_method(mock_pydantic_user, mock_user_django, mocker):
     # FIXTURE PersonBasisMixin
     # ============================================
     """)
-    mock_mixin_class =  mocker.patch("persons.adapters.person_base.PersonBasisMixin")
+    mock_mixin_class = mocker.patch("persons.adapters.person_base.PersonBasisMixin")
     mock_personBasisMixin = mock_mixin_class.return_value
     mock_personBasisMixin.log_t = "[Mock PersonBasisMixin]"
     mock_personBasisMixin.person_index = None
-    mock_personBasisMixin.person_email = mock_user_django.__getattribute__("email")  # "test_2_mail@host.ru"
-    mock_personBasisMixin.get_email = MagicMock(return_value=mock_user_django.__getattribute__("email"))
+    mock_personBasisMixin.person_email = mock_user_django.__getattribute__(
+        "email"
+    )  # "test_2_mail@host.ru"
+    mock_personBasisMixin.get_email = MagicMock(
+        return_value=mock_user_django.__getattribute__("email")
+    )
     mock_personBasisMixin.get_person_model = MagicMock(return_value=mock_user_django)
     yield mock_mixin_class
+
 
 @pytest.fixture
 def mock_cacher_adapter_mixin(mocker):
@@ -56,40 +61,54 @@ def mock_cacher_adapter_mixin(mocker):
     mock_cacherAdapterMixin.get_person_model = mocker.Mock(return_value=None)
     return mock_mixin_class
 
+
 @pytest.fixture
-def mock_person_service_adapter(mock_pydantic_user,  mocker):
+def mock_person_service_adapter(mock_pydantic_user, mocker):
     from __tests__.fixtures.mock_function import (
         database_service_get_user_by_email,
         database_service_get_user_by_id,
     )
+
     log.info("""\n
     # ============================================
     # FIXTURE PersonServiceAdapter
     # ============================================
     """)
-    mock_adapter_class = mocker.patch("persons.adapters.person_database_adapter.PersonServiceDatabaseAdapter")
-    mock_adapter_class.get_user_by_id.return_value = database_service_get_user_by_id(mock_pydantic_user)
-    mock_adapter_class.get_user_by_email.return_value = database_service_get_user_by_email(mock_pydantic_user)
+    mock_adapter_class = mocker.patch(
+        "persons.adapters.person_database_adapter.PersonServiceDatabaseAdapter"
+    )
+    mock_adapter_class.get_user_by_id.return_value = database_service_get_user_by_id(
+        mock_pydantic_user
+    )
+    mock_adapter_class.get_user_by_email.return_value = (
+        database_service_get_user_by_email(mock_pydantic_user)
+    )
     mock_adapter_class.search_by_email = mocker.Mock(return_value=[mock_pydantic_user])
 
     yield mock_adapter_class
 
+
 @pytest.fixture
 def mock_subPerson_class(mock_pydantic_user, mocker):
     from persons.adapters import PostmanAdapter
+
     log.info("""
     # ============================================
     # FIXTURE SubPerson
     # ============================================
     """)
     mock_postman = mocker.patch("persons.adapters.postman_adapter.PostmanAdapter")
-    mock_sub_person = mocker.patch.object(PostmanAdapter.SubPerson, "_get_data", )
+    mock_sub_person = mocker.patch.object(
+        PostmanAdapter.SubPerson,
+        "_get_data",
+    )
     mock_sub_person.return_value = [json.loads(mock_pydantic_user.model_dump_json())]
     mock_postman.SubPerson._get_data = mock_sub_person
-    return  mock_postman
+    return mock_postman
+
 
 @pytest.fixture
-def mock_database_get_user_model_2(mocker,users_model_data):
+def mock_database_get_user_model_2(mocker, users_model_data):
     log.info("""\n
     # ============================================
     # FIXTURE BEFORE BEFORE CREATE THE MOCK FOR THEM:
@@ -111,6 +130,7 @@ def mock_database_get_user_model_2(mocker,users_model_data):
     log.info(f"\n\tTEST DEBUG call_args args: {mock_users_object_get.call_args}")
     log.info(f"TEST DEBUG call_args_list: {mock_users_object_get.call_args_list}")
 
+
 @pytest.fixture
 def mock_database_get_user_model(mocker, users_model_data):
     """
@@ -129,19 +149,40 @@ def mock_database_get_user_model(mocker, users_model_data):
     # CREATE Object of the Users model
     # ============================================
     """)
-    MockUserClass = Mock(spec=[
-        'id', 'username', 'email', 'password', 'first_name', 'last_name',
-        'last_login', 'is_active', 'is_staff', 'is_superuser', 'is_sent',
-        'is_verified', 'category', 'balance', 'verification_code',
-        'created_at', 'updated_at', 'date_joined'
-    ])
-    MockUserClass.email_user = lambda subject, message, recipient_list, from_email=None, **kwargs: send_mail(subject, message, recipient_list, from_email, **kwargs)
+    MockUserClass = Mock(
+        spec=[
+            "id",
+            "username",
+            "email",
+            "password",
+            "first_name",
+            "last_name",
+            "last_login",
+            "is_active",
+            "is_staff",
+            "is_superuser",
+            "is_sent",
+            "is_verified",
+            "category",
+            "balance",
+            "verification_code",
+            "created_at",
+            "updated_at",
+            "date_joined",
+        ]
+    )
+    MockUserClass.email_user = (
+        lambda subject, message, recipient_list, from_email=None, **kwargs: send_mail(
+            subject, message, recipient_list, from_email, **kwargs
+        )
+    )
     mock_user = MockUserClass()
     mock_user.configure_mock(**users_model_data)
-    mock_users_model = mocker.patch.object(Users.objects, "get",return_value=mock_user )
+    mock_users_model = mocker.patch.object(Users.objects, "get", return_value=mock_user)
     mock_users_model.object.get.return_value = mock_user
     mocker.patch("persons.models.Users")
     yield mock_user
+
 
 # ============================================
 # MOCK DATABASE Users TO THE TestUserServiceAdapter TEST
@@ -149,7 +190,6 @@ def mock_database_get_user_model(mocker, users_model_data):
 @pytest.fixture
 def mock_users_database(mocker):
     from __tests__.fixtures.mock_function import get_one_user
-
 
     log.info("""\n
     # ============================================
@@ -166,6 +206,7 @@ def mock_users_database(mocker):
     # FIXTURE BEFORE GETS A MOCK LOGIC FOR THE Django's Users.objects.get
     # ============================================
     """)
+
     def side_affect_fun(**kwargs):
         email = kwargs.get("email")
         print(f"TEST DEBUG side_affect_fun: {str(email)}")
@@ -185,8 +226,9 @@ def mock_users_database(mocker):
     mock_method_get.side_effect = side_affect_fun
 
     mock_method_create = mock_method_Users.objects.create
-    mock_method_create.side_effect = \
-        lambda **kwargs: save_one_user(file_of_db, **kwargs)
+    mock_method_create.side_effect = lambda **kwargs: save_one_user(
+        file_of_db, **kwargs
+    )
 
     yield mock_method_Users
 

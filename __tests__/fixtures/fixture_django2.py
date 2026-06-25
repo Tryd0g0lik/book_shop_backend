@@ -3,6 +3,7 @@ def pytest_generate_tests(metafunc):
     if "new_users_registration" in metafunc.fixturenames:
         generate_regisration(metafunc)
 
+
 def generate_regisration(metafunc):
     if "new_users_registration" in metafunc.fixturenames:
 
@@ -32,7 +33,5 @@ def generate_regisration(metafunc):
             },
         ]
         metafunc.parametrize(
-            "new_users_registration",
-            users,
-            ids=[s['email'] for s in users]
+            "new_users_registration", users, ids=[s["email"] for s in users]
         )

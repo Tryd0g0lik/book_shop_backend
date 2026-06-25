@@ -11,7 +11,6 @@ from persons import EnumTemplatesKeysCache
 log = logging.getLogger(__name__)
 
 
-
 class TestResaveCacheAfterSentLetter:
     async def test_resave_cache_after_sent_letter(self, new_users_registration):
         from persons.services import AccountManager
@@ -23,8 +22,18 @@ class TestResaveCacheAfterSentLetter:
         sub_person = SubPerson()
         cachemanager = sub_person.cachemanager
         await sub_person.cachemanager.asynccacher.related()
-        k1 =re.sub(r'[@.]+', repl="", string=f"user:pending:zero:{new_users_registration["email"]}", flags=re.ASCII)
-        k2 = re.sub(r'[@.]+', repl="", string=f"user:pending:letter:{new_users_registration["email"]}", flags=re.ASCII)
+        k1 = re.sub(
+            r"[@.]+",
+            repl="",
+            string=f"user:pending:zero:{new_users_registration["email"]}",
+            flags=re.ASCII,
+        )
+        k2 = re.sub(
+            r"[@.]+",
+            repl="",
+            string=f"user:pending:letter:{new_users_registration["email"]}",
+            flags=re.ASCII,
+        )
         assert k1.count(":") == 2
         assert k2.count(":") == 3
 
@@ -32,7 +41,9 @@ class TestResaveCacheAfterSentLetter:
         tasks = []
         username_ = new_users_registration.get("username")
         user_email_ = new_users_registration.get("email")
-        await cachemanager.asave(key=k1, default={"username": username_, "email": user_email_})
+        await cachemanager.asave(
+            key=k1, default={"username": username_, "email": user_email_}
+        )
 
         async def resave_cache_after_sent_letter(*args) -> bool:
             """
@@ -57,13 +68,14 @@ class TestResaveCacheAfterSentLetter:
                         % k.split(":")[-1]
                     )
                     assert k2 == key
-                    user_data_json: dict =json.loads((data_list[0]).decode("utf-8"))
+                    user_data_json: dict = json.loads((data_list[0]).decode("utf-8"))
 
                     # Re-save
-                    response_bool = await cachemanager.asave(key=key, default=user_data_json, ttl=300)
+                    response_bool = await cachemanager.asave(
+                        key=key, default=user_data_json, ttl=300
+                    )
                     log.info(
-                        lt
-                        + f"User dada Re-saved successfully from old {args} key !"
+                        lt + f"User dada Re-saved successfully from old {args} key !"
                     )
                     assert type(response_bool) in (bool,)
                     assert response_bool in (True,)
@@ -73,17 +85,21 @@ class TestResaveCacheAfterSentLetter:
                     log.error(lt + " ERROR => " + e.args[0] if e.args else str(e))
                     return False
             return True
+
         for key in keys:
 
             tasks.append(resave_cache_after_sent_letter(*(key,)))
         await asyncio.gather(*tasks, return_exceptions=True)
 
-        data_list =[]
+        data_list = []
         result_bool = await cachemanager.aget(key=k2, collection=data_list, ex=1300)
         assert len(data_list) > 0
         assert result_bool in (True,)
 
         assert type(data_list) in (list,)
         assert len(data_list) == 1
-        result_bool = await cachemanager.aget(key=k1, collection=data_list, )
+        result_bool = await cachemanager.aget(
+            key=k1,
+            collection=data_list,
+        )
         assert result_bool is None

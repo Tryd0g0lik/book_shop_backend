@@ -27,9 +27,7 @@ class TestCreateOrUpdateInDatabase:
         password: str = new_users_registration["password1"]
         del new_users_registration["password1"], new_users_registration["password2"]
 
-        passw_hash = PersonServiceDatabaseAdapter.hashes_password(
-            password=password
-        )
+        passw_hash = PersonServiceDatabaseAdapter.hashes_password(password=password)
 
         new_users = new_users_registration.copy()
         new_users["password"] = passw_hash
@@ -37,8 +35,8 @@ class TestCreateOrUpdateInDatabase:
         user = Users.objects.create(**new_users)
         log.info("TEST FIXTURE # UPDATING DATA")
         log.info(f"TEST DEBUG EMAIL: {str(user.email)} ID: {user.id}")
-        old_email: str = new_users_registration['email']
-        new_email: str = 'new@email.com'
+        old_email: str = new_users_registration["email"]
+        new_email: str = "new@email.com"
 
         log.info("TEST FIXTURE # CHANGING - EMAIL & PASSWORD")
         new_users_registration["email"] = new_email
@@ -52,12 +50,16 @@ class TestCreateOrUpdateInDatabase:
         :param fixture_create_user: It is "[< DICT_NEW_USER_DATA >, < USER_OBJECT_FROM_DB >, < OLD_USER_EMAIL >, < NEW_USER_EMAIL >]".
         :return: Assert what database will be containing two lines.
         """
-        create_or_update_in_database: PersonServiceDatabaseAdapterInitialize = PersonServiceDatabaseAdapter.update_in_database
+        create_or_update_in_database: PersonServiceDatabaseAdapterInitialize = (
+            PersonServiceDatabaseAdapter.update_in_database
+        )
         # UPDATE USER
         new_users_data = fixture_create_user[0]
         user = fixture_create_user[1]
         new_email = fixture_create_user[-1]
-        user_dic = create_or_update_in_database(user_data=new_users_data, user_id=user.id)
+        user_dic = create_or_update_in_database(
+            user_data=new_users_data, user_id=user.id
+        )
         if user_dic is None:
             log.info(f"TEST DEBUG EMAIL: None")
         else:
@@ -81,13 +83,17 @@ class TestCreateOrUpdateInDatabase:
         :return: Assert what database will be containing two lines.
         """
         # UPDATING USER
-        create_or_update_in_database: PersonServiceDatabaseAdapterInitialize = PersonServiceDatabaseAdapter.update_in_database
+        create_or_update_in_database: PersonServiceDatabaseAdapterInitialize = (
+            PersonServiceDatabaseAdapter.update_in_database
+        )
         new_users_data = fixture_create_user[0]
         user = fixture_create_user[1]
         old_email = fixture_create_user[-2]
         new_email = fixture_create_user[-1]
         new_users_data["password"] = new_users_data["password"] + user.username
-        user_dic = create_or_update_in_database(user_data=new_users_data, user_email=old_email)
+        user_dic = create_or_update_in_database(
+            user_data=new_users_data, user_email=old_email
+        )
         if user_dic is None:
             log.info(f"TEST DEBUG EMAIL: None")
         else:
@@ -96,7 +102,9 @@ class TestCreateOrUpdateInDatabase:
         user_filter = Users.objects.filter(email=new_email)
         assert user_filter.exists(), "User exists"
         user_first = user_filter.first()
-        assert user_first.username not in user_first.password, "Password should not be changed"
+        assert (
+            user_first.username not in user_first.password
+        ), "Password should not be changed"
         assert user_dic["email"] == new_email, "Response how a dictionary"
 
     @pytest.mark.django_db()
@@ -108,7 +116,9 @@ class TestCreateOrUpdateInDatabase:
         :return: Assert what database will be containing two lines.
         """
         # UPDATING USER
-        create_or_update_in_database: PersonServiceDatabaseAdapterInitialize = PersonServiceDatabaseAdapter.update_in_database
+        create_or_update_in_database: PersonServiceDatabaseAdapterInitialize = (
+            PersonServiceDatabaseAdapter.update_in_database
+        )
         new_users_data = fixture_create_user[0]
         user = fixture_create_user[1]
         old_email = fixture_create_user[-2]
@@ -121,7 +131,9 @@ class TestCreateOrUpdateInDatabase:
         new_users_data["new_password"] = new_password
         del new_users_data["password"]
 
-        user_dic = create_or_update_in_database(user_data=new_users_data, user_email=old_email)
+        user_dic = create_or_update_in_database(
+            user_data=new_users_data, user_email=old_email
+        )
         log.info(f"# CHECKING OF HASHING")
         assert user_dic["email"] == new_email, "Response how a dictionary"
         log.info("# BEFORE IT LEVEL - THE USER WAS UPDATED (in hashing")

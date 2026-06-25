@@ -27,11 +27,18 @@ log = logging.getLogger(__name__)
 class TestUserServiceAdapter:
     # def test_get_user_by_id(self,userId, userEm,expect, mock_database_get_user_model):
     # @pytest.mark.skip("Пересмотреть логику 'mock_database_get_user_model'", )
-    @pytest.mark.skip(reason="This test is skipped. Launch after data is entered in to the database")
-    @pytest.mark.parametrize("userId, userEm, expect", [
-        (4, "new@example.com", True),
-    ])
-    def test_get_user_by_id(self,userId, userEm,expect, users_model_data, mock_database_get_user_model_2):
+    @pytest.mark.skip(
+        reason="This test is skipped. Launch after data is entered in to the database"
+    )
+    @pytest.mark.parametrize(
+        "userId, userEm, expect",
+        [
+            (4, "new@example.com", True),
+        ],
+    )
+    def test_get_user_by_id(
+        self, userId, userEm, expect, users_model_data, mock_database_get_user_model_2
+    ):
         """
 
         :param int userId: Index of mock person
@@ -52,7 +59,7 @@ class TestUserServiceAdapter:
             # - userId (of entrypoint): {str(userId)}
             # ============================================
             """)
-            if mock_user['id'] in [userId]:
+            if mock_user["id"] in [userId]:
                 result = PersonServiceDatabaseAdapter.get_user_by_id(user_id=userId)
                 log.info(f"""\n\t
                 # ============================================
@@ -69,11 +76,14 @@ class TestUserServiceAdapter:
                     ind = result_json.__getitem__("id") if id in keys else -999
                     assert em is not None
                     assert ind is not None
-                    print("TEST DEBUG test_get_user_by_id Type:%s & STR: %s" % (type(result_json), str(result_json)[:25]))
+                    print(
+                        "TEST DEBUG test_get_user_by_id Type:%s & STR: %s"
+                        % (type(result_json), str(result_json)[:25])
+                    )
                     assert ind == userId
                     assert em == userEm
 
-    def test_is_email(self, mock_users_database ):
+    def test_is_email(self, mock_users_database):
         # PATH: persons.adapters.person_dabase_adapter.PersonServiceDatabaseAdapter.is_email
         from persons.adapters import PersonServiceDatabaseAdapter
 
@@ -83,7 +93,6 @@ class TestUserServiceAdapter:
 
         assert result_email is not None
         assert result_email is False
-
 
     # def test_create_user(self, mock_users_database ):
     #     """
