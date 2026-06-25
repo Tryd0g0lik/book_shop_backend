@@ -17,8 +17,8 @@ class CategoryModel(AbstractCategoryPage):
     panels = [
         FieldPanel("name"),
         FieldPanel("description"),
-        FieldPanel("created_at"),
-        FieldPanel("updated_at"),
+        FieldPanel("created_at", read_only=True),
+        FieldPanel("updated_at", read_only=True),
     ]
 
     def __str__(self):
@@ -40,7 +40,7 @@ class BrandModel(AbstractCategoryPage):
                 FieldPanel("description"),
                 FieldRowPanel(
                     [
-                        FieldPanel("created_at"),
+                        FieldPanel("created_at", read_only=True),
                         FieldPanel("updated_at"),
                     ]
                 ),

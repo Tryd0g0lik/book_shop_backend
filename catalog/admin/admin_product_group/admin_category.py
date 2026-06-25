@@ -22,12 +22,3 @@ class CategoryAdmin(ModelAdmin):
         "updated_at",
     ]
     search_fields = ["name", "created_at", "updated_at", "description"]
-    panels = [
-        MultiFieldPanel(
-            [
-                "name",
-                "description",
-                FieldRowPanel([FieldPanel("created_at", read_only=True), "updated_at"]),
-            ]
-        ),
-    ]

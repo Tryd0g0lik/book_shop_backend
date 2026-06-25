@@ -58,7 +58,7 @@ INSTALLED_APPS = [
     "adrf",
     "webpack_loader",
     "taggit",
-    "django_bootstrap5",
+    "bootstrap4",
     # Standard application
     "django.contrib.admin",
     "django.contrib.auth",
