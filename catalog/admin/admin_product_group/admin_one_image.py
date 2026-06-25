@@ -6,6 +6,7 @@ from catalog.models.images.model_image_one_item import OneImageModels
 
 class OneImageAdmin(ModelAdmin):
     model = OneImageModels
+    base_url_path = "oneimage"
     menu_label = "Images"
     menu_item_name = "Images"
     menu_item_title = "Images"

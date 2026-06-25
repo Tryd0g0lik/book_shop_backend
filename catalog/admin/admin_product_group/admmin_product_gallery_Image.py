@@ -19,13 +19,14 @@ class ProductGalleryImageAdmin(ModelAdmin):
     """
 
     model = ProductGalleryImageModel
-    icon = "product"
-    menu_icon = "product"
-    menu_label = _("One product")
+    icon = "tag"
+    menu_icon = "tag"
+    menu_label = _("Pages of products")
     menu_item_name = _("Catalog_item_name")
     menu_item_title = _("Catalog_item_title")
+    base_url_path = "catalog/products"
     menu_order = 1002
-    add_to_admin_menu = True
+    add_to_admin_menu = False
 
     list_display = [
         "is_active",
@@ -123,42 +124,3 @@ class ProductGalleryImageAdmin(ModelAdmin):
             ]
         ),
     ]
-    # class Media:
-    #     js = ("scripts/wagtail_admin_js.js",)
-    # def image_tag(self, obj):
-    #     """
-    #     TODO: Track and verify. It doesn't seem to be doesn't working!!
-    #     """
-    #     from django.utils.html import format_html
-    #
-    #     return format_html(
-    #         '<img src="{}" style="max-width:200px; max-height:200px"/>'.format(
-    #             obj.image.url
-    #         )
-    #     )
-
-
-modeladmin_register(ProductGalleryImageAdmin)
-
-
-#
-# class AdminPreviewImageChooser(AdminImageChooser):
-#     """
-#     Generates a larger version of the AdminImageChooser
-#     Currently limited to showing the large image on load only.
-#     """
-#
-#     def get_value_data(self, value):
-#         value_data = super().get_value_data(value)
-#
-#         if value_data:
-#             image = self.image_model.objects.get(pk=value_data["id"])
-#             # note: the image string here should match what is used in the template
-#             preview_image = image.get_rendition("width-1920")
-#             value_data["preview"] = {
-#                 "width": preview_image.width,
-#                 "height": preview_image.height,
-#                 "url": preview_image.url,
-#             }
-#
-#         return value_data
