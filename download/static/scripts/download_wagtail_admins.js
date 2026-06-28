@@ -1,2 +1,2 @@
-import "./wagtail-admin/admin_dowload_792_7a675bf0332e75218e94.js"; 
+import "./wagtail-admin/admin_download_main_b9c6fe61104c0639f1e3.js"; 
 	

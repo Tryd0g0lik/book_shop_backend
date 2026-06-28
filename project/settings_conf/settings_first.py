@@ -17,6 +17,7 @@ import logging
 from persons.apps import DEBUG
 from project.settings_conf.settings_env import (
     APP_BASIS_URL,
+    APP_DEFAULT_FROM_EMAIL,
     APP_NAME,
     APP_TIME_ZONE,
     REDIS_URL,
@@ -86,7 +87,7 @@ INSTALLED_APPS = [
     "wagtail.sites",
     "wagtail.users",
     "wagtail.snippets",
-    "wagtail.documents",
+    "wagtail.documents",  # $!!
     "wagtail.images",
     "wagtail.search",
     "wagtail.locales",
@@ -312,14 +313,18 @@ DATA_UPLOAD_MAX_NUMBER_FILES = 10240
 # APPLICATION DEFINITION
 # ============================================
 # file extension
-f_extension = "csv, docx, pdf, rtf, txt, xlsx, zip"
+f_extension = "csv, docx, pdf, rtf, txt, xlsx, xls, zip"
+
 
 # ============================================
 # WAGTAILSEARCH DEFINITION
 # ============================================
+WAGTAILDOCS_MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10MB
 WAGTAILDOCS_EXTENSIONS = list(f_extension.split(", "))
 WAGTAILADMIN_LOGIN_FORM = "persons.forms.UsersLoginForm"
 WAGTAIL_SITE_NAME = f"{APP_NAME}"
+WAGTAIL_USER_TIME_ZONES = TIME_ZONE[:]
+WAGTAILADMIN_NOTIFICATION_FROM_EMAI = APP_DEFAULT_FROM_EMAIL
 # WAGTAIL_APPEND_SLASH = "/"
 # USER_MODEL_USERNAME_FIELD = "TEST_USER_MODEL_USERNAME_FIELD"
 

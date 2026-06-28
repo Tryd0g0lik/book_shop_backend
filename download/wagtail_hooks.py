@@ -1,13 +1,11 @@
 # download/wagtail_hooks.py:1
 # catalog/wagtail_hooks.py:1
-import json
 import os
 import re
 from os import path
 
 from django.templatetags.static import static
 from django.utils.html import format_html
-from django.utils.translation import gettext_lazy as _
 from wagtail import hooks
 
 from project import BASE_DIR
