@@ -17,4 +17,4 @@ class OneImageAdmin(ModelAdmin):
     search_fields = ["title", "describe"]
 
 
-modeladmin_register(OneImageAdmin)
+# modeladmin_register(OneImageAdmin)

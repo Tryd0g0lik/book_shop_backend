@@ -39,7 +39,7 @@ class OneImageModels(models.Model):
             MaxLengthValidator(100),
             MinLengthValidator(3),
             RegexValidator(
-                regex=r"^[A-Za-z0-9\. \"'_%+-]+$",
+                regex=r"^[A-Za-zА-ЯЪа-яъ0-9\. \"'_%+-]+$",
             ),
         ],
     )
@@ -51,12 +51,12 @@ class OneImageModels(models.Model):
         related_query_name="image_%(app_label)s_%(class)s_related",
     )
     product = ParentalKey(
-        "catalog.ProductGalleryImageModel",
+        "catalog.ProductModel",
         related_name="images",
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        # related_query_name="image_query_related",
+        related_query_name="product_%(app_label)s_%(class)s_related",
     )
     describe: str = models.TextField(
         max_length=80,

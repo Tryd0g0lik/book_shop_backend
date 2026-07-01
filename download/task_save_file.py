@@ -92,6 +92,8 @@ async def subprocess_data(data: pd.array):
     shape = data.shape
     for view_list in values:
         product = ProductModel()
+        index_key = keys.index("is_active")
+        product.is_active = view_list[index_key]
         for index in range(0, shape[1] - 1):
             k = None
             v = None
@@ -142,12 +144,15 @@ async def subprocess_data(data: pd.array):
                     for view_str in v_list:
                         view_str = re.sub(r"[}{]+", "", view_str)
                         l: list | str = view_str.split(":")
-                        if type(l) == str:
-                            l = l.split("=")
+                        l = l.split("=") if type(l) == str else l
+
                         v_dict.setdefault(l[0], l[1])
                     setattr(product, "attributes_additional", v_dict)
+                    continue
                 elif k != "attributes":
                     setattr(product, k, v)
+                    continue
+                else:
                     continue
             except Exception as e:
                 log.error(
@@ -159,6 +164,7 @@ async def subprocess_data(data: pd.array):
                 await write_error_data(q, [k, v])
                 continue
         try:
+
             await product.asave()
         except Exception as e:
             log.warning(
@@ -176,11 +182,14 @@ async def subprocess_data(data: pd.array):
             number = keys.index("attributes")
 
             result: list[str] = view_list[number].split(",")
-            for item in result:
-                item_list: list[str] | str = item.split(":")
+            view_list: list[str] = [result] if type(result) == str else result
+            for item in view_list:
+                item_list: list[str] | str = (
+                    item.split(":")
+                    if type(item) == str and "=" not in item
+                    else item.split("=")
+                )
 
-                if type(item_list) == str:
-                    item_list = item_list.split("=")
                 v_list = [item.strip() for item in item_list]
                 try:
                     tasks_collection = []
@@ -188,8 +197,8 @@ async def subprocess_data(data: pd.array):
                         if i % 2 != 0:
                             continue
                         tasks_collection.append(
-                            asyncio.to_thread(
-                                lambda: ProductCharacteristics.objects.acreate(
+                            asyncio.create_task(
+                                ProductCharacteristics.objects.acreate(
                                     name=v_list[0].strip(),
                                     value=v_list[1].strip(),
                                     product_id=product.id,

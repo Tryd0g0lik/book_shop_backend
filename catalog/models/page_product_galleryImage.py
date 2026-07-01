@@ -8,7 +8,7 @@ from wagtail.snippets.models import register_snippet
 
 class ProductGalleryImagePage(Orderable):
     page = ParentalKey(
-        "ProductPage", on_delete=models.CASCADE, related_name="gallery_images"
+        "catalog.ProductPage", on_delete=models.CASCADE, related_name="gallery_images"
     )
     caption = models.CharField(max_length=250, blank=True)
     image = models.ForeignKey(

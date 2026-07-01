@@ -66,6 +66,7 @@ urlpatterns = [
     # path(
     #     "download/", include((download_urls, "download"), "downloads"), name="downloads"
     # ),
+    path("admin/catalog/", include(("catalog.urls", "catalog"), namespace="catalog")),
     re_path("admin/login/", UserLoginView.as_view(), name="wagtailadmin_login"),
     re_path(r"^admin/", include(wagtailadmin_urls)),
 ]

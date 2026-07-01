@@ -6,8 +6,10 @@ from django.core.validators import (
     RegexValidator,
 )
 from django.db import models
+from django.forms import TextInput
 from django.utils.translation import gettext_lazy as _
 from modelcluster.fields import ParentalKey
+from wagtail.admin.panels import FieldPanel, FieldRowPanel, InlinePanel, MultiFieldPanel
 
 from catalog.models.model_abstract import AbstractCategoryPage
 
@@ -37,11 +39,13 @@ class ProductCharacteristics(AbstractCategoryPage):
         help_text=_("The value of the property"),
     )
     product = ParentalKey(
-        "ProductGalleryImageModel",
-        related_name="properties",
+        "ProductModel",
+        help_text=_("Commons characteristics of the ont product."),
         null=True,
         blank=True,
         on_delete=models.CASCADE,
+        verbose_name="product Characteristics",
+        related_name="characteristics",
     )
 
     class Meta:
