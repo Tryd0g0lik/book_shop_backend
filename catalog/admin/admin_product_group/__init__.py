@@ -7,12 +7,14 @@ __all__ = (
     "BrandAdmin",
     "ProductGalleryImageAdmin",
     "OneImageAdmin",
+    "ProductAdmin",
 )
 
 # Product Group
 from catalog.admin.admin_product_group.admin_brand import BrandAdmin
 from catalog.admin.admin_product_group.admin_category import CategoryAdmin
 from catalog.admin.admin_product_group.admin_one_image import OneImageAdmin
+from catalog.admin.admin_product_group.admin_product import ProductAdmin
 from catalog.admin.admin_product_group.admmin_product_gallery_Image import (
     ProductGalleryImageAdmin,
 )
@@ -26,4 +28,4 @@ class ProductGroup(ModelAdminGroup):
     add_to_admin_menu = True
 
     menu_order = 1000
-    items = (BrandAdmin, CategoryAdmin, ProductGalleryImageAdmin)
+    items = (BrandAdmin, CategoryAdmin, ProductGalleryImageAdmin, ProductAdmin)

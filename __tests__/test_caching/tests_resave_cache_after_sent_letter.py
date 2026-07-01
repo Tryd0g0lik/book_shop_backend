@@ -7,6 +7,7 @@ from allauth.account.internal.userkit import user_email
 
 from __tests__.fixtures.fixture_django2 import pytest_generate_tests
 from persons import EnumTemplatesKeysCache
+from project.settings_conf.settings_first import DEFAULT_CHARSET
 
 log = logging.getLogger(__name__)
 
@@ -68,7 +69,7 @@ class TestResaveCacheAfterSentLetter:
                         % k.split(":")[-1]
                     )
                     assert k2 == key
-                    user_data_json: dict = json.loads((data_list[0]).decode("utf-8"))
+                    user_data_json: dict = json.loads((data_list[0]).decode(DEFAULT_CHARSET))
 
                     # Re-save
                     response_bool = await cachemanager.asave(

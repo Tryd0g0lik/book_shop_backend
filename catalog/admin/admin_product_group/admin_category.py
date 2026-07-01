@@ -13,7 +13,7 @@ class CategoryAdmin(ModelAdmin):
     menu_label = _("Categories")
     add_to_admin_menu = False
     base_url_path = "catalog/categories"
-    menu_order = 300
+    menu_order = 400
     list_par_page = 25
 
     list_display = ["name", "description", "created_at", "updated_at"]

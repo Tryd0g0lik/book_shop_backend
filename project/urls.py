@@ -31,7 +31,6 @@ from wagtail.admin import urls as wagtailadmin_urls
 from wagtail.contrib.sitemaps.views import sitemap
 from wagtail.documents import urls as wagtaildocs_urls
 
-from download.utls import urlpatterns as download_urls
 from persons.urls import urlpatterns as persons_urls
 from persons.views import UserLoginView
 from project import settings
@@ -49,7 +48,10 @@ schema_view = get_schema_view(
         permissions.AllowAny,
     ],
     patterns=[
-        # path("api/", include(("project.urls_api", "hub_api"), namespace="hub_api")),
+        path(
+            "api/",
+            include(("project.urls_api", "project_api"), namespace="project_api"),
+        ),
     ],
 )
 
@@ -60,9 +62,10 @@ urlpatterns = [
         include((persons_urls, "persons"), namespace="persons"),
         name="persons",
     ),
-    path(
-        "download/", include((download_urls, "download"), "downloads"), name="downloads"
-    ),
+    path("api/", include(("project.urls_api", "project_api"), namespace="project_api")),
+    # path(
+    #     "download/", include((download_urls, "download"), "downloads"), name="downloads"
+    # ),
     re_path("admin/login/", UserLoginView.as_view(), name="wagtailadmin_login"),
     re_path(r"^admin/", include(wagtailadmin_urls)),
 ]

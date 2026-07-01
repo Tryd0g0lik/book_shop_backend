@@ -16,7 +16,11 @@ class BrandAdmin(ModelAdmin):
     menu_order = 300
     list_per_page = 25
 
-    list_display = ["name", "description", "created_at", "updated_at"]
+    list_display = [
+        "name",
+        "description",
+        "updated_at",
+    ]
     list_filter = [
         "created_at",
         "updated_at",

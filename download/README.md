@@ -9,6 +9,8 @@
 # ============================================
 INSTALLED_APPS = [
     # ...
+    "wagtail.documents", 
+    # ...
     "download",
 ]
 

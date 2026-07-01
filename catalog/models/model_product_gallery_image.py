@@ -67,7 +67,6 @@ class ProductGalleryImageModel(Orderable, ClusterableModel, AbstractModel):
             "ul",
             "ol",
             "p",
-            "u",
         ],
     )
 
@@ -89,7 +88,7 @@ class ProductGalleryImageModel(Orderable, ClusterableModel, AbstractModel):
         verbose_name_plural = _("Catalog")
         ordering = ["-created_at"]
         app_label = "catalog"
-        db_table = "product_gallery_image"
+        db_table = "product_gallery"
         unique_together = (("page", "product"),)
 
     def __str__(self):

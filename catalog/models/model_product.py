@@ -13,6 +13,12 @@ from django.core.validators import (
 )
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from wagtail.admin.panels import (
+    FieldPanel,
+    FieldRowPanel,
+    MultiFieldPanel,
+    PageChooserPanel,
+)
 from wagtail.fields import RichTextField
 
 from .model_abstract import AbstractModel
@@ -39,7 +45,7 @@ class ProductModel(AbstractModel):
         validators=[
             MaxLengthValidator(150),
         ],
-        features=["html", "bold", "italic", "link", "ol", "ul", "image", "embed"],
+        features=["bold", "italic", "link", "ol", "ul", "image", "embed"],
     )
 
     description = RichTextField(
@@ -49,7 +55,7 @@ class ProductModel(AbstractModel):
         validators=[
             MaxLengthValidator(1000),
         ],
-        features=["html", "bold", "italic", "link", "ol", "ul", "image", "embed"],
+        features=["bold", "italic", "link", "ol", "ul", "image", "embed"],
     )
     category = models.ForeignKey(
         "CategoryModel",
@@ -107,24 +113,40 @@ class ProductModel(AbstractModel):
     )
 
     panels = [
-        "is_active",
-        "name",
-        "describe_preview",
-        "description",
-        "category",
-        "brand",
-        "price",
-        "stock_quantity",
-        "discount_percent",
-        "attributes ",
-        "attributes_additional ",
-        "created_at",
+        MultiFieldPanel(
+            [
+                FieldRowPanel(
+                    [
+                        "is_active",
+                        "name",
+                        FieldPanel("created_at", read_only=True),
+                    ]
+                ),
+                FieldRowPanel(
+                    [
+                        "category",
+                        "brand",
+                    ]
+                ),
+                FieldRowPanel(
+                    [
+                        "price",
+                        "stock_quantity",
+                        "discount_percent",
+                    ]
+                ),
+                "describe_preview",
+                "description",
+                PageChooserPanel("attributes"),
+                "attributes_additional",
+            ]
+        ),
     ]
 
     class Meta:
         verbose_name = _("Product")
         db_table = "product_model"
-        unique_together = (("name", "category"),)
+        unique_together = (("name", "category"), ("name", "brand"))
 
     def __str__(self):
         return f"{self.name} - {self.created_at}"

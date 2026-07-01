@@ -1,3 +1,5 @@
 from django.urls import path
 
-# urlpatterns = [path("modal_pages/form/", download_catalog_path)]
+from download.views.view_load_file import CatalogViewSet
+
+# urlpatterns = [path("load/file/", CatalogViewSet.as_view({"get": "list"}), name="load-file"),]

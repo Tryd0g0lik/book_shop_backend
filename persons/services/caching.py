@@ -10,6 +10,8 @@ import re
 import threading
 from typing import Coroutine, Optional
 
+from django.conf.global_settings import DEFAULT_CHARSET
+
 from persons.adapters import AsyncCacherAdapter, CacherAdapter
 from persons.interfaces import AsyncCacherAdapter as AsyncCacherAdapterInitialize
 from persons.interfaces import CacherAdapter as CacherAdapterInitialize
@@ -90,7 +92,9 @@ class CacheManager:
                         await conn.setex(
                             key,
                             ttl,
-                            json.dumps(default, ensure_ascii=False).encode("utf-8"),
+                            json.dumps(default, ensure_ascii=False).encode(
+                                DEFAULT_CHARSET
+                            ),
                         )
                         log.info(
                             self.log_t[:-1]

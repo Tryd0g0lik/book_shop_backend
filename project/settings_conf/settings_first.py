@@ -279,6 +279,10 @@ STATIC_URL = "/static/"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
+# Temporary directory for downloads
+TEMP_UPLOAD_DIR = os.path.join(BASE_DIR, "media", "temp")
+Path(TEMP_UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
+os.environ["TEMP"] = TEMP_UPLOAD_DIR
 # ============================================
 # OPTIONS FOR FILE'S REPOSITORY/SOURCE
 # ============================================

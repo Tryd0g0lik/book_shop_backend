@@ -3,7 +3,6 @@ persons/views/views_login.py
 """
 
 import asyncio
-import base64
 import datetime
 import json
 import logging
@@ -13,17 +12,14 @@ from allauth.account.views import LoginView
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
 from django.db.models import QuerySet
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
-from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from rest_framework import status
-from watchfiles import awatch
 
 from persons.exceptions.error_person import PersonLogingError
 from persons.forms import UsersLoginForm
 from persons.forms.verification_form import UsersCheckCodeVerificationForm
-from persons.interfaces import UsersPydantic
 
 log = logging.getLogger(__name__)
 
@@ -102,7 +98,7 @@ class UserLoginView(LoginView):
             if not user_queryset.exists():
 
                 log.warning(ERROR_TEXT + " User does not exists!")
-                messages.warning(request, "User does not exists!")
+                messages.warning(request, _("User does not exists!"))
                 return JsonResponse(
                     data={
                         "details": ERROR_TEXT
@@ -114,7 +110,7 @@ class UserLoginView(LoginView):
                 user = user_queryset.first()
                 password_hashed = user.check_password(password)
                 if not password_hashed:
-                    t = "User's password is invalid!"
+                    t = _("User's password is invalid!")
                     log.warning(ERROR_TEXT + f" {t}")
                     messages.warning(request, t)
                     return JsonResponse(
