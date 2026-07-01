@@ -1,3 +1,4 @@
+# download/task_save_file.py:1
 import asyncio
 import json
 import logging
@@ -6,11 +7,8 @@ import queue
 import re
 import threading
 from datetime import datetime
-from multiprocessing.queues import Queue
 
 import pandas as pd
-from django.utils.translation import gettext_lazy as _
-from twisted.names.client import query
 
 from project import settings
 from project.settings_conf.settings_first import DEFAULT_CHARSET
@@ -18,6 +16,14 @@ from project.settings_conf.settings_first import DEFAULT_CHARSET
 log = logging.getLogger(__name__)
 PATH_ERROR_DIR = os.path.join(settings.MEDIA_ROOT, "error_catalog")
 TEMPLATE_NAME_OF_FILES = r"(^product_error_[0-9-_]+\.txt)$"
+CHECKLIST = [
+    "product_name",
+    "describe_preview",
+    "description",
+    "price",
+    "discount_percent",
+    "stock_quantity",
+]
 MAX_FILE_SIZE = 200 * 1024
 
 q = queue.Queue(maxsize=2000)
@@ -51,6 +57,9 @@ async def write_error_data(q: queue, view_list: list) -> None:
         )
 
 
+# ============================================
+# TASK IS FOR SAVING DATA OF FILE IN DATABASE.
+# ============================================
 def task_saving_data_oFfile(*args, **kwargs):
     file_name = list(args)[0]
     print(file_name)
@@ -85,8 +94,12 @@ async def subprocess_data(data: pd.array):
         ProductModel,
     )
 
+    lock = asyncio.Lock()
     # Keys of file
     keys = list(data.keys())
+    checklist: list[str] = [item for item in keys if item in CHECKLIST]
+    if len(checklist) < 4:
+        return
     # Values
     values = list(data.values)
     shape = data.shape
@@ -101,6 +114,7 @@ async def subprocess_data(data: pd.array):
             # CREATE PRODUCT IN DATABASE
             # ============================================
             k = keys[index]
+
             v = view_list[index]
             try:
                 if k == "product_name":
@@ -163,60 +177,67 @@ async def subprocess_data(data: pd.array):
 
                 await write_error_data(q, [k, v])
                 continue
-        try:
-
-            await product.asave()
-        except Exception as e:
-            log.warning(
-                f"[subprocess_data]: It seems this product was created before that. WARNING => {
-                e.args[0] if len(e.args) > 0 else str(e)
-                }"
-            )
-            await write_error_data(q, [k, v])
-            continue
-
+        async with lock:
             # ============================================
-            # CREATE CHARACTERISTICS OF PRODUCT IN DATABASE
+            # CREATE POSITIONS IN DATABASE
             # ============================================
-        if keys.count("attributes") > 0:
-            number = keys.index("attributes")
+            try:
 
-            result: list[str] = view_list[number].split(",")
-            view_list: list[str] = [result] if type(result) == str else result
-            for item in view_list:
-                item_list: list[str] | str = (
-                    item.split(":")
-                    if type(item) == str and "=" not in item
-                    else item.split("=")
+                await product.asave()
+            except Exception as e:
+                log.warning(
+                    f"[subprocess_data]: It seems this product was created before that. WARNING => {
+                    e.args[0] if len(e.args) > 0 else str(e)
+                    }"
                 )
+                await write_error_data(q, [k, v])
+                continue
 
-                v_list = [item.strip() for item in item_list]
-                try:
-                    tasks_collection = []
-                    for i in range(0, len(v_list)):
-                        if i % 2 != 0:
-                            continue
-                        tasks_collection.append(
-                            asyncio.create_task(
-                                ProductCharacteristics.objects.acreate(
-                                    name=v_list[0].strip(),
-                                    value=v_list[1].strip(),
-                                    product_id=product.id,
+                # ============================================
+                # CREATE CHARACTERISTICS OF PRODUCT IN DATABASE
+                # ============================================
+            if keys.count("attributes") > 0:
+                number = keys.index("attributes")
+
+                result: list[str] = view_list[number].split(",")
+                view_list: list[str] = [result] if type(result) == str else result
+                for item in view_list:
+                    item_list: list[str] | str = (
+                        item.split(":")
+                        if type(item) == str and "=" not in item
+                        else item.split("=")
+                    )
+
+                    v_list = [item.strip() for item in item_list]
+                    try:
+                        tasks_collection = []
+                        for i in range(0, len(v_list)):
+                            if i % 2 != 0:
+                                continue
+                            tasks_collection.append(
+                                asyncio.create_task(
+                                    ProductCharacteristics.objects.acreate(
+                                        name=v_list[0].strip(),
+                                        value=v_list[1].strip(),
+                                        product_id=product.id,
+                                    )
                                 )
                             )
+                        await asyncio.gather(*tasks_collection)
+                    except Exception as e:
+                        log.error(
+                            "[subprocess_data]: Error => {}".format(
+                                e.args[0] if len(e.args) > 0 else str(e)
+                            )
                         )
-                    await asyncio.gather(*tasks_collection)
-                except Exception as e:
-                    log.error(
-                        "[subprocess_data]: Error => {}".format(
-                            e.args[0] if len(e.args) > 0 else str(e)
-                        )
-                    )
-                    await write_error_data(q, v_list)
-                    continue
+                        await write_error_data(q, v_list)
+                        continue
     await storage_errors(q)
 
 
+# ============================================
+# STORAGE A LOST DATA
+# ============================================
 async def storage_errors(q: queue.Queue):
     queue_data = None
     # ---
@@ -272,6 +293,9 @@ async def storage_errors(q: queue.Queue):
         )
 
 
+# ============================================
+# FILE OBJECT
+# ============================================
 class Files:
     def __init__(self, path: str):
         self.path = path

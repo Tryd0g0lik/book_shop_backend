@@ -3,8 +3,8 @@
 from django import forms
 from django.forms import Select, TextInput
 from django.utils.translation import gettext_lazy as _
-from wagtail.admin.panels import FieldPanel, FieldRowPanel, InlinePanel, MultiFieldPanel
-from wagtail_modeladmin.options import ModelAdmin, modeladmin_register
+from wagtail.admin.panels import FieldPanel, FieldRowPanel, MultiFieldPanel
+from wagtail_modeladmin.options import ModelAdmin
 
 from catalog.models import ProductGalleryImageModel
 
@@ -60,67 +60,6 @@ class ProductGalleryImageAdmin(ModelAdmin):
                         FieldPanel("published_at", read_only=True),
                     ]
                 ),
-                # InlinePanel(
-                #     "properties",
-                #     heading=_("Properties"),
-                #     label=_("Property"),
-                #     classname="custom-property-value",
-                #     panels=[
-                #         MultiFieldPanel(
-                #             [
-                #                 FieldRowPanel(
-                #                     [
-                #                         FieldPanel(
-                #                             "name",
-                #                             required_on_save=True,
-                #                             classname="form-property-name",
-                #                         ),
-                #                         FieldPanel(
-                #                             "value",
-                #                             required_on_save=True,
-                #                             widget=TextInput(
-                #                                 attrs={
-                #                                     "required": True,
-                #                                     "name": "Characteristic-value",
-                #                                 }
-                #                             ),
-                #                             classname="form-characteristic-value",
-                #                         ),
-                #                     ]
-                #                 ),
-                #                 "description",
-                #                 FieldPanel("created_at", read_only=True),
-                #                 "id",
-                #             ]
-                #         )
-                #     ],
-                # ),
-                # InlinePanel(
-                #     "images",  # This is the related_name from OneImageModels
-                #     label=_("Image"),
-                #     heading=_("Images"),
-                #     classname="custom-property-value",
-                #     panels=[
-                #         MultiFieldPanel(
-                #             [
-                #                 FieldPanel("title"),
-                #                 FieldPanel("image"),
-                #                 FieldRowPanel(
-                #                     [
-                #                         FieldPanel("describe"),
-                #                         FieldPanel("label"),
-                #                     ]
-                #                 ),
-                #                 FieldRowPanel(
-                #                     [
-                #                         FieldPanel("x"),
-                #                         FieldPanel("y"),
-                #                     ]
-                #                 ),
-                #             ]
-                #         )
-                #     ],
-                # ),
             ]
         ),
     ]

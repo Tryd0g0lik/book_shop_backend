@@ -1,10 +1,8 @@
 # catalog/admin/admin_product_group/admin_product.py:1
-from django.forms import TextInput
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from wagtail.admin import messages
-from wagtail.admin.panels import FieldPanel, FieldRowPanel, InlinePanel, MultiFieldPanel
 from wagtail_modeladmin.options import ModelAdmin
 
 from catalog.models import ProductModel
@@ -55,6 +53,11 @@ class ProductAdmin(ModelAdmin):
     is_active_toggle.short_description = _("Status")
 
     def get_actions(self, request):
+        """
+        TODO: It doesn't  checking
+        :param request:
+        :return:
+        """
         actions = super().get_actions(request)
         actions["activate_products"] = (
             self.activate_products,

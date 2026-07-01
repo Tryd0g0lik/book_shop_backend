@@ -3,15 +3,11 @@ import os
 import re
 import tempfile
 
-import pandas as pd
-from adrf import serializers
-
-# from rest_framework import status
 from adrf.viewsets import ViewSet
 from django.http import JsonResponse
 from rest_framework import status
 
-from catalog.models import ProductGalleryImageModel, ProductModel
+from catalog.models import ProductGalleryImageModel
 from download.task_save_file import task_saving_data_oFfile
 
 #
