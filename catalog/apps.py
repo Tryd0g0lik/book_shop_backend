@@ -7,4 +7,4 @@ class CatalogConfig(AppConfig):
     name = "catalog"
 
 
-sys.setrecursionlimit(2000)
+# sys.setrecursionlimit(2000)

@@ -1,0 +1,16 @@
+{
+  "status": "done",
+  "assets": {
+    "admin_download_main_0eb96f7579233da5ad1f.js": {
+      "name": "admin_download_main_0eb96f7579233da5ad1f.js",
+      "path": "E:\\OpenServer\\domains\\book_shop\\backend\\download\\static\\scripts\\wagtail-admin\\admin_download_main_0eb96f7579233da5ad1f.js",
+      "publicPath": "/static/download/scripts/wagtail-admin/admin_download_main_0eb96f7579233da5ad1f.js"
+    }
+  },
+  "chunks": {
+    "main": [
+      "admin_download_main_0eb96f7579233da5ad1f.js"
+    ]
+  },
+  "publicPath": "/static/download/scripts/wagtail-admin/"
+}

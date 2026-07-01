@@ -1,22 +1,32 @@
 # catalog/models/model_product_gallery_image.py:1
 # Intermediate model between product, image for product and pages of one product,
-# from allauth.account.models import EmailAddress
+
 from datetime import datetime
 
-from django.core.exceptions import ValidationError
 from django.core.validators import (
     MaxLengthValidator,
     MaxValueValidator,
     MinValueValidator,
+    RegexValidator,
 )
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from modelcluster.models import ClusterableModel
+from wagtail.fields import RichTextField
+from wagtail.models import Orderable
 
 from catalog.models.model_abstract import AbstractModel
 
 
-class ProductGalleryImageModel(AbstractModel):
+class ProductGalleryImageModel(Orderable, ClusterableModel, AbstractModel):
     f"""
+    Every position contain (in self) it and a product data, and images fot product
+    This is the middle table between the table (models):
+    - images gallery (of wagtail) for products;
+    - products positions;
+    - characteristics of products. It is a common properties which we often can see in between positions;
+    And additional descript.
+    # ---
     It is a set of content for publish.
     Every item it is one page.
     Every page would be to contain the one product:
@@ -35,19 +45,7 @@ class ProductGalleryImageModel(AbstractModel):
         on_delete=models.CASCADE,
         limit_choices_to={"is_active": True},
     )
-    # image = models.ForeignKey(
-    #     "wagtailimages.Image",
-    #     on_delete=models.CASCADE,
-    #     limit_choices_to={},
-    #     related_name="+",
-    #
-    # )
-    image = models.ManyToManyField(
-        "wagtailimages.Image",
-        limit_choices_to={},
-        related_name="+",
-        related_query_name="image_query_related",
-    )
+
     product = models.ForeignKey(
         "ProductModel",
         on_delete=models.CASCADE,
@@ -55,9 +53,23 @@ class ProductGalleryImageModel(AbstractModel):
         limit_choices_to={"is_active": True},
         related_query_name="product_related",
     )
-    caption = models.CharField(
-        blank=True, max_length=250, null=True, help_text=_("The caption of the image")
+
+    caption = RichTextField(
+        blank=True,
+        max_length=80,
+        null=True,
+        help_text=_("Comment to the product"),
+        validators=[RegexValidator(regex=r"^[\.>< =\"\'\/ \w \"'_%+-]+$")],
+        features=[
+            "bold",
+            "italic",
+            "link",
+            "ul",
+            "ol",
+            "p",
+        ],
     )
+
     version = models.IntegerField(
         default=0,
         validators=[MinValueValidator(0), MaxValueValidator(9999)],
@@ -70,35 +82,17 @@ class ProductGalleryImageModel(AbstractModel):
     published_at = models.DateTimeField(
         null=True, blank=True, help_text=_("Designates when this item was published")
     )
-    # panels = [
-    #     FieldPanel("caption"),
-    #     FieldPanel("image"),
-    #     FieldPanel("product"),
-    #     FieldPanel("version"),
-    #     FieldPanel("is_active"),
-    #     FieldPanel("published_at", read_only=True),
-    #     FieldPanel("updated_by", required_on_save=True),
-    # ]
-    # panels = [Image("image"), "product", "caption"]
 
     class Meta:
-        verbose_name = _("Product Gallery Image")
-        verbose_name_plural = _("Product Gallery Images")
+        verbose_name = _("Catalog")
+        verbose_name_plural = _("Catalog")
         ordering = ["-created_at"]
         app_label = "catalog"
-        db_table = "product_gallery_image"
+        db_table = "product_gallery"
         unique_together = (("page", "product"),)
 
     def __str__(self):
         return f"Page {self.page.name} - Product: {self.product.name}"
-
-    def clean_version(self) -> None:
-        if self.version < 0 and self.version == 9999:
-            self.version = 0
-            self.save(update_fields=["version"])
-        else:
-            self.version += 1
-            self.save(update_fields=["version"])
 
     def save(
         self,
@@ -107,10 +101,15 @@ class ProductGalleryImageModel(AbstractModel):
         force_update=False,
         using=None,
         update_fields=None,
-    ) -> None:
-        from wagtail.images.views.images import Image
+    ):
+        # --- Number version (after changes)
+        if self.version < 0 or self.version == 9999:
+            self.version = 0
+        else:
+            self.version += 1
 
         if self.is_active:
+            # -- Date of published
             controller = False
             if self.version == 0:
                 controller = True

@@ -1,5 +1,6 @@
 # catalog/admin/admin_product_group/admin_category.py:1
-from wagtail.admin.panels import FieldPanel
+from django.utils.translation import gettext_lazy as _
+from wagtail.admin.panels import FieldPanel, FieldRowPanel, MultiFieldPanel
 from wagtail_modeladmin.options import ModelAdmin
 
 from catalog.models import CategoryModel
@@ -7,18 +8,17 @@ from catalog.models import CategoryModel
 
 class CategoryAdmin(ModelAdmin):
     model = CategoryModel
-    list_display = [
-        "name",
-        "description",
-    ]
-    search_fields = ["name", "description"]
-    list_filter = ["created_at"]
     icon = "tag"
-    add_to_admin_menu = True
-    menu_label = "Categories"
-    menu_order = 300
+    menu_icon = "tag"
+    menu_label = _("Categories")
+    add_to_admin_menu = False
+    base_url_path = "catalog/categories"
+    menu_order = 400
+    list_par_page = 25
 
-    panels = {
-        FieldPanel("name"),
-        FieldPanel("description"),
-    }
+    list_display = ["name", "description", "created_at", "updated_at"]
+    list_filter = [
+        "created_at",
+        "updated_at",
+    ]
+    search_fields = ["name", "created_at", "updated_at", "description"]

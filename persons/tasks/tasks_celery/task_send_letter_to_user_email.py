@@ -18,6 +18,7 @@ from django.template.loader import render_to_string
 from persons import EnumEmailLetter, EnumTemplatesKeysCache, EnuSubjectOfLetter
 from persons.exceptions import PersonErrorTasks
 from project.settings_conf.settings_env import APP_DEFAULT_FROM_EMAIL
+from project.settings_conf.settings_first import DEFAULT_CHARSET
 
 log = logging.getLogger(__name__)
 
@@ -81,7 +82,7 @@ async def child_process_get_keys_0(
         if result_bool:
 
             for key in keys:
-                key = key.decode("utf-8")
+                key = key.decode(DEFAULT_CHARSET)
                 if ":letter:" in key:
                     continue
                 log.info(
@@ -126,7 +127,7 @@ async def child_process_get_keys_0(
             assert len(args) >= 1, "One or more keys"
             log.info(f"{lt} # test run {args}")
             for k in args:
-                k = k.decode("utf-8")
+                k = k.decode(DEFAULT_CHARSET)
                 data_list: list = []
 
                 try:
@@ -137,7 +138,7 @@ async def child_process_get_keys_0(
                         EnumTemplatesKeysCache.USER_PENDING_LETTER.value
                         % k.split(":")[-1]
                     )
-                    user_data_json = json.loads((data_list[0]).decode("utf-8"))
+                    user_data_json = json.loads((data_list[0]).decode(DEFAULT_CHARSET))
                     if "verification_code" in user_data_json:
                         data_list.clear()
                         continue
@@ -249,7 +250,7 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
         if result_bool and qsize > 0:
             while not dict_queue.empty():
                 byte_code = dict_queue.get_nowait()
-                list_of_keys = json.loads(byte_code.decode("utf-8"))
+                list_of_keys = json.loads(byte_code.decode(DEFAULT_CHARSET))
 
                 # list_of_keys.append(json_code)
                 account_manager = AccountManager()
@@ -342,7 +343,7 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
                         # ---
                         for one_dict in collection_:
                             user_data_json: dict = json.loads(
-                                (one_dict).decode("utf-8")
+                                (one_dict).decode(DEFAULT_CHARSET)
                             )
 
                             user_data_json["verification_code"] = generate_login_code

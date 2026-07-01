@@ -13,6 +13,12 @@ from django.core.validators import (
 )
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from wagtail.admin.panels import (
+    FieldPanel,
+    FieldRowPanel,
+    MultiFieldPanel,
+    PageChooserPanel,
+)
 from wagtail.fields import RichTextField
 
 from .model_abstract import AbstractModel
@@ -39,7 +45,7 @@ class ProductModel(AbstractModel):
         validators=[
             MaxLengthValidator(150),
         ],
-        features=["bold", "italic", "link"],
+        features=["bold", "italic", "link", "ol", "ul", "image", "embed"],
     )
 
     description = RichTextField(
@@ -105,24 +111,42 @@ class ProductModel(AbstractModel):
         null=True,
         help_text=_("Uniquer (for product) characteristics of the one product."),
     )
+
     panels = [
-        "name",
-        "describe_preview",
-        "description",
-        "category",
-        "brand",
-        "price",
-        "stock_quantity",
-        "discount_percent",
-        "attributes ",
-        "attributes_additional ",
-        "created_at",
+        MultiFieldPanel(
+            [
+                FieldRowPanel(
+                    [
+                        "is_active",
+                        "name",
+                        FieldPanel("created_at", read_only=True),
+                    ]
+                ),
+                FieldRowPanel(
+                    [
+                        "category",
+                        "brand",
+                    ]
+                ),
+                FieldRowPanel(
+                    [
+                        "price",
+                        "stock_quantity",
+                        "discount_percent",
+                    ]
+                ),
+                "describe_preview",
+                "description",
+                PageChooserPanel("attributes"),
+                "attributes_additional",
+            ]
+        ),
     ]
 
     class Meta:
         verbose_name = _("Product")
         db_table = "product_model"
-        unique_together = (("name", "category"),)
+        unique_together = (("name", "category"), ("name", "brand"))
 
     def __str__(self):
         return f"{self.name} - {self.created_at}"
@@ -144,6 +168,31 @@ class ProductModel(AbstractModel):
     def clean_price(self):
         if self.price is None or self.price < 0:
             self.price = 0
+
+    def clean_attributes_additional(self):
+        if self.attributes_additional is None:
+            pass
+
+    def clean(self):
+        super().clean()
+
+    def save(
+        self,
+        *,
+        force_insert=False,
+        force_update=False,
+        using=None,
+        update_fields=None,
+    ):
+
+        if update_fields:
+            pass
+        return super().save(
+            force_insert=force_insert,
+            force_update=force_update,
+            using=using,
+            update_fields=update_fields,
+        )
 
     # def clean_discount(self):
     #     if (

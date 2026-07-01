@@ -11,20 +11,6 @@ from .model_abstract import AbstractCategoryPage
 class ProductPageModel(AbstractCategoryPage):
     id = models.AutoField(primary_key=True)
     is_active = models.BooleanField(default=False, verbose_name=_("Is active?"))
-    # panels = [
-    #     FieldPanel("id"),
-    #     MultiFieldPanel([
-    #         FieldRowPanel([
-    #             FieldPanel("name"),
-    #             FieldPanel("created_at"),
-    #             FieldPanel("is_active"),
-    #         ])
-    #     ]),
-    #
-    #     FieldPanel("description"),
-    #
-    #     FieldPanel("updated_at", required_on_save=True),
-    # ]
 
     class Meta:
         verbose_name = _("Product Page")

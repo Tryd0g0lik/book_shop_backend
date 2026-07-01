@@ -28,7 +28,6 @@ from drf_yasg.views import get_schema_view
 from rest_framework import permissions
 from wagtail import urls as wagtail_urls
 from wagtail.admin import urls as wagtailadmin_urls
-from wagtail.admin.views import account, home
 from wagtail.contrib.sitemaps.views import sitemap
 from wagtail.documents import urls as wagtaildocs_urls
 
@@ -36,8 +35,6 @@ from persons.urls import urlpatterns as persons_urls
 from persons.views import UserLoginView
 from project import settings
 from project.settings_conf.settings_env import APP_NAME
-
-# from .urls_api import urlpatterns as hub_urls
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -51,7 +48,10 @@ schema_view = get_schema_view(
         permissions.AllowAny,
     ],
     patterns=[
-        # path("api/", include(("project.urls_api", "hub_api"), namespace="hub_api")),
+        path(
+            "api/",
+            include(("project.urls_api", "project_api"), namespace="project_api"),
+        ),
     ],
 )
 
@@ -62,6 +62,10 @@ urlpatterns = [
         include((persons_urls, "persons"), namespace="persons"),
         name="persons",
     ),
+    path("api/", include(("project.urls_api", "project_api"), namespace="project_api")),
+    # path(
+    #     "download/", include((download_urls, "download"), "downloads"), name="downloads"
+    # ),
     re_path("admin/login/", UserLoginView.as_view(), name="wagtailadmin_login"),
     re_path(r"^admin/", include(wagtailadmin_urls)),
 ]
@@ -92,4 +96,5 @@ urlpatterns += (
     ],
 )
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 #

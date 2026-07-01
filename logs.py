@@ -10,6 +10,8 @@ import threading
 import time
 from typing import Optional
 
+from project.settings_conf.settings_first import DEFAULT_CHARSET
+
 _log_maintenance_started = False
 
 _log_lock = threading.Lock()
@@ -87,7 +89,7 @@ def check_log_file(
             with _log_lock:
                 if not os.path.exists(log_file):
                     continue
-                with open(log_file, "r+", encoding="utf-8") as f:
+                with open(log_file, "r+", encoding=DEFAULT_CHARSET) as f:
                     lines = f.readlines()
                     if len(lines) >= max_lines:
                         # ---------------- new lines

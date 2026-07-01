@@ -9,7 +9,6 @@ from project.settings_conf.settings_env import APP_MINIMUM_PASSWORD_LENGTH
 TEST_FORM_DATA = [
     # ========== HAPPY PATH TESTS ==========
     {
-
         "name": "valid_admin_user",
         "data": {
             "username": "admin_super",
@@ -25,10 +24,9 @@ TEST_FORM_DATA = [
         "expected": {
             "valid": True,
             "error_field": None,
-        }
+        },
     },
     {
-
         "name": "valid_client_user",
         "data": {
             "username": "client_john",
@@ -44,10 +42,9 @@ TEST_FORM_DATA = [
         "expected": {
             "valid": True,
             "error_field": None,
-        }
+        },
     },
     {
-
         "name": "valid_moderator_user",
         "data": {
             "username": "moderator_anna",
@@ -63,12 +60,10 @@ TEST_FORM_DATA = [
         "expected": {
             "valid": True,
             "error_field": None,
-        }
+        },
     },
-
     # ========== USERNAME VALIDATION TESTS ==========
     {
-
         "name": "username_too_short",
         "data": {
             "username": "ab",  # Less than minimum length
@@ -84,9 +79,9 @@ TEST_FORM_DATA = [
         "expected": {
             "valid": True,
             "error_field": "username",
-        }
-    },{
-
+        },
+    },
+    {
         "name": "username_too_short",
         "data": {
             "username": "ab@+-_00",  # Available symbols
@@ -102,10 +97,9 @@ TEST_FORM_DATA = [
         "expected": {
             "valid": True,
             "error_field": "username",
-        }
+        },
     },
     {
-
         "name": "username_too_long",
         "data": {
             "username": "a" * 50,  # It accessible max length
@@ -121,10 +115,9 @@ TEST_FORM_DATA = [
         "expected": {
             "valid": True,
             "error_field": None,
-        }
+        },
     },
-{
-
+    {
         "name": "username_duplicate",
         "data": {
             "username": "admin_super",  # Already exists. It is a doublicate email
@@ -140,12 +133,11 @@ TEST_FORM_DATA = [
         "expected": {
             "valid": False,
             "error_field": "email",
-            "error_message": "Username already exists"
-        }
+            "error_message": "Username already exists",
+        },
     },
     # ========== USERNAME INVALID TESTS ==========
     {
-
         "name": "username_too_long",
         "data": {
             "username": "a" * 51,  # Exceeds max length
@@ -161,10 +153,9 @@ TEST_FORM_DATA = [
         "expected": {
             "valid": False,
             "error_field": None,
-        }
+        },
     },
-{
-
+    {
         "name": "username_too_short",
         "data": {
             "username": "ab$",  # In symbol $
@@ -180,10 +171,9 @@ TEST_FORM_DATA = [
         "expected": {
             "valid": False,
             "error_field": "username",
-        }
+        },
     },
     {
-
         "name": "username_too_short",
         "data": {
             "username": "ab@+- _00",  # Invalid symbol  " "
@@ -199,10 +189,9 @@ TEST_FORM_DATA = [
         "expected": {
             "valid": False,
             "error_field": "username",
-        }
+        },
     },
     {
-
         "name": "username_too_short",
         "data": {
             "username": "ab@+-%_00",  # Invalid symbol %
@@ -218,10 +207,9 @@ TEST_FORM_DATA = [
         "expected": {
             "valid": False,
             "error_field": "username",
-        }
+        },
     },
     {
-
         "name": "username_with_special_chars",
         "data": {
             "username": "user@#$%^&*()",
@@ -237,11 +225,9 @@ TEST_FORM_DATA = [
         "expected": {
             "valid": False,
             "error_field": "username",
-        }
+        },
     },
-
     {
-
         "name": "username_missing_required",
         "data": {
             "username": "",
@@ -257,12 +243,10 @@ TEST_FORM_DATA = [
         "expected": {
             "valid": False,
             "error_field": "username",
-        }
+        },
     },
-
     # ========== EMAIL VALIDATION TESTS ==========
     {
-
         "name": "invalid_email_format",
         "data": {
             "username": "testuser",
@@ -278,11 +262,10 @@ TEST_FORM_DATA = [
         "expected": {
             "valid": False,
             "error_field": "email",
-            "error_message": "Enter a valid email address"
-        }
+            "error_message": "Enter a valid email address",
+        },
     },
     {
-
         "name": "email_too_long",
         "data": {
             "username": "testuser",
@@ -298,11 +281,10 @@ TEST_FORM_DATA = [
         "expected": {
             "valid": False,
             "error_field": "email",
-            "error_message": "Email cannot exceed 320 characters"
-        }
+            "error_message": "Email cannot exceed 320 characters",
+        },
     },
     {
-
         "name": "email_duplicate",
         "data": {
             "username": "different_user",
@@ -318,11 +300,10 @@ TEST_FORM_DATA = [
         "expected": {
             "valid": False,
             "error_field": "email",
-            "error_message": "Email already registered"
-        }
+            "error_message": "Email already registered",
+        },
     },
-{
-
+    {
         "name": "email_duplicate",
         "data": {
             "username": "different_user",
@@ -338,11 +319,10 @@ TEST_FORM_DATA = [
         "expected": {
             "valid": False,
             "error_field": "email",
-            "error_message": "Email already registered"
-        }
+            "error_message": "Email already registered",
+        },
     },
     {
-
         "name": "email_missing",
         "data": {
             "username": "testuser",
@@ -358,10 +338,10 @@ TEST_FORM_DATA = [
         "expected": {
             "valid": False,
             "error_field": "email",
-            "error_message": "Email is required"
-        }
+            "error_message": "Email is required",
+        },
     },
-{
+    {
         "id": "12A",
         "name": "email_missing",
         "data": {
@@ -378,10 +358,9 @@ TEST_FORM_DATA = [
         "expected": {
             "valid": False,
             "error_field": "email",
-            "error_message": "Email is required"
-        }
+            "error_message": "Email is required",
+        },
     },
-
     # ========== PASSWORD VALIDATION TESTS ==========
     {
         "id": "13",
@@ -400,9 +379,10 @@ TEST_FORM_DATA = [
         "expected": {
             "valid": False,
             "error_field": "password1",
-            "error_message": "Password must be at least 3 characters"
-        }
-    },{
+            "error_message": "Password must be at least 3 characters",
+        },
+    },
+    {
         "id": "13A",
         "name": "password_too_short",
         "data": {
@@ -419,9 +399,10 @@ TEST_FORM_DATA = [
         "expected": {
             "valid": False,
             "error_field": "password1",
-            "error_message": "Password must be at least 3 characters"
-        }
-    },{
+            "error_message": "Password must be at least 3 characters",
+        },
+    },
+    {
         "id": "13B",
         "name": "password_too_short",
         "data": {
@@ -432,15 +413,18 @@ TEST_FORM_DATA = [
             "is_staff": False,
             "category": "CLIENT",
             "check_user": "on",
-            "password1": f"{"a" * APP_MINIMUM_PASSWORD_LENGTH}"[:-1],  # Less than minimum length invalid
+            "password1": f"{"a" * APP_MINIMUM_PASSWORD_LENGTH}"[
+                :-1
+            ],  # Less than minimum length invalid
             "password2": f"{"a" * APP_MINIMUM_PASSWORD_LENGTH}"[:-1],
         },
         "expected": {
             "valid": True,
             "error_field": "password1",
-            "error_message": "Password must be at least 3 characters"
-        }
-    },{
+            "error_message": "Password must be at least 3 characters",
+        },
+    },
+    {
         "id": "13C",
         "name": "password_too_short",
         "data": {
@@ -457,8 +441,8 @@ TEST_FORM_DATA = [
         "expected": {
             "valid": False,
             "error_field": "password1",
-            "error_message": "Password must be at least 3 characters"
-        }
+            "error_message": "Password must be at least 3 characters",
+        },
     },
     {
         "id": "14",
@@ -477,8 +461,8 @@ TEST_FORM_DATA = [
         "expected": {
             "valid": False,
             "error_field": "password2",
-            "error_message": "Passwords do not match"
-        }
+            "error_message": "Passwords do not match",
+        },
     },
     {
         "id": "14A",
@@ -497,8 +481,8 @@ TEST_FORM_DATA = [
         "expected": {
             "valid": False,
             "error_field": "password1",
-            "error_message": "Password is required"
-        }
+            "error_message": "Password is required",
+        },
     },
     {
         "id": "16",
@@ -517,10 +501,9 @@ TEST_FORM_DATA = [
         "expected": {
             "valid": False,
             "error_field": "password1",
-            "error_message": "Password is too common"
-        }
+            "error_message": "Password is too common",
+        },
     },
-
     # ========== CATEGORY AND PERMISSIONS TESTS ==========
     {
         "id": "17",
@@ -532,15 +515,15 @@ TEST_FORM_DATA = [
             "email": "test17@example.com",
             "is_staff": False,
             "category": "INVALID_CATEGORY",
-            "check_user": "on", # Is valid
+            "check_user": "on",  # Is valid
             "password1": "ValidPass123!",
             "password2": "ValidPass123!",
         },
         "expected": {
             "valid": True,
             "error_field": None,
-            "error_message": "Select a valid choice"
-        }
+            "error_message": "Select a valid choice",
+        },
     },
     {
         "id": "18",
@@ -552,15 +535,15 @@ TEST_FORM_DATA = [
             "email": "staff@example.com",
             "is_staff": True,
             "category": "CLIENT",
-            "check_user": "", # Checkbox not checked / Is invalid
+            "check_user": "",  # Checkbox not checked / Is invalid
             "password1": "ValidPass123!",
             "password2": "ValidPass123!",
         },
         "expected": {
             "valid": False,
             "error_field": "check_user",
-            "error_message": "Staff status requires ADMIN category"
-        }
+            "error_message": "Staff status requires ADMIN category",
+        },
     },
     {
         "id": "19",
@@ -579,11 +562,9 @@ TEST_FORM_DATA = [
         "expected": {
             "valid": False,
             "error_field": "check_user",
-            "error_message": "You must confirm user verification"
-        }
+            "error_message": "You must confirm user verification",
+        },
     },
-
-
     # ========== SPECIAL CHARACTER AND UNICODE TESTS ==========
     {
         "id": "23",
@@ -599,10 +580,7 @@ TEST_FORM_DATA = [
             "password1": "ValidPass123!",
             "password2": "ValidPass123!",
         },
-        "expected": {
-            "valid": True,
-            "supports_unicode": True
-        }
+        "expected": {"valid": True, "supports_unicode": True},
     },
     {
         "id": "24",
@@ -618,14 +596,9 @@ TEST_FORM_DATA = [
             "password1": "ValidPass123!",
             "password2": "ValidPass123!",
         },
-        "expected": {
-            "valid": False,
-            "error_field": "email"
-        }
+        "expected": {"valid": False, "error_field": "email"},
     },
-
     # ========== SECURITY TESTS ==========
-
     {
         "id": "26",
         "name": "xss_attempt",
@@ -640,14 +613,11 @@ TEST_FORM_DATA = [
             "password1": "ValidPass123!",
             "password2": "ValidPass123!",
         },
-        "expected": {
-            "valid": False,
-            "error_field": "username"
-        }
+        "expected": {"valid": False, "error_field": "username"},
     },
 ]
-        # metafunc.parametrize(
-        #     "user_registrate_playwright",
-        #     TEST_FORM_DATA,
-        #     ids=[s['id'] for s in TEST_FORM_DATA]
-        # )
+# metafunc.parametrize(
+#     "user_registrate_playwright",
+#     TEST_FORM_DATA,
+#     ids=[s['id'] for s in TEST_FORM_DATA]
+# )

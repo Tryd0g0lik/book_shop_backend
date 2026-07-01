@@ -17,6 +17,7 @@ import logging
 from persons.apps import DEBUG
 from project.settings_conf.settings_env import (
     APP_BASIS_URL,
+    APP_DEFAULT_FROM_EMAIL,
     APP_NAME,
     APP_TIME_ZONE,
     REDIS_URL,
@@ -58,6 +59,7 @@ INSTALLED_APPS = [
     "adrf",
     "webpack_loader",
     "taggit",
+    "bootstrap4",
     # Standard application
     "django.contrib.admin",
     "django.contrib.auth",
@@ -85,7 +87,7 @@ INSTALLED_APPS = [
     "wagtail.sites",
     "wagtail.users",
     "wagtail.snippets",
-    "wagtail.documents",
+    "wagtail.documents",  # $!!
     "wagtail.images",
     "wagtail.search",
     "wagtail.locales",
@@ -101,6 +103,8 @@ INSTALLED_APPS = [
     "catalog.apps.CatalogConfig",
     "content_pages",
     "profiles",
+    # additional
+    "download",
 ]
 
 
@@ -161,6 +165,7 @@ TEMPLATES = [
             os.path.join(BASE_DIR, "persons/templates"),
             os.path.join(BASE_DIR, "templates"),
             os.path.join(BASE_DIR, "catalog/templates"),
+            os.path.join(BASE_DIR, "download/templates"),
         ],
         "APP_DIRS": True,
         "OPTIONS": {
@@ -237,14 +242,14 @@ PBKDF2_ITERATIONS = 720000
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
 
-LANGUAGE_CODE = "en"
+LANGUAGE_CODE = "ru"  # "en"
 TIME_ZONE = f"{APP_TIME_ZONE.strip()}"
 
 USE_I18N = True
 WAGTAIL_I18N_ENABLED = True
 # LANGUAGES - This sets which languages are available on the frontend of the site.
 # WAGTAIL_CONTENT_LANGUAGES - This sets which the languages Wagtail content can be authored in.
-LANGUAGE_CODE = "en"
+
 WAGTAIL_CONTENT_LANGUAGES = LANGUAGES = [
     ("en", "English"),
     ("fr", "French"),
@@ -264,6 +269,8 @@ USE_L10N = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
+    os.path.join(BASE_DIR / "catalog/static"),
+    os.path.join(BASE_DIR / "download/static"),
 ]
 STATIC_ROOT = os.path.join(BASE_DIR, "collectstatic/")
 STATIC_URL = "/static/"
@@ -272,6 +279,10 @@ STATIC_URL = "/static/"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
+# Temporary directory for downloads
+TEMP_UPLOAD_DIR = os.path.join(BASE_DIR, "media", "temp")
+Path(TEMP_UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
+os.environ["TEMP"] = TEMP_UPLOAD_DIR
 # ============================================
 # OPTIONS FOR FILE'S REPOSITORY/SOURCE
 # ============================================
@@ -306,14 +317,18 @@ DATA_UPLOAD_MAX_NUMBER_FILES = 10240
 # APPLICATION DEFINITION
 # ============================================
 # file extension
-f_extension = "csv, docx, pdf, rtf, txt, xlsx, zip"
+f_extension = "csv, docx, pdf, rtf, txt, xlsx, xls, zip"
+
 
 # ============================================
 # WAGTAILSEARCH DEFINITION
 # ============================================
+WAGTAILDOCS_MAX_UPLOAD_SIZE = 10 * 1024 * 1024  # 10MB
 WAGTAILDOCS_EXTENSIONS = list(f_extension.split(", "))
 WAGTAILADMIN_LOGIN_FORM = "persons.forms.UsersLoginForm"
 WAGTAIL_SITE_NAME = f"{APP_NAME}"
+WAGTAIL_USER_TIME_ZONES = TIME_ZONE[:]
+WAGTAILADMIN_NOTIFICATION_FROM_EMAI = APP_DEFAULT_FROM_EMAIL
 # WAGTAIL_APPEND_SLASH = "/"
 # USER_MODEL_USERNAME_FIELD = "TEST_USER_MODEL_USERNAME_FIELD"
 
