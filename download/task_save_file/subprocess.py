@@ -41,6 +41,8 @@ async def subprocess_data(data: pd.array):
         product = ProductModel()
         index_key = keys.index("is_active")
         product.is_active = view_list[index_key]
+        # ---
+        product_name_index = view_list.index("product_name")
         for index in range(0, shape[1] - 1):
             k = None
             v = None
@@ -109,7 +111,7 @@ async def subprocess_data(data: pd.array):
                     )
                 )
 
-                await write_error_data(q, [k, v])
+                await write_error_data(q, [k, v, view_list[product_name_index]])
                 continue
         async with lock:
             # ============================================
@@ -124,7 +126,7 @@ async def subprocess_data(data: pd.array):
                     e.args[0] if len(e.args) > 0 else str(e)
                     }"
                 )
-                await write_error_data(q, [k, v])
+                await write_error_data(q, [k, v, view_list[product_name_index]])
                 continue
 
                 # ============================================
@@ -164,6 +166,7 @@ async def subprocess_data(data: pd.array):
                                 e.args[0] if len(e.args) > 0 else str(e)
                             )
                         )
+                        v_list.append(view_list[product_name_index])
                         await write_error_data(q, v_list)
                         continue
     await storage_errors(q)

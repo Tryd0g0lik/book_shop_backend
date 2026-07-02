@@ -97,12 +97,16 @@ INSTALLED_APPS = [
     "wagtail",
     "wagtail.api.v2",
     "django.contrib.sitemaps",
+    # filters
+    "django_filters",
     # My moduls
     "persons",
     "cart",
     "catalog.apps.CatalogConfig",
     "content_pages",
     "profiles",
+    "crispy_forms",
+    "crispy_bootstrap4",
     # additional
     "download",
 ]

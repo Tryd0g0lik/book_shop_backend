@@ -10,18 +10,6 @@ from rest_framework import status
 from catalog.models import ProductGalleryImageModel
 from download.task_save_file import task_saving_data_oFfile
 
-#
-# class CatalogSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = ProductGalleryImageModel
-#         fields = "__all__"
-
-
-# class ProductSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = ProductModel
-#         fields = "__all__"
-
 
 class CatalogViewSet(ViewSet):
     queryset = ProductGalleryImageModel.objects.all()

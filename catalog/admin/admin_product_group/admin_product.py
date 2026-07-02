@@ -5,6 +5,7 @@ from django.utils.translation import gettext_lazy as _
 from wagtail.admin import messages
 from wagtail_modeladmin.options import ModelAdmin
 
+from catalog.filters import AlphabeticalFilter, PriceFilter
 from catalog.models import ProductModel
 
 
@@ -27,14 +28,15 @@ class ProductAdmin(ModelAdmin):
         "is_active_toggle",
     ]
     list_filter = [
+        AlphabeticalFilter,
         "category",
         "brand",
-        "price",
+        PriceFilter,
     ]
-    filter_horizontal = [
-        "stock_quantity",
-        "is_active_toggle",
-    ]
+    # filter_horizontal = [
+    #     "stock_quantity",
+    #     "is_active_toggle",
+    # ]
 
     def is_active_toggle(self, obj):
         """Переключатель статуса прямо в списке"""

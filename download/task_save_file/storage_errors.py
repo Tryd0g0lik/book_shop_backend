@@ -23,7 +23,13 @@ async def write_error_data(q: queue, view_list: list) -> None:
     try:
         q.put_nowait(
             json.dumps(
-                {view_list[0].strip(): str(view_list[1]).strip()}, ensure_ascii=False
+                {
+                    view_list[0].strip(): {
+                        "product_name": str(view_list[2]).strip(),
+                        "value": str(view_list[1]).strip(),
+                    }
+                },
+                ensure_ascii=False,
             )
         )
     except queue.Full:
