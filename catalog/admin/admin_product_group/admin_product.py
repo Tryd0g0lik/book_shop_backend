@@ -26,7 +26,15 @@ class ProductAdmin(ModelAdmin):
         "stock_quantity",
         "is_active_toggle",
     ]
-    search_fields = ["name", "brand", "category"]
+    list_filter = [
+        "category",
+        "brand",
+        "price",
+    ]
+    filter_horizontal = [
+        "stock_quantity",
+        "is_active_toggle",
+    ]
 
     def is_active_toggle(self, obj):
         """Переключатель статуса прямо в списке"""

@@ -1,21 +1,14 @@
-# download/task_save_file.py:1
+# download/task_save_file/subprocess.py:1
 import asyncio
-import json
 import logging
-import os
 import queue
 import re
-import threading
-from datetime import datetime
 
 import pandas as pd
 
-from project import settings
-from project.settings_conf.settings_first import DEFAULT_CHARSET
+from download.task_save_file.storage_errors import storage_errors, write_error_data
 
-log = logging.getLogger(__name__)
-PATH_ERROR_DIR = os.path.join(settings.MEDIA_ROOT, "error_catalog")
-TEMPLATE_NAME_OF_FILES = r"(^product_error_[0-9-_]+\.txt)$"
+q = queue.Queue(maxsize=2000)
 CHECKLIST = [
     "product_name",
     "describe_preview",
@@ -24,66 +17,7 @@ CHECKLIST = [
     "discount_percent",
     "stock_quantity",
 ]
-MAX_FILE_SIZE = 200 * 1024
-
-q = queue.Queue(maxsize=2000)
-
-
-async def write_error_data(q: queue, view_list: list) -> None:
-    """
-
-    :param q: queue. When will be writing if The data don't save in database.
-    :param view_list: IT is data which will be  saving. Zero index it is a key. Second it is a value/
-        This list hase a length to 2 (index 0 & index 1)/
-    :return: void
-    """
-    try:
-        q.put_nowait(
-            json.dumps(
-                {view_list[0].strip(): str(view_list[1]).strip()}, ensure_ascii=False
-            )
-        )
-    except queue.Full:
-        await asyncio.wait_for(
-            asyncio.to_thread(
-                lambda: q.put(
-                    json.dumps(
-                        {view_list[0].strip(): str(view_list[1]).strip()},
-                        ensure_ascii=False,
-                    )
-                )
-            ),
-            30,
-        )
-
-
-# ============================================
-# TASK IS FOR SAVING DATA OF FILE IN DATABASE.
-# ============================================
-def task_saving_data_oFfile(*args, **kwargs):
-    file_name = list(args)[0]
-    print(file_name)
-    if not file_name:
-        return
-    path = os.getcwd() + "\\media\\documents\\"
-    names_list = os.listdir(path)
-    names_list = [item for item in names_list if item == file_name]
-    if len(names_list) == 0:
-        return
-    try:
-
-        def wraper():
-            print(path + file_name)
-            data = pd.read_excel(path + file_name, engine="xlrd")
-            # ---
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            loop.run_until_complete(subprocess_data(data))
-            return
-
-        threading.Thread(target=wraper).start()
-    except Exception as e:
-        print(e)
+log = logging.getLogger(__name__)
 
 
 async def subprocess_data(data: pd.array):
@@ -233,112 +167,3 @@ async def subprocess_data(data: pd.array):
                         await write_error_data(q, v_list)
                         continue
     await storage_errors(q)
-
-
-# ============================================
-# STORAGE A LOST DATA
-# ============================================
-async def storage_errors(q: queue.Queue):
-    queue_data = None
-    # ---
-    f = Files(PATH_ERROR_DIR)
-    try:
-        while not q.empty():
-            try:
-                queue_data = q.get_nowait()
-
-            except Exception as e:
-                log.error(
-                    "[storage_errors]: {}".format(
-                        e.args[0] if len(e.args) > 0 else str(e)
-                    )
-                )
-                return
-
-            # Search an empty file
-            # Check file, it is full or empty
-            empty_file = f.get_empty_file()
-            # ---
-            s = f"{json.dumps(queue_data, ensure_ascii=False)}\n"
-            # If Files was found
-            if empty_file is not None:
-                # for name in files_name:
-                path_full = os.path.join(f.path, empty_file)
-
-                # If full
-                with open(path_full, "r+", encoding=DEFAULT_CHARSET) as file:
-                    text_old = file.read()
-                    if len(text_old) == 0:
-                        file.write(s)
-                    else:
-                        # text_new = f"{text_old}{s}"
-                        file.write(s)
-            else:
-                # If files not found
-                i = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
-                with open(
-                    os.path.join(f.path, f"product_error_{i}.txt"),
-                    "w+",
-                    encoding=DEFAULT_CHARSET,
-                ) as file:
-                    file.write(s)
-    except queue.Empty:
-        log.warning("[storage_errors]: Queue is empty")
-        return
-    except Exception as e:
-        log.error(
-            "[storage_errors]: ERROR => {}".format(
-                e.args[0] if len(e.args) > 0 else str(e)
-            )
-        )
-
-
-# ============================================
-# FILE OBJECT
-# ============================================
-class Files:
-    def __init__(self, path: str):
-        self.path = path
-        self._get_directory_exists()
-
-    def get_list_files(self):
-        listdir = os.listdir(self.path)
-        try:
-            return [item for item in listdir if re.search(TEMPLATE_NAME_OF_FILES, item)]
-        except FileNotFoundError:
-            return []
-
-    def _get_directory_exists(self) -> None:
-        try:
-            os.makedirs(PATH_ERROR_DIR, exist_ok=True)
-            log.info(
-                "[get_directory_exists]: Directory exists for collection of lost data"
-            )
-        except FileExistsError:
-            log.warning("[get_directory_exists]: Something what wrong.")
-
-    def get_empty_file(self) -> str | None:
-        """
-        Get an empty file by path it is self.path (:var path_error_dir) and
-         a template of the file name 'product_error_%d-%m-%Y_%H-%M-%S.txt'.
-        It is getting a full list of file's names.
-        Then do checking the size of the file.  If size < MAX_FILE_SIZE mean return the name file
-        else return None
-        :return: str | None
-        """
-        list_str: list = self.get_list_files()
-        for name in list_str:
-            if self.is_file(name):
-                full_path = os.path.join(self.path, name)
-                if os.path.getsize(full_path) < MAX_FILE_SIZE:
-                    return name
-        return None
-
-    def is_file(self, name: str) -> bool:
-        """
-        Check if a file exists.
-        :param name: This is a file name.
-        :return: Ture if file exists or False if not.
-        """
-        resp_bool: bool = os.path.exists(os.path.join(self.path, name))
-        return resp_bool
