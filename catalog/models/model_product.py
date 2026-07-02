@@ -12,10 +12,13 @@ from django.core.validators import (
     RegexValidator,
 )
 from django.db import models
+from django.forms import TextInput
 from django.utils.translation import gettext_lazy as _
+from modelcluster.models import ClusterableModel
 from wagtail.admin.panels import (
     FieldPanel,
     FieldRowPanel,
+    InlinePanel,
     MultiFieldPanel,
     PageChooserPanel,
 )
@@ -23,10 +26,8 @@ from wagtail.fields import RichTextField
 
 from .model_abstract import AbstractModel
 
-# from wagtail.images.image_operations import
 
-
-class ProductModel(AbstractModel):
+class ProductModel(ClusterableModel, AbstractModel):
     id = models.AutoField(primary_key=True)
     name = models.CharField(
         max_length=80,
@@ -97,14 +98,6 @@ class ProductModel(AbstractModel):
         help_text=_("The quantity of the product"),
         db_index=True,
     )
-    attributes = models.ForeignKey(
-        "ProductCharacteristics",
-        help_text=_("Commons characteristics of the ont product."),
-        null=True,
-        blank=True,
-        on_delete=models.CASCADE,
-        verbose_name="+",
-    )
     attributes_additional = models.JSONField(
         default=dict,
         blank=True,
@@ -125,6 +118,7 @@ class ProductModel(AbstractModel):
                 FieldRowPanel(
                     [
                         "category",
+                        "category",
                         "brand",
                     ]
                 ),
@@ -137,8 +131,66 @@ class ProductModel(AbstractModel):
                 ),
                 "describe_preview",
                 "description",
-                PageChooserPanel("attributes"),
+                # PageChooserPanel("properties"),
                 "attributes_additional",
+                InlinePanel(
+                    "characteristics",
+                    heading=_("Properties"),
+                    label=_("Property"),
+                    classname="custom-property-value",
+                    panels=[
+                        MultiFieldPanel(
+                            [
+                                FieldRowPanel(
+                                    [
+                                        FieldPanel(
+                                            "name",
+                                            required_on_save=True,
+                                            classname="form-property-name",
+                                        ),
+                                        FieldPanel(
+                                            "value",
+                                            required_on_save=True,
+                                            widget=TextInput(
+                                                attrs={
+                                                    "required": True,
+                                                    "name": "Characteristic-value",
+                                                }
+                                            ),
+                                            classname="form-characteristic-value",
+                                        ),
+                                    ]
+                                ),
+                            ]
+                        )
+                    ],
+                ),
+                InlinePanel(
+                    "images",  # This is the related_name from OneImageModels
+                    label=_("Image"),
+                    heading=_("Images"),
+                    classname="custom-property-value",
+                    panels=[
+                        MultiFieldPanel(
+                            [
+                                FieldPanel("title"),
+                                FieldPanel("image"),
+                                FieldRowPanel(
+                                    [
+                                        FieldPanel("describe"),
+                                        FieldPanel("label"),
+                                    ]
+                                ),
+                                FieldRowPanel(
+                                    [
+                                        FieldPanel("x"),
+                                        FieldPanel("y"),
+                                    ]
+                                ),
+                            ]
+                        )
+                    ],
+                ),
             ]
         ),
     ]
@@ -150,20 +202,6 @@ class ProductModel(AbstractModel):
 
     def __str__(self):
         return f"{self.name} - {self.created_at}"
-
-    # def clean_descriptions(self):
-    #     if self.description is not None:
-    #         if self.description > 0 and (
-    #             self.describe_preview is None or self.describe_preview == 0
-    #         ):
-    #             max_length = self.describe_preview
-    #             self.describe_preview = self.description[: max_length - 4]
-    #
-    #             self.describe_preview = (
-    #                 self.describe_preview[: max_length - 4] + " ..."
-    #                 if len(self.describe_preview) == max_length
-    #                 else self.describe_preview
-    #             )
 
     def clean_price(self):
         if self.price is None or self.price < 0:

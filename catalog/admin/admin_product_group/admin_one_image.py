@@ -5,6 +5,11 @@ from catalog.models.images.model_image_one_item import OneImageModels
 
 
 class OneImageAdmin(ModelAdmin):
+    """
+    TODO: create API and from the javascript do changes for publish a image list. The header/title of image change
+     on image publication
+    """
+
     model = OneImageModels
     base_url_path = "oneimage"
     menu_label = "Images"
@@ -17,4 +22,4 @@ class OneImageAdmin(ModelAdmin):
     search_fields = ["title", "describe"]
 
 
-modeladmin_register(OneImageAdmin)
+# modeladmin_register(OneImageAdmin)

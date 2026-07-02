@@ -3,28 +3,12 @@ import os
 import re
 import tempfile
 
-import pandas as pd
-from adrf import serializers
-
-# from rest_framework import status
 from adrf.viewsets import ViewSet
 from django.http import JsonResponse
 from rest_framework import status
 
-from catalog.models import ProductGalleryImageModel, ProductModel
+from catalog.models import ProductGalleryImageModel
 from download.task_save_file import task_saving_data_oFfile
-
-#
-# class CatalogSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = ProductGalleryImageModel
-#         fields = "__all__"
-
-
-# class ProductSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = ProductModel
-#         fields = "__all__"
 
 
 class CatalogViewSet(ViewSet):
@@ -112,22 +96,3 @@ class CatalogViewSet(ViewSet):
             },
             status=status.HTTP_200_OK,
         )
-
-
-# async def list(self, request):
-#     data_dict = dict
-#     queryset_items = await asyncio.to_thread(lambda : list(ProductGalleryImageModel.objects.all()))
-#
-#     serializer = await asyncio.to_thread(lambda : CatalogSerializer(queryset_items, many=True))
-#     for item in list(serializer.data):
-#         product_list = await asyncio.to_thread(lambda pk=item["product_id"]: list(ProductModel.objects.filter(pk = item["product"])), item["product_id"])
-#         serializer_list = []
-#         for product in product_list:
-#             result_dict = await asyncio.to_thread(lambda : ProductSerializer(product))
-#             serializer_list.append(result_dict)
-#         item["product"] = serializer_list
-
-
-# def create(self, request, *args, **kwargs):
-#     serializer = CatalogSerializer(data=request.data)
-#     return JsonResponse(serializer.data, status=status.HTTP_201_CREATED)
