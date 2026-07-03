@@ -1,3 +1,4 @@
-__all__ = ["ProfilesModels"]
+# __all__ = ["AdminProfileModels"]
 
-from profiles.models.models_profiles import ProfilesModels
+# from profiles.models.models_profiles import ProfilesModels
+# from profiles.models.model_admin import AdminProfileModels

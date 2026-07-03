@@ -7,15 +7,13 @@ import datetime
 import json
 import logging
 import re
-from threading import Thread
 from typing import Optional
 
 from allauth.account.views import SignupView as AllauthSignupView
 from django.contrib import messages
 from django.contrib.auth.models import Group
-from django.db.models import Q
 from django.http import HttpResponseRedirect, JsonResponse
-from django.shortcuts import redirect, render, reverse
+from django.shortcuts import render, reverse
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext_lazy as _
 from django.views import View
@@ -314,7 +312,6 @@ class UsersRegistrationView(AllauthSignupView):
         args = (
             EnumTemplatesKeysCache.USER_PENDING_ZERO.value % re.sub(r"[@.]", "", email),
         )
-        # args = (email,)
         # ------------------------------------
         kwargs = {"category": role, "email": email}
         try:
