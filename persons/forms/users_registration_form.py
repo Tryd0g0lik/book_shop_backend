@@ -10,16 +10,12 @@ from allauth.account.forms import SignupForm, UserTokenForm
 from django import forms
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.core.validators import (
-    EmailValidator,
     MaxLengthValidator,
     MinLengthValidator,
 )
 from django.utils.translation import gettext_lazy as _
-from shtab import Optional
 
-from persons import CATEGORY_STATUS, EnumTemplatesKeysCache
-from persons.apps import cachemanager
-from persons.exceptions.error_forms import ErrorCodeVerificationForm
+from persons import CATEGORY_STATUS
 from persons.models import Users
 from persons.validators import EmailValidatorPerson
 

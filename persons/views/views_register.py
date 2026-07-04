@@ -19,7 +19,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.decorators.http import require_GET, require_POST
 
-from persons import CATEGORY_STATUS, EnumTemplatesKeysCache
+from persons import CATEGORY_STATUS, PATH_NAMES
 from persons.apps import account_manager, cachemanager
 from persons.forms import UsersRegistrationForm
 from persons.forms.verification_form import UsersCheckCodeVerificationForm
@@ -29,12 +29,7 @@ from persons.tasks.tasks_celery.task_send_letter_to_user_email import task_postm
 # from project.settings_conf.settings_first import LOGIN_URL
 
 log = logging.getLogger(__name__)
-path_names: list[str] = [
-    "/person/register/account/",
-    "/person/register/admin/",
-    "/person/register/moderator/",
-    "/person/register/manager/",
-]
+path_names = PATH_NAMES[:]
 
 
 class UsersRegistrationView(AllauthSignupView):
@@ -245,6 +240,7 @@ class UsersRegistrationView(AllauthSignupView):
         from persons.tasks.tasks_celery.task_set_cache import (
             task_of_cache,
         )
+        from utilities import EnumTemplatesKeysCache
 
         username: str = form.cleaned_data.get("username")
         email: str = form.cleaned_data.get("email")
@@ -349,6 +345,8 @@ class UsersVerificationDuringRegistration(View):
             "500": description="Server vahe error. Open page for registration."
             "400": description="Bad request. Please check your status. User should be not 'is_authenticated' "
         """
+        from utilities import EnumTemplatesKeysCache
+
         form = UsersCheckCodeVerificationForm()
         context = {"validation_sent": True, "form": form}
         user = request.user

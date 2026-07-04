@@ -76,7 +76,7 @@ class UserLoginView(LoginView):
         """
         TODO: После авторизации:
           - удалить запись из кеша!!!!!!
-          - Создать (редирект для клиента) маршрут в аккаунт или в каталог
+          - Создать (редирект для клиента) маршрут в аккаунт или в каталог для клиента
          Функцию - восстановить пароль - проверить после настройки посты на внешний провайдер.
         :param request:
         :return:
@@ -141,6 +141,8 @@ class UserLoginView(LoginView):
                         "is_verified",
                     ]
                 )
+                # --- Profile
+
                 # --- Allauth
                 queryset = EmailAddress.objects.filter(user=user)
                 if queryset.exists():

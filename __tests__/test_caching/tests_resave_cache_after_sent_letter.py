@@ -3,10 +3,6 @@ import json
 import logging
 import re
 
-from allauth.account.internal.userkit import user_email
-
-from __tests__.fixtures.fixture_django2 import pytest_generate_tests
-from persons import EnumTemplatesKeysCache
 from project.settings_conf.settings_first import DEFAULT_CHARSET
 
 log = logging.getLogger(__name__)
@@ -14,7 +10,7 @@ log = logging.getLogger(__name__)
 
 class TestResaveCacheAfterSentLetter:
     async def test_resave_cache_after_sent_letter(self, new_users_registration):
-        from persons.services import AccountManager
+        from utilities.services import AccountManager
 
         log_t = "TEST" + f"[{self.test_resave_cache_after_sent_letter.__name__}]:"
         account_manager = AccountManager()
@@ -53,6 +49,7 @@ class TestResaveCacheAfterSentLetter:
             persons/tasks/tasks_celery/task_send_letter_to_user_email.py:130
             :return:
             """
+            from utilities import EnumTemplatesKeysCache
             lt = "TEST" + f"[{resave_cache_after_sent_letter.__name__}]:"
             for k in args:
                 assert type(k) == str

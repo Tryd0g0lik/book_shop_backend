@@ -1,15 +1,12 @@
 import logging
-import unittest
 
 import pytest
-from colorful.terminal import TRUE_COLORS
 
-from __tests__.fixtures.fixture_django2 import pytest_generate_tests
-from persons.adapters import PersonServiceDatabaseAdapter
 from persons.interfaces import (
     PersonServiceDatabaseAdapter as PersonServiceDatabaseAdapterInitialize,
 )
 from persons.models import Users
+from utilities.adapters import PersonServiceDatabaseAdapter
 
 log = logging.getLogger(__name__)
 

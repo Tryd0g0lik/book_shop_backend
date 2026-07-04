@@ -8,7 +8,7 @@ from persons.views.views_register import UsersVerificationDuringRegistration
 
 urlpatterns = [
     re_path(
-        r"^register/(?P<role>account|moderator|manager|admin)/$",
+        r"^register/(?P<role>account|moderators|client|manager|admin)/$",
         UsersRegistrationView.as_view(),
         name="management",
     ),  # name="management"

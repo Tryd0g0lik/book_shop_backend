@@ -6,13 +6,10 @@ from unittest.mock import MagicMock, Mock
 import pytest
 
 from __tests__.fixtures.fixture_django import (
-    generate_users,
     mock_user_django,
-    pytest_generate_tests,
 )
 from __tests__.fixtures.fixture_pydantic import mock_pydantic_user
 from __tests__.fixtures.mock_function import get_file, save_one_user
-from persons.adapters import PersonServiceDatabaseAdapter
 from persons.interfaces import UsersPydantic
 
 log = logging.getLogger(__name__)
@@ -90,7 +87,7 @@ def mock_person_service_adapter(mock_pydantic_user, mocker):
 
 @pytest.fixture
 def mock_subPerson_class(mock_pydantic_user, mocker):
-    from persons.adapters import PostmanAdapter
+    from utilities.adapters import PostmanAdapter
 
     log.info("""
     # ============================================

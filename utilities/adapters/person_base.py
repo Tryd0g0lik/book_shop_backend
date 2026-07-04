@@ -4,10 +4,9 @@ persons/adapters/person_base.py:1
 
 from typing import Optional, Union
 
-from persons.interfaces import UsersPydantic, UsersPydanticDict
-
 # from persons.exceptions import PersonErrorImproperlyConfigured
-from ..exceptions.error_postman import PostmanRequiredModelError
+from persons.exceptions.error_postman import PostmanRequiredModelError
+from persons.interfaces import UsersPydantic, UsersPydanticDict
 
 # from pydantic import EmailStr
 
@@ -138,7 +137,7 @@ object person) - Check. Do not belonging to the Users's model."
         :param value:
         :return: True or mistake 'PostmanRequiredModelError'
         """
-        from .. import EnumTemplatesKeysCache
+        from utilities import EnumTemplatesKeysCache
 
         # The value is not None - Check
         if value is None:

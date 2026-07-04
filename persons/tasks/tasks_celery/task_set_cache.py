@@ -2,16 +2,14 @@
 persons/tasks/tasks_celery/task_cache_user_email_before_verification.py:1
 """
 
-import json
 import logging
-import time
 from threading import Thread
 from uuid import uuid4
 
 from celery import shared_task
 from redis import ConnectionError, TimeoutError
 
-from persons.services import CustomizationSyncAsyncLoop
+from utilities.services import CustomizationSyncAsyncLoop
 
 log = logging.getLogger(__name__)
 task_id = uuid4()
@@ -29,7 +27,7 @@ async def cache_user_data(*args, **kwargs) -> bool:
     import asyncio
 
     from persons import EnumTemplatesREGEX
-    from persons.services import CacheManager
+    from utilities.services import CacheManager
 
     cachemanager = CacheManager()
 
@@ -121,7 +119,6 @@ def task_of_cache(self, *args, **kwargs) -> None:
     log_t = "[task_of_cache]:"
 
     try:
-        log.info(log_t + f" DEBUG Defsult 0: {kwargs}")
         custom_loop = CustomizationSyncAsyncLoop(*args, **kwargs)
         custom_loop.get_new_function = cache_user_data
         custom_loop.is_async = True

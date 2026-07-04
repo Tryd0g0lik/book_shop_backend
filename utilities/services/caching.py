@@ -7,19 +7,15 @@ import json
 import logging
 import queue
 import re
-import threading
-from typing import Coroutine, Optional
+from typing import Optional
 
 from django.conf.global_settings import DEFAULT_CHARSET
 
-from persons.adapters import AsyncCacherAdapter, CacherAdapter
 from persons.interfaces import AsyncCacherAdapter as AsyncCacherAdapterInitialize
-from persons.interfaces import CacherAdapter as CacherAdapterInitialize
 from project.settings_conf.settings_env import REDIS_DB
+from utilities.adapters import AsyncCacherAdapter
 
 log = logging.getLogger(__name__)
-
-log.info(f"DEBUG REDIS_DB: {REDIS_DB}")
 
 
 class CacheManager:
@@ -48,10 +44,10 @@ class CacheManager:
             self.log_t[:-1]
             + "[asave]:"
             + """\n
-# ============================================
-# CACHE SERVER ASAVE
-# ============================================
-# Checking of connection
+            # ============================================
+            # CACHE SERVER ASAVE
+            # ============================================
+            # Checking of connection
             """
         )
         log.info(
@@ -126,7 +122,7 @@ class CacheManager:
         :param ttl:  This is a time of caching. That is the cache time of life.
         :return: bool
         """
-        from persons.services import CustomizationSyncAsyncLoop
+        from utilities.services import CustomizationSyncAsyncLoop
 
         log.info(
             self.log_t[:-1]
@@ -476,7 +472,7 @@ class CacheManager:
         try:
             from redis import ConnectionError
 
-            from persons.services import CustomizationSyncAsyncLoop
+            from utilities.services import CustomizationSyncAsyncLoop
 
             qwargs = {
                 "queue_collection": queue_collection,
