@@ -50,7 +50,7 @@ class UsersCheckCodeVerificationForm(UserTokenForm):
                 for key_bytes in collection_keys:
                     key_str = key_bytes.decode()
                     cachemanager.aget(key=key_str, collection=promocodes)
-                # BELOW WE GET A LIST OF JSON BYTES
+                # BELOW WE GOT A LIST OF JSON BYTES
                 for view_bytes in promocodes:
                     view_json: dict = json.loads(view_bytes.decode())
                     # BELOW WE GET VALUES & LOOK UP THE VERIFICATION TOKEN IN HIM

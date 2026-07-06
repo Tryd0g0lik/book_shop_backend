@@ -205,12 +205,12 @@ class CacheManager:
                     log.info(
                         self.log_t[:-1]
                         + "[aget]:"
-                        + """\n
-# Get the cache's data by the keys.
-# ============================================
-# THE PATTERN OF KEY OR SINGLE KEY + CHOSE QUEUE OR LIST OR TUPLE
-# ============================================
-"""
+                        + """
+                            # Get the cache's data by the keys.
+                            # ============================================
+                            # THE PATTERN OF KEY OR SINGLE KEY + CHOSE QUEUE OR LIST OR TUPLE
+                            # ============================================
+                            """
                     )
                     if queue_collection is not None and isinstance(
                         queue_collection, queue.Queue

@@ -429,7 +429,6 @@ class PersonServiceDatabaseAdapter:
             }
             # ---- CATEGORY
             if "category" in user_data:
-
                 query_object_first.groups.clear()
                 category_str: str = user_data.get("category")
 

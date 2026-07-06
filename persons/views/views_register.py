@@ -258,10 +258,12 @@ class UsersRegistrationView(AllauthSignupView):
             user.groups.add(group)
             user.save()
 
-            queryset = Users.objects.filter(is_superuser=False, is_staff=True)
+            queryset = Users.objects.filter(is_superuser=False)
+            queryset_staff = queryset.filter(is_staff=True)
             # We can have a (count):
-            # - Superadmin before 1;
             # - Admin ... 1;
+            # - Moderator ... 0-2;
+            # - Editor ... 0-3;
             # - Manager ... 0-3;
             # - Client more.
             if role.upper() in CATEGORY_STATUS[1]:
@@ -271,13 +273,19 @@ class UsersRegistrationView(AllauthSignupView):
                     # Superuser
                     setattr(user, "is_superuser", True)
                     setattr(user, "is_staff", True)
-                elif queryset.count() == 0:
-                    # Admins
-                    setattr(user, "is_superuser", False)
-                    setattr(user, "is_staff", True)
+            elif role.upper() in CATEGORY_STATUS[4] and (
+                queryset_staff.count() >= 0
+                and queryset_staff.count() <= 2
+            ):
+                # Admins
+                setattr(user, "is_superuser", False)
+                setattr(user, "is_staff", True)
             elif (
                 role.upper() in CATEGORY_STATUS[2]
-                and queryset.count() >= 0
+            or
+                role.upper() in CATEGORY_STATUS[5]
+            ) and (
+                queryset.count() >= 0
                 and queryset.count() <= 3
             ):
                 # Managers
@@ -357,17 +365,20 @@ class UsersVerificationDuringRegistration(View):
             collection_ = []
             await cachemanager.aget(key_pattern=keys, collection=collection_)
 
-            if len(collection_) > 0:
-                for key in collection_.copy():
-                    key: bytes = key[:]
-                    collection_.clear()
-                    await cachemanager.aget(key=key.decode(), collection=collection_)
+            # if len(collection_) > 0:
+            #     for key in collection_.copy():
+            #         k: bytes = key[:]
+            #         collection_.clear()
+            #         await cachemanager.aget(key=k.decode(), collection=collection_)
             if len(collection_) > 0:
                 for item in collection_:
                     try:
+                        temporary_collection_ = []
+                        await cachemanager.aget(key=item.decode(), collection=temporary_collection_)
                         user_cache_json = json.loads(item.decode())
                         if user_cache_json["verification_code"] == token_key:
                             user_cache_json["is_verified"] = True
+                            del temporary_collection_
                             collection_.clear()
                             database_service = account_manager.postman.database_service
                             result: Optional[dict] = await asyncio.to_thread(
@@ -398,6 +409,7 @@ class UsersVerificationDuringRegistration(View):
                                         status=302,
                                     )
                                 )
+                        else: continue
                     except Exception as e:
                         log.error(e)
                         context["details"] = e.args[0] if e.args else str(e)

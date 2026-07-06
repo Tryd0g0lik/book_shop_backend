@@ -6,7 +6,7 @@ import asyncio
 import datetime
 import json
 import logging
-
+from django.utils import timezone
 from allauth.account.models import EmailAddress, EmailConfirmation
 from allauth.account.views import LoginView
 from django.contrib import messages
@@ -81,9 +81,6 @@ class UserLoginView(LoginView):
         :param request:
         :return:
         """
-        from django.core import serializers
-
-        from persons.apps import account_manager
         from persons.models import Users
 
         ERROR_TEXT = f"{self.log_t[:-1]}[{self.post.__name__}]: Error =>"
@@ -128,7 +125,7 @@ class UserLoginView(LoginView):
 
             try:
                 # --- Person
-                dtime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                dtime = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
                 user.is_active = True
                 user.is_verified = True
                 user.date_joined = dtime

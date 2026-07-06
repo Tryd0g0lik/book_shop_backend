@@ -6,13 +6,15 @@ import re
 from enum import Enum
 
 from project.settings_conf.settings_env import APP_NAME
-
+# Note: The order of location of tuple is very important for 'CATEGORY_STATUS'!!
+# Exampl - look to the 'persons.views.views_register.UsersRegistrationView.form_valid'
 CATEGORY_STATUS = [
     ("BASE", "Base"),
     ("ADMIN", "Admin"),
     ("MANAGER", "Manager"),
     ("CLIENT", "Client"),
     ("MODERATORS", "Moderators"),
+    ("EDITORS", "Editors"),
 ]
 PATH_NAMES: list[str] = [
     "/person/register/account/",
@@ -20,6 +22,7 @@ PATH_NAMES: list[str] = [
     "/person/register/moderators/",
     "/person/register/manager/",
     "/person/register/client/",
+    "/person/register/editors/",
 ]
 
 
