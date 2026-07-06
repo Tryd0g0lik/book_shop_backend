@@ -274,20 +274,14 @@ class UsersRegistrationView(AllauthSignupView):
                     setattr(user, "is_superuser", True)
                     setattr(user, "is_staff", True)
             elif role.upper() in CATEGORY_STATUS[4] and (
-                queryset_staff.count() >= 0
-                and queryset_staff.count() <= 2
+                queryset_staff.count() >= 0 and queryset_staff.count() <= 2
             ):
                 # Admins
                 setattr(user, "is_superuser", False)
                 setattr(user, "is_staff", True)
             elif (
-                role.upper() in CATEGORY_STATUS[2]
-            or
-                role.upper() in CATEGORY_STATUS[5]
-            ) and (
-                queryset.count() >= 0
-                and queryset.count() <= 3
-            ):
+                role.upper() in CATEGORY_STATUS[2] or role.upper() in CATEGORY_STATUS[5]
+            ) and (queryset.count() >= 0 and queryset.count() <= 3):
                 # Managers
                 setattr(user, "is_superuser", False)
                 setattr(user, "is_staff", True)
@@ -364,18 +358,16 @@ class UsersVerificationDuringRegistration(View):
             keys = EnumTemplatesKeysCache.USER_PENDING_LETTER.value % "*"
             collection_ = []
             await cachemanager.aget(key_pattern=keys, collection=collection_)
-
-            # if len(collection_) > 0:
-            #     for key in collection_.copy():
-            #         k: bytes = key[:]
-            #         collection_.clear()
-            #         await cachemanager.aget(key=k.decode(), collection=collection_)
             if len(collection_) > 0:
                 for item in collection_:
                     try:
                         temporary_collection_ = []
-                        await cachemanager.aget(key=item.decode(), collection=temporary_collection_)
-                        user_cache_json = json.loads(item.decode())
+                        await cachemanager.aget(
+                            key=item.decode(), collection=temporary_collection_
+                        )
+                        if len(temporary_collection_) == 0:
+                            continue
+                        user_cache_json = json.loads(temporary_collection_[0].decode())
                         if user_cache_json["verification_code"] == token_key:
                             user_cache_json["is_verified"] = True
                             del temporary_collection_
@@ -391,16 +383,17 @@ class UsersVerificationDuringRegistration(View):
                             if result is not None:
                                 log.info("Verification code updated successfully")
                                 category: str = result["category"]
-                                admin_ = list(CATEGORY_STATUS[1])[0]
-                                manager_ = list(CATEGORY_STATUS[2])[0]
+                                category_list = [
+                                    item for item in CATEGORY_STATUS if category in item
+                                ]
                                 url = "persons:login"
-                                if (
-                                    category.lower() == admin_.lower()
-                                    or category.lower() == manager_.lower()
-                                ):
-                                    # url = f"{admin_.lower()}/login/"
-                                    url = "wagtailadmin_login"
-
+                                if len(category_list) > 0:
+                                    if ("Admin" in category_list) or (
+                                        "Moderators" in category_list
+                                    ):
+                                        url = "wagtailadmin_login"
+                                    else:
+                                        pass
                                 return await asyncio.to_thread(
                                     lambda: HttpResponseRedirect(
                                         reverse(
@@ -409,7 +402,8 @@ class UsersVerificationDuringRegistration(View):
                                         status=302,
                                     )
                                 )
-                        else: continue
+                        else:
+                            continue
                     except Exception as e:
                         log.error(e)
                         context["details"] = e.args[0] if e.args else str(e)
