@@ -10,15 +10,15 @@ import re
 import time
 from typing import Any, Mapping, Optional, Union
 
-from allauth.account.models import EmailAddress, EmailConfirmation
 from celery import shared_task
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
-from django.utils import timezone
 
 from persons import EnumEmailLetter, EnuSubjectOfLetter
 from persons.exceptions import PersonErrorTasks
-from persons.tasks.tasks_celery.task_create_position import task_create_position_for_EmailConfiguration
+from persons.tasks.tasks_celery.task_create_position import (
+    task_create_position_for_EmailConfiguration,
+)
 from project.settings_conf.settings_env import APP_DEFAULT_FROM_EMAIL
 from project.settings_conf.settings_first import DEFAULT_CHARSET
 
@@ -295,12 +295,14 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
                     async with lock:
                         text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value
                         log.info("  < = > 0")
+                        # --- Sending a letter
                         sub_function_send_mail(
                             [one_email],
                             subject,
                             text_context,
                             context_,
                         )
+                        # --- Sending a letter second
                         log.info("# The First letter is gone")
                         text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_1.value
                         generate_login_code = (
@@ -318,19 +320,9 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
                             context_,
                         )
 
-                        task_create_position_for_EmailConfiguration.delay(one_email, generate_login_code)
-                        # log.info(log_t + "# save a verification code")
-                        # # --- Allauth
-                        # email_address = await asyncio.to_thread(
-                        #     lambda: EmailAddress.objects.get(email=one_email)
-                        # )
-                        # email_conf = EmailConfirmation(
-                        #     created=timezone.now(),
-                        #     sent=timezone.now(),
-                        #     key=generate_login_code,
-                        #     email_address_id=email_address.id,
-                        # )
-                        # await email_conf.asave()
+                        task_create_position_for_EmailConfiguration.delay(
+                            one_email, generate_login_code
+                        )
                         # ---
 
                         log.info(
@@ -341,8 +333,9 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
                         # ============================================"""
                         )
                         cachemanager = CacheManager()
-                        k: str = EnumTemplatesKeysCache.USER_PENDING_LETTER.value % re.sub(
-                            r"[@.]+", "", one_email
+                        k: str = (
+                            EnumTemplatesKeysCache.USER_PENDING_LETTER.value
+                            % re.sub(r"[@.]+", "", one_email)
                         )
                         collection_: list[bytes] = []
                         # ---

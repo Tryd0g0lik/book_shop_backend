@@ -5,6 +5,7 @@ Logs are output to both console and a log file (default: 'log_putout.log').
 """
 
 import logging
+import multiprocessing as mp
 import os
 import threading
 import time
@@ -34,9 +35,15 @@ def configure_logging(
         configure_logging(logging.INFO)
         log.info("Application started")
     """
+    from django.utils import timezone
+
     # Clear any existing handlers
     logging.getLogger().handlers.clear()
-
+    log_file_list: list = log_file.split(".log")
+    t = timezone.now().strftime("%Y%m%d%H%M%S")
+    log_file_list[:-1].append(t)
+    log_file = "_".join(log_file_list)
+    log_file += ".log"
     # Create formatter
     formatter = logging.Formatter(
         "[%(asctime)s.%(msecs)03d] %(levelname)s - %(name)s:%(lineno)d - %(message)s",
@@ -62,14 +69,19 @@ def configure_logging(
 
     # Start log file maintenance thread ONLY ONCE
     global _log_maintenance_started
-    with _log_lock:
-        threading.Thread(
-            target=check_log_file,
-            args=(log_file,),
-            daemon=True,
-            name="LogFileMaintenance",
-        ).start()
-        _log_maintenance_started = True
+    mp.Process(
+        target=check_log_file,
+        args=(log_file,),
+        daemon=True,
+    ).start()
+    #
+    # threading.Thread(
+    #     target=check_log_file,
+    #     args=(log_file,),
+    #     daemon=True,
+    #     name="LogFileMaintenance",
+    # ).start()
+    _log_maintenance_started = True
 
 
 def check_log_file(
@@ -83,6 +95,8 @@ def check_log_file(
         max_lines: Maximum lines before rotation (default: 3000)
         check_interval: Check interval in seconds (default: 1800 = 30 min)
     """
+    from django.utils import timezone
+
     while True:
         time.sleep(check_interval)
         try:
@@ -91,24 +105,30 @@ def check_log_file(
                     continue
                 with open(log_file, "r+", encoding=DEFAULT_CHARSET) as f:
                     lines = f.readlines()
+
                     if len(lines) >= max_lines:
+                        f.close()
+                        backup_file = (
+                            f"{log_file}.{timezone.now().strftime('%Y%m%d%H%M%S')}.log"
+                        )
+                        with open(backup_file, "w+", encoding=DEFAULT_CHARSET) as file:
+                            log_file = backup_file[:]
+                            file.close()
                         # ---------------- new lines
-                        backup_file = f"{log_file}.backup"
-                        if os.path.exists(backup_file):
-                            os.remove(backup_file)
-                        os.rename(log_file, backup_file)
+
+                        # os.rename(log_file, backup_file)
                         # ---------------- end new lines
                         # f.seek(0)
                         # f.truncate()
-                        logging.warning(
-                            "Log file %s was cleared (%d lines exceeded limit of %d)",
-                            log_file,
-                            len(lines),
-                            max_lines,
-                        )
-                        return True
+
                     else:
                         pass
+                    logging.warning(
+                        "Log file %s was cleared (%d lines exceeded limit of %d)",
+                        log_file,
+                        len(lines),
+                        max_lines,
+                    )
 
         except Exception as e:
             logging.error("Error checking log file: %s", str(e), exc_info=True)
