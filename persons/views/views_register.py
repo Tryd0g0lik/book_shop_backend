@@ -19,7 +19,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.decorators.http import require_GET, require_POST
 
-from persons import CATEGORY_STATUS, EnumTemplatesKeysCache
+from persons import CATEGORY_STATUS, PATH_NAMES
 from persons.apps import account_manager, cachemanager
 from persons.forms import UsersRegistrationForm
 from persons.forms.verification_form import UsersCheckCodeVerificationForm
@@ -29,12 +29,7 @@ from persons.tasks.tasks_celery.task_send_letter_to_user_email import task_postm
 # from project.settings_conf.settings_first import LOGIN_URL
 
 log = logging.getLogger(__name__)
-path_names: list[str] = [
-    "/person/register/account/",
-    "/person/register/admin/",
-    "/person/register/moderator/",
-    "/person/register/manager/",
-]
+path_names = PATH_NAMES[:]
 
 
 class UsersRegistrationView(AllauthSignupView):
@@ -245,6 +240,7 @@ class UsersRegistrationView(AllauthSignupView):
         from persons.tasks.tasks_celery.task_set_cache import (
             task_of_cache,
         )
+        from utilities import EnumTemplatesKeysCache
 
         username: str = form.cleaned_data.get("username")
         email: str = form.cleaned_data.get("email")
@@ -262,10 +258,12 @@ class UsersRegistrationView(AllauthSignupView):
             user.groups.add(group)
             user.save()
 
-            queryset = Users.objects.filter(is_superuser=False, is_staff=True)
+            queryset = Users.objects.filter(is_superuser=False)
+            queryset_staff = queryset.filter(is_staff=True)
             # We can have a (count):
-            # - Superadmin before 1;
             # - Admin ... 1;
+            # - Moderator ... 0-2;
+            # - Editor ... 0-3;
             # - Manager ... 0-3;
             # - Client more.
             if role.upper() in CATEGORY_STATUS[1]:
@@ -275,15 +273,15 @@ class UsersRegistrationView(AllauthSignupView):
                     # Superuser
                     setattr(user, "is_superuser", True)
                     setattr(user, "is_staff", True)
-                elif queryset.count() == 0:
-                    # Admins
-                    setattr(user, "is_superuser", False)
-                    setattr(user, "is_staff", True)
-            elif (
-                role.upper() in CATEGORY_STATUS[2]
-                and queryset.count() >= 0
-                and queryset.count() <= 3
+            elif role.upper() in CATEGORY_STATUS[4] and (
+                queryset_staff.count() >= 0 and queryset_staff.count() <= 2
             ):
+                # Admins
+                setattr(user, "is_superuser", False)
+                setattr(user, "is_staff", True)
+            elif (
+                role.upper() in CATEGORY_STATUS[2] or role.upper() in CATEGORY_STATUS[5]
+            ) and (queryset.count() >= 0 and queryset.count() <= 3):
                 # Managers
                 setattr(user, "is_superuser", False)
                 setattr(user, "is_staff", True)
@@ -349,6 +347,8 @@ class UsersVerificationDuringRegistration(View):
             "500": description="Server vahe error. Open page for registration."
             "400": description="Bad request. Please check your status. User should be not 'is_authenticated' "
         """
+        from utilities import EnumTemplatesKeysCache
+
         form = UsersCheckCodeVerificationForm()
         context = {"validation_sent": True, "form": form}
         user = request.user
@@ -358,18 +358,19 @@ class UsersVerificationDuringRegistration(View):
             keys = EnumTemplatesKeysCache.USER_PENDING_LETTER.value % "*"
             collection_ = []
             await cachemanager.aget(key_pattern=keys, collection=collection_)
-
-            if len(collection_) > 0:
-                for key in collection_.copy():
-                    key: bytes = key[:]
-                    collection_.clear()
-                    await cachemanager.aget(key=key.decode(), collection=collection_)
             if len(collection_) > 0:
                 for item in collection_:
                     try:
-                        user_cache_json = json.loads(item.decode())
+                        temporary_collection_ = []
+                        await cachemanager.aget(
+                            key=item.decode(), collection=temporary_collection_
+                        )
+                        if len(temporary_collection_) == 0:
+                            continue
+                        user_cache_json = json.loads(temporary_collection_[0].decode())
                         if user_cache_json["verification_code"] == token_key:
                             user_cache_json["is_verified"] = True
+                            del temporary_collection_
                             collection_.clear()
                             database_service = account_manager.postman.database_service
                             result: Optional[dict] = await asyncio.to_thread(
@@ -382,16 +383,17 @@ class UsersVerificationDuringRegistration(View):
                             if result is not None:
                                 log.info("Verification code updated successfully")
                                 category: str = result["category"]
-                                admin_ = list(CATEGORY_STATUS[1])[0]
-                                manager_ = list(CATEGORY_STATUS[2])[0]
+                                category_list = [
+                                    item for item in CATEGORY_STATUS if category in item
+                                ]
                                 url = "persons:login"
-                                if (
-                                    category.lower() == admin_.lower()
-                                    or category.lower() == manager_.lower()
-                                ):
-                                    # url = f"{admin_.lower()}/login/"
-                                    url = "wagtailadmin_login"
-
+                                if len(category_list) > 0:
+                                    if ("Admin" in category_list) or (
+                                        "Moderators" in category_list
+                                    ):
+                                        url = "wagtailadmin_login"
+                                    else:
+                                        pass
                                 return await asyncio.to_thread(
                                     lambda: HttpResponseRedirect(
                                         reverse(
@@ -400,6 +402,8 @@ class UsersVerificationDuringRegistration(View):
                                         status=302,
                                     )
                                 )
+                        else:
+                            continue
                     except Exception as e:
                         log.error(e)
                         context["details"] = e.args[0] if e.args else str(e)

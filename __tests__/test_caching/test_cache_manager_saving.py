@@ -6,13 +6,9 @@ import asyncio
 import logging
 import queue
 
-import django
 import pytest
-from django.conf import settings
-from kombu.transport.sqlalchemy.models import Queue
 
 from __tests__.fixtures.fixture_django import django_setup
-from __tests__.fixtures.fixture_pydantic import mock_pydantic_user
 
 log = logging.getLogger(__name__)
 log.info("""
@@ -41,7 +37,7 @@ class TestCacheManager:
         ],
     )
     async def test_cache_manager_method_save(self, key_str, data_dict, expected):
-        from persons.services import CacheManager
+        from utilities.services import CacheManager
 
         cachemanager = CacheManager()
         result_bool = await cachemanager.asave(key_str, data_dict)
@@ -71,7 +67,7 @@ class TestCacheManager:
         :param expected:
         :return:
         """
-        from persons.services import CacheManager
+        from utilities.services import CacheManager
 
         queue_ = queue.Queue()
         cachemanager = CacheManager()
@@ -109,7 +105,7 @@ class TestCacheManager:
         :param expected:
         :return:
         """
-        from persons.services import CacheManager
+        from utilities.services import CacheManager
 
         collections_ = []
         cachemanager = CacheManager()
@@ -146,7 +142,7 @@ class TestCacheManager:
         :param expected:
         :return:
         """
-        from persons.services import CacheManager
+        from utilities.services import CacheManager
 
         collections_ = []
         cachemanager = CacheManager()
@@ -192,7 +188,7 @@ class TestCacheManager:
         :param expected:
         :return:
         """
-        from persons.services import CacheManager
+        from utilities.services import CacheManager
 
         queue_ = queue.Queue()
         cachemanager = CacheManager()

@@ -4,7 +4,6 @@ persons/adapters/async_cache_adapter.py:1
 
 import asyncio
 import logging
-import re
 from contextlib import asynccontextmanager
 from typing import Optional
 
@@ -12,7 +11,7 @@ from redis.asyncio import ConnectionError as AsyncConnectionError
 from redis.asyncio import Redis, RedisError
 from redis.asyncio.connection import ConnectionPool
 
-from persons.adapters.cache_base import CacherBaseMixin
+from utilities.adapters.cache_base import CacherBaseMixin
 
 log = logging.getLogger(__name__)
 

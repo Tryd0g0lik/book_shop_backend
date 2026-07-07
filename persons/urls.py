@@ -8,7 +8,7 @@ from persons.views.views_register import UsersVerificationDuringRegistration
 
 urlpatterns = [
     re_path(
-        r"^register/(?P<role>account|moderator|manager|admin)/$",
+        r"^register/(?P<role>account|editors|moderators|client|manager|admin)/$",
         UsersRegistrationView.as_view(),
         name="management",
     ),  # name="management"
@@ -17,13 +17,13 @@ urlpatterns = [
         UsersRegistrationView.as_view(),
         name="token",
     ),
-    path(
-        "register/verification/",
+    re_path(
+        r"^register/verification/$",
         UsersVerificationDuringRegistration.as_view(),
         name="register_token",
     ),
-    path(
-        "login/",
+    re_path(
+        r"^login/$",
         UserLoginView.as_view(),
         name="login",  # wagtailadmin_login
     ),

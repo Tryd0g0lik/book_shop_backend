@@ -9,20 +9,17 @@ from project.settings_conf.settings_first import (
     WAGTAIL_CONTENT_LANGUAGES,
 )
 
-#
-#
-# class ProfilesModels(models.Model):
-#
-#     # Settings
-#     language = models.CharField(
-#         max_length=10,
-#         choices=WAGTAIL_CONTENT_LANGUAGES, default=LANGUAGE_CODE
-#     )
-#     time_zone = models.CharField(
-#         max_length=50,
-#         default=TIME_ZONE
-#     )
-#
-#     class Meta:
-#         abstract = True
-#
+
+class ProfilesModel(models.Model):
+
+    # Settings
+    language = models.CharField(
+        max_length=10, choices=WAGTAIL_CONTENT_LANGUAGES, default=LANGUAGE_CODE
+    )
+    time_zone = models.CharField(max_length=50, default=TIME_ZONE)
+    dashboard_preference = models.JSONField(
+        default=dict, blank=True, help_text="User preferences for dashboards and layout"
+    )
+
+    class Meta:
+        abstract = True

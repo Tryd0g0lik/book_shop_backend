@@ -7,13 +7,11 @@ the property: 'is_authenticated' or/and 'not is_anonymouse'.
 
 import logging
 
-from __tests__.fixtures.fixture_django import pytest_generate_tests
 from __tests__.fixtures.fixture_mock_patch import (
-    mock_database_get_user_model,
     mock_database_get_user_model_2,
 )
 from persons import EnumEmailLetter
-from persons.adapters import PostmanAdapter
+from utilities.adapters import PostmanAdapter
 
 log = logging.getLogger(__name__)
 
@@ -22,7 +20,7 @@ class TestSendToUserEmail:
 
     def test_send_to_user_email_no_valid(self):
         """Send Email (to the database User), here is returning True or mistake/"""
-        from persons.adapters import PersonServiceDatabaseAdapter
+        from utilities.adapters import PersonServiceDatabaseAdapter
 
         database_service_ = PersonServiceDatabaseAdapter()
         result_bool = False
@@ -42,7 +40,7 @@ class TestSendToUserEmail:
 
     def test_send_to_user_email(self, users_model_data, mock_database_get_user_model_2):
         """Here us need to check the user_id_, subject_, user_email_. These data are: 'Yes - They are called'"""
-        from persons.adapters import PersonServiceDatabaseAdapter, PostmanAdapter
+        from utilities.adapters import PersonServiceDatabaseAdapter, PostmanAdapter
 
         database_service_ = PersonServiceDatabaseAdapter()
         mock_user = users_model_data

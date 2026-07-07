@@ -6,7 +6,7 @@ import asyncio
 import datetime
 import json
 import logging
-
+from django.utils import timezone
 from allauth.account.models import EmailAddress, EmailConfirmation
 from allauth.account.views import LoginView
 from django.contrib import messages
@@ -76,14 +76,11 @@ class UserLoginView(LoginView):
         """
         TODO: После авторизации:
           - удалить запись из кеша!!!!!!
-          - Создать (редирект для клиента) маршрут в аккаунт или в каталог
+          - Создать (редирект для клиента) маршрут в аккаунт или в каталог для клиента
          Функцию - восстановить пароль - проверить после настройки посты на внешний провайдер.
         :param request:
         :return:
         """
-        from django.core import serializers
-
-        from persons.apps import account_manager
         from persons.models import Users
 
         ERROR_TEXT = f"{self.log_t[:-1]}[{self.post.__name__}]: Error =>"
@@ -128,7 +125,7 @@ class UserLoginView(LoginView):
 
             try:
                 # --- Person
-                dtime = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                dtime = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
                 user.is_active = True
                 user.is_verified = True
                 user.date_joined = dtime
@@ -141,6 +138,8 @@ class UserLoginView(LoginView):
                         "is_verified",
                     ]
                 )
+                # --- Profile
+
                 # --- Allauth
                 queryset = EmailAddress.objects.filter(user=user)
                 if queryset.exists():

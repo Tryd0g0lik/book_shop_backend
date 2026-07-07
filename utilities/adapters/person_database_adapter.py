@@ -4,7 +4,6 @@ persons/adapters/person_service_adapter.py:6
 This is service for a work only with a business logic for the Users (Persons)
 """
 
-import json
 import logging
 from typing import Optional, TypeAlias, TypedDict, Union
 
@@ -196,7 +195,6 @@ class PersonServiceDatabaseAdapter:
     def is_email(user_email: str) -> bool:
         """Search users by email"""
         from persons.models import Users
-        from persons.services import CustomizationSyncAsyncLoop
 
         try:
             Users.objects.get(email=user_email)
@@ -377,7 +375,6 @@ class PersonServiceDatabaseAdapter:
 
         from persons.models import Users
 
-        is_category = False
         if not user_data or (user_id is None and user_email is None):
             raise PersonErrorImproperlyConfigured(
                 f"{PersonServiceDatabaseAdapter.log_t[:-1]}\
@@ -432,7 +429,6 @@ class PersonServiceDatabaseAdapter:
             }
             # ---- CATEGORY
             if "category" in user_data:
-
                 query_object_first.groups.clear()
                 category_str: str = user_data.get("category")
 
@@ -455,15 +451,9 @@ class PersonServiceDatabaseAdapter:
                 #  Before checking password
                 # ============================================"""
                 )
-
-                # old_password = user_data.get("old_password")
                 new_password = user_data.get("new_password")
-                # kwargs = {"user_id": query_object_first.id}
                 query_object_first.set_password(new_password)
                 query_object_first.save()
-                # PersonServiceDatabaseAdapter.change_password(
-                #     old_password, new_password, **kwargs
-                # )
                 log.info(
                     f"""{PersonServiceDatabaseAdapter.log_t[:-1]}\
                 [{PersonServiceDatabaseAdapter.update_in_database.__name__}]: Password's events is all successful!"""

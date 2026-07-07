@@ -13,13 +13,10 @@ import logging
 
 import pytest
 
-from __tests__.fixtures.fixture_django import pytest_generate_tests
 from __tests__.fixtures.fixture_mock_patch import (
-    mock_database_get_user_model,
     mock_database_get_user_model_2,
     mock_users_database,
 )
-from persons.interfaces import UsersPydantic
 
 log = logging.getLogger(__name__)
 
@@ -48,7 +45,7 @@ class TestUserServiceAdapter:
         All content  of the mock database to the '__tests__.fixtures.fixture_django.pytest_generate_tests'
         :return:
         """
-        from persons.adapters import PersonServiceDatabaseAdapter
+        from utilities.adapters import PersonServiceDatabaseAdapter
 
         mock_user = users_model_data
         if mock_user["id"] in [4, 7]:
@@ -85,7 +82,7 @@ class TestUserServiceAdapter:
 
     def test_is_email(self, mock_users_database):
         # PATH: persons.adapters.person_dabase_adapter.PersonServiceDatabaseAdapter.is_email
-        from persons.adapters import PersonServiceDatabaseAdapter
+        from utilities.adapters import PersonServiceDatabaseAdapter
 
         # --------------------
         person = PersonServiceDatabaseAdapter()

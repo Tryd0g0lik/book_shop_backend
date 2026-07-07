@@ -12,6 +12,7 @@ __all__ = [
     "UsersDict",
     "CacherAdapter",
     "AsyncCacherAdapter",
+    "Users",
 ]
 
 from persons.interfaces.interface_cache_adapter import (
@@ -24,6 +25,7 @@ from persons.interfaces.interface_cache_adapter import (
 # from persons.interfaces.interface_dataservice import PersonService
 from persons.interfaces.interface_emailStr import EmailString
 from persons.interfaces.interface_persons import (
+    Users,
     UsersDict,
     UsersPydantic,
     UsersPydanticDict,

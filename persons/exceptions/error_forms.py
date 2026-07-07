@@ -1,10 +1,10 @@
 # persons/exceptions/error_forms.py:2
 from typing import Optional
 
-from persons.exceptions.error_basis import PersonError
+from project import AbstractError
 
 
-class ErrorCodeVerificationForm(PersonError):
+class ErrorCodeVerificationForm(AbstractError):
     def __init__(
         self, log_message: Optional[str] = "We do not have the valid form data!"
     ):

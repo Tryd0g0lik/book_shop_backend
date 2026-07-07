@@ -59,14 +59,14 @@ class ProductModel(ClusterableModel, AbstractModel):
         features=["bold", "italic", "link", "ol", "ul", "image", "embed"],
     )
     category = models.ForeignKey(
-        "CategoryModel",
+        "catalog.CategoryModel",
         null=True,
         on_delete=models.SET_NULL,
         help_text=_("The category of the product"),
         db_index=True,
     )
     brand = models.ForeignKey(
-        "BrandModel",
+        "catalog.BrandModel",
         null=True,
         on_delete=models.SET_NULL,
         help_text=_("The brand of the product"),

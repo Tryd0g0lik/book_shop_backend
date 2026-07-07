@@ -21,6 +21,7 @@ celery_app = Celery(
     include=[
         "persons.tasks.tasks_celery.task_set_cache",
         "persons.tasks.tasks_celery.task_send_letter_to_user_email",
+        "persons.tasks.tasks_celery.task_create_position",
     ],
 )
 

@@ -1,13 +1,11 @@
-import asyncio
+
 import logging
 import re
-from datetime import datetime, timedelta
 
 import pytest
 import requests
 
-from persons import EnumTemplatesKeysCache
-from persons.services import AccountManager
+from utilities.services import AccountManager
 
 log = logging.getLogger(__name__)
 
@@ -24,8 +22,6 @@ class TestRegistrationAndSendCodeVerification:
     def super_form_valid(self):
         # from persons.apps import cachemanager  # account_manager,
         # from persons.tasks.tasks_celery.task_set_cache import cache_user_data
-        from persons.apps import cachemanager
-        from persons.exceptions.error_postman import PostmanRequiredModelError
         from persons.interfaces import UsersPydantic
 
         # from persons.tasks.tasks_celery.task_send_letter_to_user_email import task_postman
@@ -36,6 +32,7 @@ class TestRegistrationAndSendCodeVerification:
         account_manager = AccountManager()
 
         async def async_super_form_valid(user_data):
+            from utilities import EnumTemplatesKeysCache
             postman = account_manager.postman
             log.info(f"""\n
             # ============================================
@@ -193,9 +190,6 @@ class TestRegistrationAndSendCodeVerification:
     async def test_registration_and_send_code_verification(
         self, super_form_valid, new_users_registration, requests_logic, mocker
     ):
-
-        from django.contrib.messages.api import add_message
-        from django.test import AsyncClient
 
         log.info("""\n
         # ============================================

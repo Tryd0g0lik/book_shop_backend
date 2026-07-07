@@ -5,22 +5,20 @@ persons/adapters/postman_adapter.py:1
 import asyncio
 import json
 import logging
-from typing import Coroutine, Optional
+from typing import Optional
 
 from django.core.mail import send_mail
-from django.db.models.expressions import result
 
+from persons import EnumTemplatesREGEX
+from persons.exceptions import PersonErrorImproperlyConfigured
+from persons.exceptions.error_postman import PostmanRequiredModelError
 from persons.interfaces import (
     PersonServiceDatabaseAdapter as PersonServiceDatabaseInitialize,
 )
 from persons.interfaces import (
-    UsersDict,
     UsersPydantic,
 )
 
-from .. import EnumTemplatesREGEX
-from ..exceptions import PersonErrorImproperlyConfigured
-from ..exceptions.error_postman import PostmanRequiredModelError
 from .person_base import PersonBasisMixin
 
 #
@@ -40,7 +38,7 @@ class PostmanAdapter:
         :param list | tuple args:
         :param dict kwargs:
         """
-        from persons.adapters import PersonServiceDatabaseAdapter
+        from utilities.adapters import PersonServiceDatabaseAdapter
 
         cls.KEY_OF_CACHE_REGEX = EnumTemplatesREGEX.PERSON_KEYS_OF_CACHE_IN_REGEX.value
         cls.log_t: str = "[%s]" % cls.__class__.__name__
@@ -81,7 +79,7 @@ class PostmanAdapter:
             :param int person_index: It is an index of person.
             :param str person_email: It is a email address.
             """
-            from persons.services import CacheManager
+            from utilities.services import CacheManager
 
             self.log_t = "[%s]:" % self.__class__.__name__
             super().__init__(self.log_t, person_index, person_email)
@@ -122,7 +120,7 @@ class PostmanAdapter:
                 ):
                     pass
 
-                # Index
+                # By Index
                 elif get_index is not None:
                     # ====== Take the user's index, lookup the old user's model. Then is finding the user's data in
                     # the cache how above.
@@ -135,7 +133,7 @@ class PostmanAdapter:
                             get_user_by_index_sync, get_index
                         )
 
-                # Email
+                # By Email
                 elif get_email is not None and isinstance(get_email, str):
                     # ====== Take the user's email, lookup the old user's model. Then is finding the user's data in
                     async with PostmanAdapter.lock:

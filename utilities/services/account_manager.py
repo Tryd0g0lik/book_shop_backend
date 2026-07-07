@@ -3,7 +3,7 @@
 
 class AccountManager:
     def __new__(cls, *args, **kwargs):
-        from persons.adapters import PostmanAdapter
+        from utilities.adapters import PostmanAdapter
 
         # from persons.interfaces.interface_postman import PostmanAdapter as AccountAdapterInitialize
 
@@ -12,6 +12,6 @@ class AccountManager:
 
     @staticmethod
     def inisialize_account():
-        from persons.adapters.account_adapter import AccountAdapter
+        from utilities.adapters.account_adapter import AccountAdapter
 
         return AccountAdapter()

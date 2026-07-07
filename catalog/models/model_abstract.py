@@ -1,7 +1,7 @@
 # catalog/models/model_bstract.py:1
 from datetime import datetime
 
-from allauth.account.models import EmailAddress
+# from allauth.account.models import EmailAddress
 from django.core.validators import (
     MaxLengthValidator,
     MinLengthValidator,
@@ -22,7 +22,7 @@ class AbstractModel(models.Model):
         auto_now=True, help_text=_("The last update date")
     )
     created_by = models.ForeignKey(
-        EmailAddress,
+        "account.EmailAddress",
         on_delete=models.SET_NULL,
         help_text=_("THe user who created the position"),
         null=True,
@@ -30,7 +30,7 @@ class AbstractModel(models.Model):
         related_name="%(app_label)s_%(class)s_product_characteristics_created",
     )
     updated_by = models.ForeignKey(
-        EmailAddress,
+        "account.EmailAddress",
         on_delete=models.SET_NULL,
         help_text=_("The user who last updated the position"),
         null=True,

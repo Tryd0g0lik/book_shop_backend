@@ -6,7 +6,6 @@ from typing import Optional
 
 from allauth.account.forms import UserTokenForm
 
-from persons import EnumTemplatesKeysCache
 from persons.apps import cachemanager
 from persons.exceptions.error_forms import ErrorCodeVerificationForm
 
@@ -28,6 +27,8 @@ class UsersCheckCodeVerificationForm(UserTokenForm):
         :param str code_token:
         :return: VERIFICATION CODE or the mistake name 'ErrorCodeVerificationForm'.
         """
+        from utilities import EnumTemplatesKeysCache
+
         # Get user from cash server
         log_t = f"[{self.__class__.__name__}][{self._get_user.__name__}]:"
         cache_key = EnumTemplatesKeysCache.USER_PENDING_LETTER.value % "*"
@@ -49,7 +50,7 @@ class UsersCheckCodeVerificationForm(UserTokenForm):
                 for key_bytes in collection_keys:
                     key_str = key_bytes.decode()
                     cachemanager.aget(key=key_str, collection=promocodes)
-                # BELOW WE GET A LIST OF JSON BYTES
+                # BELOW WE GOT A LIST OF JSON BYTES
                 for view_bytes in promocodes:
                     view_json: dict = json.loads(view_bytes.decode())
                     # BELOW WE GET VALUES & LOOK UP THE VERIFICATION TOKEN IN HIM

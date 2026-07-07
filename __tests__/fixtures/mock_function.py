@@ -1,5 +1,4 @@
 # __tests__/fixtures/mock_function.py:1
-import io
 import json
 import logging
 from datetime import datetime, timedelta
@@ -7,7 +6,6 @@ from typing import Optional
 from uuid import uuid4
 
 from persons.interfaces import UsersPydantic
-from project.settings_conf.settings_db import DATABASES
 
 base_time = datetime.now()
 log = logging.getLogger(__name__)
@@ -18,7 +16,7 @@ log = logging.getLogger(__name__)
 # ============================================
 def __get_cache_staticmethod(value: str = None) -> Optional[list[bytes] | dict]:
     """It's direct work with the Redis's cache"""
-    from persons.services import CacheManager
+    from utilities.services import CacheManager
 
     log.info("""
             # ============================================
@@ -364,7 +362,7 @@ def save_one_user(*args: list[dict], **kwargs: dict) -> UsersPydantic:
         'is_verified', 'category', 'balance', 'verification_code',
     :return: list[dict]  new data
     """
-    from datetime import datetime, timedelta
+    from datetime import datetime
 
     base_time = datetime.now()
     user_dict: dict = kwargs

@@ -10,13 +10,15 @@ import re
 import time
 from typing import Any, Mapping, Optional, Union
 
-from allauth.account.models import EmailAddress, EmailConfirmation
 from celery import shared_task
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 
-from persons import EnumEmailLetter, EnumTemplatesKeysCache, EnuSubjectOfLetter
+from persons import EnumEmailLetter, EnuSubjectOfLetter
 from persons.exceptions import PersonErrorTasks
+from persons.tasks.tasks_celery.task_create_position import (
+    task_create_position_for_EmailConfiguration,
+)
 from project.settings_conf.settings_env import APP_DEFAULT_FROM_EMAIL
 from project.settings_conf.settings_first import DEFAULT_CHARSET
 
@@ -47,7 +49,7 @@ async def child_process_get_keys_0(
     :param queue.Queue queue: This is the queue.Queue object.
     :return: list
     """
-    from persons.services import CacheManager
+    from utilities.services import CacheManager
 
     log_t = log_t[:-1] + f"[{child_process_get_keys_0.__name__}]:"
     cachemanager = CacheManager()
@@ -123,6 +125,8 @@ async def child_process_get_keys_0(
 
             :return:
             """
+            from utilities import EnumTemplatesKeysCache
+
             lt = log_t[:-1] + f"[{resave_cache_after_sent_letter.__name__}]:"
             assert len(args) >= 1, "One or more keys"
             log.info(f"{lt} # test run {args}")
@@ -185,7 +189,6 @@ async def child_process_get_keys_0(
 # ============================================
 def sub_function_send_mail(
     list_of_keys: list,
-    log_t: str,
     subject_: str,
     text_context_: str,
     context_: Optional[Mapping[str, Any]],
@@ -223,10 +226,15 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
 
     from django.contrib.auth import get_user_model
 
+    from utilities import EnumTemplatesKeysCache
+
     Users = get_user_model()
 
-    from persons.services import AccountManager, CacheManager
+    from allauth.account.adapter import DefaultAccountAdapter
 
+    from utilities.services import AccountManager, CacheManager
+
+    accountAdapter = DefaultAccountAdapter()
     dict_queue = queue.Queue(2000)
     list_of_keys = []
     lock = asyncio.Lock()
@@ -239,12 +247,12 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
         # HERE WE COLLECT CHECKING THE KEYS OF CACHE
         # ============================================"""
         )
-        async with lock:
-            result_bool = await child_process_get_keys_0(
-                key_pattern=EnumTemplatesKeysCache.USER_PENDING_ZERO.value % "*",
-                queue=dict_queue,
-                log_t=log_t[:],
-            )
+        # async with lock:
+        result_bool = await child_process_get_keys_0(
+            key_pattern=EnumTemplatesKeysCache.USER_PENDING_ZERO.value % "*",
+            queue=dict_queue,
+            log_t=log_t[:],
+        )
         qsize = dict_queue.qsize()
 
         if result_bool and qsize > 0:
@@ -253,8 +261,8 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
                 list_of_keys = json.loads(byte_code.decode(DEFAULT_CHARSET))
 
                 # list_of_keys.append(json_code)
-                account_manager = AccountManager()
-                generater = account_manager.inisialize_account()
+                # account_manager = AccountManager()
+                # generater = account_manager.inisialize_account()
                 log.info(
                     log_t
                     + f"""
@@ -281,20 +289,24 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
                     person_object: Users = await asyncio.to_thread(
                         lambda: person_queryset_filter.first()
                     )
-
-                    text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value
+                    context_ = {
+                        "user": person_object,
+                    }
                     async with lock:
+                        text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value
+                        log.info("  < = > 0")
+                        # --- Sending a letter
                         sub_function_send_mail(
                             [one_email],
-                            log_t,
                             subject,
                             text_context,
-                            None,
+                            context_,
                         )
+                        # --- Sending a letter second
                         log.info("# The First letter is gone")
                         text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_1.value
                         generate_login_code = (
-                            generater.generate_email_verification_code()
+                            accountAdapter.generate_email_verification_code()
                         )
 
                         context_ = {
@@ -303,24 +315,14 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
                         }
                         sub_function_send_mail(
                             [one_email],
-                            log_t,
                             subject,
                             text_context,
                             context_,
                         )
 
-                        log.info(log_t + "# save a verification code")
-                        # --- Allauth
-                        email_address = await asyncio.to_thread(
-                            lambda: EmailAddress.objects.get(email=one_email)
+                        task_create_position_for_EmailConfiguration.delay(
+                            one_email, generate_login_code
                         )
-                        email_conf = EmailConfirmation(
-                            created=datetime.now(),
-                            sent=datetime.now(),
-                            key=generate_login_code,
-                            email_address_id=email_address.id,
-                        )
-                        await email_conf.asave()
                         # ---
 
                         log.info(
@@ -407,7 +409,7 @@ def task_postman(self, *args, **kwargs) -> None:
     """
     from threading import Thread
 
-    from persons.services import CustomizationSyncAsyncLoop
+    from utilities.services import CustomizationSyncAsyncLoop
 
     log_t = "[task_postman]:"
     try:
