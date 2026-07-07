@@ -1,10 +1,10 @@
-# profiles/permisiona/permision_checker.py:1
+# profiles/permissiona/permission_checker.py:1
 from typing import Optional
 
 from django.contrib.auth import get_user_model
 
 from profiles.interfaces.interface_roles import UserProfile
-from utilities.permisions import PermissionsMixin
+from utilities.permissions import PermissionsMixin
 
 Users = get_user_model()
 
