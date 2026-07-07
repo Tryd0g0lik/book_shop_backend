@@ -1,8 +1,8 @@
 # cart/permissions/permission_checker.py:1
-from django.contrib.auth import get_user_model
-from shtab import Optional
+from typing import Optional
 
-from persons import CATEGORY_STATUS
+from django.contrib.auth import get_user_model
+
 from profiles.interfaces.interface_roles import UserProfile
 from utilities.permisions import PermissionsMixin
 
@@ -11,10 +11,6 @@ Users = get_user_model()
 
 
 class PermissionsChecker(PermissionsMixin):
-    def __new__(cls, *args, **kwargs):
-        initial = super().__new__(*args, **kwargs)
-        initial.roles = [list(item)[0] for item in CATEGORY_STATUS]
-        return initial
 
     @staticmethod
     def is_owner(user: Optional[Users], user_owner: UserProfile) -> bool:
