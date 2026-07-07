@@ -1,9 +1,9 @@
-# catalog/permisions/permisions_checker.py:1
+# catalog/permissions/permissions_checker.py:1
 from typing import Optional
 
 from persons.interfaces import Users
 from profiles.interfaces.interface_roles import UserProfile
-from utilities.permisions import PermissionsMixin
+from utilities.permissions import PermissionsMixin
 
 
 class PermissionsChecker(PermissionsMixin):

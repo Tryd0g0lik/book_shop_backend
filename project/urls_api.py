@@ -8,4 +8,9 @@ urlpatterns = [
         "download/",
         include(download_api),
     ),
+    path(
+        "orders/",
+        include(("orders.urls_api", "orders"), namespace="orders_api"),
+        name="orders_api",
+    ),
 ]

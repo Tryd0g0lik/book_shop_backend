@@ -4,7 +4,7 @@ from typing import Optional
 from django.contrib.auth import get_user_model
 
 from profiles.interfaces.interface_roles import UserProfile
-from utilities.permisions import PermissionsMixin
+from utilities.permissions import PermissionsMixin
 
 Users = get_user_model()
 # -- Roles

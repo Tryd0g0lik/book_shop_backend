@@ -101,6 +101,7 @@ INSTALLED_APPS = [
     "django_filters",
     # My moduls
     "persons",
+    "orders",
     "cart",
     "catalog.apps.CatalogConfig",
     "content_pages",
