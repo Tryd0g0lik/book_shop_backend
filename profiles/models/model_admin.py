@@ -6,11 +6,6 @@ from profiles.models.models_profiles import ProfilesModel
 
 
 class AdminProfileModel(ProfilesModel):
-    user = models.OneToOneField(
-        "persons.Users",
-        on_delete=models.CASCADE,
-        related_name="profile_admin",
-    )
 
     class Meta:
         db_table = "profiles_admin"

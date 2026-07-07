@@ -4,8 +4,10 @@ This a content will use for how auxiliary classes for data typing.
 """
 
 from datetime import datetime
-from typing import Optional, TypedDict, Union
+from typing import Optional, Protocol, TypedDict, Union
 from unicodedata import category
+
+from django.utils import timezone
 
 # from django.contrib.auth.models import Group
 from pydantic import BaseModel, ConfigDict
@@ -13,7 +15,73 @@ from pydantic import BaseModel, ConfigDict
 from persons.interfaces.interface_emailStr import EmailString
 
 
-#
+class Users(Protocol):
+    username_validator: str
+    username: str
+    first_name: str
+    last_name: str
+    email: EmailString
+    password: str
+    is_sent: bool
+    is_staff: bool
+    is_active: bool
+    is_verified: bool
+    verification_code: str
+    balance: float
+    date_joined = timezone
+    created_at = timezone
+    updated_at: timezone
+    user_permission: list
+    groups: list
+    is_superuser: bool
+
+    def __str__(self) -> str: ...
+
+    def clean_verification_code(self) -> None: ...
+
+    def clean(self) -> None: ...
+
+    def get_full_name(self) -> str: ...
+
+    def get_short_name(self) -> str: ...
+
+    def email_user(self, subject, message, from_email=None, **kwargs) -> None: ...
+    def save(self, **kwargs) -> None: ...
+
+    def get_username(self) -> Optional[str]: ...
+
+    def natural_key(self): ...
+
+    @property
+    def is_anonymous(self) -> bool: ...
+    @property
+    def is_authenticated(self) -> bool: ...
+
+    def set_password(self, raw_password) -> None: ...
+
+    def check_password(self, raw_password):
+        def setter(raw_password): ...
+
+    async def acheck_password(self, raw_password):
+        async def setter(raw_password): ...
+
+    def set_unusable_password(self) -> None: ...
+
+    def has_usable_password(self) -> str: ...
+
+    def get_session_auth_hash(self): ...
+
+    def get_session_auth_fallback_hash(self) -> None: ...
+
+    def _get_session_auth_hash(self, secret=None): ...
+
+    @classmethod
+    def get_email_field_name(cls) -> str: ...
+
+    @classmethod
+    def normalize_username(cls, username): ...
+
+
 class UsersDict(TypedDict):
     id: Optional[str]
     is_superuser: Optional[str]
