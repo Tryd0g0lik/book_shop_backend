@@ -3,69 +3,70 @@ from django.contrib.auth import get_user_model
 from shtab import Optional
 
 from persons import CATEGORY_STATUS
-from persons.interfaces import Users as Persons
-from profiles.interfaces import (
-    AdminProfileModel,
-    ClientProfileModel,
-    EditorProfileModel,
-    ManagerProfileModel,
-    ModeratorProfileModel,
-)
+from profiles.interfaces.interface_roles import UserProfile
+from utilities.permisions import PermissionsMixin
 
 Users = get_user_model()
 # -- Roles
 
 
-class PermissionsChecker:
+class PermissionsChecker(PermissionsMixin):
     def __new__(cls, *args, **kwargs):
         initial = super().__new__(*args, **kwargs)
         initial.roles = [list(item)[0] for item in CATEGORY_STATUS]
         return initial
 
     @staticmethod
-    def is_anonymous(user: Users) -> bool:
-        return user.is_anonymous
-
-    @staticmethod
-    def is_authenticated(user: Users) -> bool:
-        return user.is_authenticated
-
-    @staticmethod
-    def is_admin(user: Users) -> bool:
-        return user.is_superuser
-
-    @staticmethod
-    def is_active(user: Users) -> bool:
-        if user.is_verified and user.is_active:
-            return True
+    def is_owner(user: Optional[Users], user_owner: UserProfile) -> bool:
+        user_owner = (
+            getattr(user_owner, "user") if hasattr(user_owner, "user") else None
+        )
+        if user is not None and user_owner is not None:
+            if PermissionsChecker.is_active(user_owner) and getattr(
+                user, "id"
+            ) == getattr(user_owner, "id"):
+                return True
         return False
 
     @staticmethod
     def can_add_to_card(
         user: Optional[Users],
-        cart_owner: Optional[
-            ClientProfileModel
-            | AdminProfileModel
-            | ModeratorProfileModel
-            | ManagerProfileModel
-            | EditorProfileModel
-        ],
+        cart_owner: UserProfile,
     ) -> bool:
         """Everyone user can add to cart"""
+        user_owner = (
+            getattr(cart_owner, "user") if hasattr(cart_owner, "user") else None
+        )
         if user is not None:
-            if user.is_anonymous:
+            if PermissionsChecker.is_anonymous(user):
                 return True
-            if PermissionsChecker.is_active(user) and cart_owner is not None:
-                user.group.name == cart_owner.user.group.name
-
-        return True
-
-    @staticmethod
-    def can_edit_cart() -> bool:
-        """Everyone user can edit cart"""
-        return True
+            elif PermissionsChecker.is_owner(user, user_owner):
+                return True
+        return False
 
     @staticmethod
-    def can_delete_cart() -> bool:
-        """Everyone user can delete cart"""
-        return True
+    def can_edit_to_cart(user: Users, cart_owner: UserProfile) -> bool:
+        result_bool = PermissionsChecker.can_add_to_card(user, cart_owner)
+        if result_bool or (
+            PermissionsChecker.is_admin(user) and PermissionsChecker.is_active(user)
+        ):
+            return True
+        return False
+
+    @staticmethod
+    def can_delete_to_cart(user: Users, cart_owner: UserProfile) -> bool:
+        if PermissionsChecker.can_edit_to_cart(user, cart_owner):
+            return True
+        elif (
+            PermissionsChecker.is_admin(user)
+            or PermissionsChecker.is_manager(user)
+            or PermissionsChecker.is_moderator(user)
+        ):
+            return True
+        return False
+
+    @staticmethod
+    def can_view_to_cart(user: Users, cart_owner: UserProfile) -> bool:
+        if PermissionsChecker.can_delete_to_cart(user, cart_owner):
+            return True
+        return False
