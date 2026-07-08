@@ -37,7 +37,32 @@ class ProductModel(ClusterableModel, AbstractModel):
         ],
         unique=True,
         help_text=_("The name of the product"),
+        verbose_name=_("Product Name"),
+    )
+    product_sku = models.CharField(
+        max_length=100,
+        blank=True,
+        default="",
+        verbose_name=_("Product SKU"),
         db_index=True,
+    )
+    price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        validators=[
+            MinValueValidator(Decimal("0.00")),
+            DecimalValidator(max_digits=10, decimal_places=2),
+        ],
+        verbose_name=_("Product Price on the order moment"),
+        help_text=_("The price of the product"),
+    )
+    product_discount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        verbose_name=_("Product Discount on the order moment"),
+        validators=[MinValueValidator(Decimal("0.00"))],
+        default=Decimal("0.00"),
     )
     describe_preview = RichTextField(
         null=True,
@@ -71,17 +96,7 @@ class ProductModel(ClusterableModel, AbstractModel):
         on_delete=models.SET_NULL,
         help_text=_("The brand of the product"),
     )
-    price = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=Decimal("0.00"),
-        validators=[
-            MinValueValidator(Decimal("0.00")),
-            MaxValueValidator(Decimal("99999999.99")),
-            DecimalValidator(max_digits=10, decimal_places=2),
-        ],
-        help_text=_("The price of the product"),
-    )
+
     discount_percent = models.DecimalField(
         max_digits=4,
         decimal_places=2,
