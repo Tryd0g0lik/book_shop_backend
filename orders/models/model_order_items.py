@@ -10,14 +10,16 @@ class OrderItemModel(models.Model):
     """Number of product in the order"""
 
     order = models.ForeignKey(
-        "orders.Order",
+        "orders.OrderModel",
         on_delete=models.CASCADE,
         related_name="items",
         verbose_name=_("Order"),
         db_index=True,
+        null=True,
+        blank=True,
     )
     product = models.ForeignKey(
-        "products.ProductModel",
+        "catalog.ProductModel",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -98,3 +100,4 @@ class OrderItemModel(models.Model):
     def save(self, *args, **kwargs):
         self.subtotal = self.product_price * self.quantity
         self.total = (self.product_price - self.product_discount) * self.quantity
+        super().save(*args, **kwargs)

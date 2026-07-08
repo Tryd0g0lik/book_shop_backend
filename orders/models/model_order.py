@@ -210,7 +210,6 @@ class OrderModel(models.Model):
         db_index=True,
     )
     update_at = models.DateTimeField(
-        auto_now=True,
         verbose_name=_("Updated Date"),
         db_index=True,
         default=timezone.now,
@@ -228,7 +227,7 @@ class OrderModel(models.Model):
         verbose_name_plural = _("Orders")
         ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["user", "created_at"]),
+            models.Index(fields=["profile", "created_at"]),
             models.Index(fields=["status", "created_at"]),
             models.Index(fields=["payment_status", "created_at"]),
         ]
