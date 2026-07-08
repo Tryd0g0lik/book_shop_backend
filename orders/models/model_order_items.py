@@ -25,7 +25,7 @@ class OrderItemModel(models.Model):
         verbose_name=_("Product"),
     )
 
-    # === DATA OF PRODUCT ON MOMENT OF ORDER
+    # === DATA OF PRODUCT ON MOMENT OF ORDER (snapshot)
     product_name = models.CharField(
         max_length=255,
         verbose_name=_("Product Name"),
