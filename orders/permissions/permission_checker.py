@@ -1,4 +1,4 @@
-# profiles/permissiona/permission_checker.py:1
+# orders/permissions/permission_checker.py:1
 from typing import Optional
 
 from persons.interfaces import Users
@@ -7,7 +7,6 @@ from utilities.permissions import PermissionsMixin
 
 
 class PermissionsChecker(PermissionsMixin):
-
     @staticmethod
     def is_owner(user: Optional[Users], user_owner: UserProfile) -> bool:
         user_owner = (
@@ -21,46 +20,44 @@ class PermissionsChecker(PermissionsMixin):
         return False
 
     @staticmethod
-    def can_view_to_profile(user: Optional[Users], user_owner: UserProfile) -> bool:
-        user_owner = PermissionsChecker.is_owner(user, user_owner)
+    def can_view_all_orders(user: Optional[Users]) -> bool:
+        is_active = PermissionsChecker.is_active(user)
         is_moderator = PermissionsChecker.is_moderator(user)
         is_manager = PermissionsChecker.is_manager(user)
         is_admin = PermissionsChecker.is_admin(user)
-        if user_owner or is_admin or is_manager or is_moderator:
+        if is_active and is_moderator or is_manager or is_admin:
             return True
         return False
 
     @staticmethod
-    def can_edit_email_of_profile(user: Optional[Users]) -> bool:
-        is_moderator = PermissionsChecker.is_moderator(user)
-        is_admin = PermissionsChecker.is_admin(user)
+    def can_view_orders(user: Optional[Users], user_owner: UserProfile) -> bool:
         is_active = PermissionsChecker.is_active(user)
-        if is_active and (is_moderator or is_admin):
+        is_owner = PermissionsChecker.is_owner(user, user_owner)
+        is_editor = PermissionsChecker.is_editor(user)
+        is_client = PermissionsChecker.is_client(user)
+        if not is_active:
+            return False
+        if PermissionsChecker.can_view_all_orders(user):
+            return True
+        if is_owner and is_editor or is_client:
             return True
         return False
 
     @staticmethod
-    def can_adit_to_profile(user: Optional[Users], user_owner: UserProfile) -> bool:
-        user_owner = PermissionsChecker.is_owner(user, user_owner)
+    def can_delete_all_orders(user: Optional[Users]) -> bool:
+        is_all_view = PermissionsChecker.can_view_all_orders(user)
+        if is_all_view:
+            return True
+        return False
+
+    @staticmethod
+    def can_do_pay(user: Optional[Users], user_owner: UserProfile) -> bool:
         is_active = PermissionsChecker.is_active(user)
-        is_manager = PermissionsChecker.is_manager(user)
-        is_ = PermissionsChecker.can_edit_email_of_profile(user)
-
-        if is_active and (user_owner or is_ or is_manager):
+        is_owner = PermissionsChecker.is_owner(user, user_owner)
+        if is_active and is_owner:
             return True
         return False
 
     @staticmethod
-    def can_edit_profile_name(user: Optional[Users]) -> bool:
-        is_admin = PermissionsChecker.is_admin(user)
-        if is_admin:
-            return True
-        return False
-
-    @staticmethod
-    def can_delete_profile_name():
-        return False
-
-    @staticmethod
-    def can_create_profile_name():
+    def can_edit_order() -> bool:
         return False
