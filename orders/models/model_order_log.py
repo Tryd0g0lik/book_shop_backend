@@ -28,16 +28,19 @@ class OrderLogModel(models.Model):
     old_status = models.CharField(
         max_length=20,
         blank=True,
+        default="",
         verbose_name=_("Old status"),
     )
     new_status = models.CharField(
         max_length=20,
         blank=True,
+        default="",
         verbose_name=_("New status"),
     )
 
     comment = models.TextField(
         blank=True,
+        default="",
         verbose_name=_("Comment"),
     )
 

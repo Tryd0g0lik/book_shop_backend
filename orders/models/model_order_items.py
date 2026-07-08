@@ -33,12 +33,14 @@ class OrderItemModel(models.Model):
     product_sku = models.CharField(
         max_length=100,
         blank=True,
+        default="",
         verbose_name=_("Product SKU"),
         db_index=True,
     )
     product_price = models.DecimalField(
         max_digits=12,
         decimal_places=2,
+        default=Decimal("0.00"),
         verbose_name=_("Product Price on the order moment"),
         validators=[MinValueValidator(Decimal("0.00"))],
     )
@@ -61,12 +63,14 @@ class OrderItemModel(models.Model):
     subtotal = models.DecimalField(
         max_digits=12,
         decimal_places=2,
+        default=Decimal("0.00"),
         verbose_name=_("Subtotal"),
         validators=[MinValueValidator(Decimal("0.00"))],
     )
     total = models.DecimalField(
         max_digits=12,
         decimal_places=2,
+        default=Decimal("0.00"),
         verbose_name=_("Total"),
         validators=[MinValueValidator(Decimal("0.00"))],
     )
