@@ -17,7 +17,7 @@ from django.utils.translation import gettext_lazy as _
 Users = get_user_model()
 
 
-class Order(models.Model):
+class OrderModel(models.Model):
     """
     Order model.
     This model is fixing all data about the steps wit   h successful orders
