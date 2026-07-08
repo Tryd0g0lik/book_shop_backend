@@ -87,6 +87,7 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=int(JWT_ACCESS_TOKEN_LIFETIME_MINUTES)),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=int(JWT_REFRESH_TOKEN_LIFETIME_DAYS)),
     "SIGNING_KEY": f"{JWT_SECRET_KEY}",
+    "TOKEN_OBTAIN_SERIALIZER": "persons.views.serializers.token_obtain_serializer.TokenObtainPairSerializer",
 }
 
 

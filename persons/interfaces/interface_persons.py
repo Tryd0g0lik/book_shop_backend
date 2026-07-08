@@ -16,6 +16,7 @@ from persons.interfaces.interface_emailStr import EmailString
 
 
 class Users(Protocol):
+    id: Optional[int]
     username_validator: str
     username: str
     first_name: str

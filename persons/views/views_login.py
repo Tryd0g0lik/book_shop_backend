@@ -6,7 +6,7 @@ import asyncio
 import datetime
 import json
 import logging
-from django.utils import timezone
+
 from allauth.account.models import EmailAddress, EmailConfirmation
 from allauth.account.views import LoginView
 from django.contrib import messages
@@ -14,9 +14,11 @@ from django.contrib.auth import authenticate, login
 from django.db.models import QuerySet
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
+from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from rest_framework import status
 
+from persons import CATEGORY_STATUS
 from persons.exceptions.error_person import PersonLogingError
 from persons.forms import UsersLoginForm
 from persons.forms.verification_form import UsersCheckCodeVerificationForm
@@ -77,6 +79,8 @@ class UserLoginView(LoginView):
         TODO: После авторизации:
           - удалить запись из кеша!!!!!!
           - Создать (редирект для клиента) маршрут в аккаунт или в каталог для клиента
+          - Прописать JWT токен тут или при редиректе (после удачной авторизации)
+          - роли client, manager, editor не имеют страницы для редиректа в случае удачного логина.
          Функцию - восстановить пароль - проверить после настройки посты на внешний провайдер.
         :param request:
         :return:
@@ -186,10 +190,20 @@ class UserLoginView(LoginView):
                         }
                     )
                     request.session[user.verification_code] = session_data_json_str
-
-                    return redirect(
-                        "wagtailadmin_home",
-                    )
+                    queryset_profile = user.groups.values_list("name", flat=True)
+                    if queryset_profile.exists():
+                        profile = queryset_profile.first()
+                        if profile in [
+                            CATEGORY_STATUS[1][0],
+                            CATEGORY_STATUS[1][0],
+                            CATEGORY_STATUS[2][0],
+                            CATEGORY_STATUS[4][0],
+                            CATEGORY_STATUS[5][0],
+                        ]:
+                            return redirect(
+                                "wagtailadmin_home",
+                            )
+                        return redirect("catalog/")
                 messages.warning(request, "User login or password is invalid!")
                 return render(
                     request,
