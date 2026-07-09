@@ -1,18 +1,18 @@
 # # project/urls_api.py:2
-from django.urls import include, path, re_path
-
-# from rest_framework_simplejwt.serializers import TokenObtainSerializer
+from django.urls import include, path
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from download.urls_api import urlpatterns as download_api
-from persons.views.serializers.token_obtain_serializer import TokenObtainPairSerializer
-
-# from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
     path(
         "download/",
         include(download_api),
+    ),
+    path(
+        "catalog/",
+        include(("catalog.urls_api", "catalog"), namespace="catalog_api"),
+        name="catalog_api",
     ),
     path(
         "orders/",

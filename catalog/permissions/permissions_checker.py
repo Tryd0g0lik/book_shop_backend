@@ -41,7 +41,6 @@ class PermissionsChecker(PermissionsMixin):
 
     @staticmethod
     def can_delete_product(user: Optional[Users], user_owner: UserProfile) -> bool:
-        is_active = PermissionsChecker.is_active(user)
         is_admin = PermissionsChecker.is_admin(user)
         is_manager = PermissionsChecker.is_manager(user)
         is_editor = PermissionsChecker.is_editor(user)
@@ -49,7 +48,7 @@ class PermissionsChecker(PermissionsMixin):
         if PermissionsChecker.can_add_product(user, user_owner):
             if is_admin:
                 return True
-            elif is_active and (is_editor or is_manager) and is_owner:
+            elif (is_editor or is_manager) and is_owner:
                 return True
         return False
 

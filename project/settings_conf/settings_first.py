@@ -103,7 +103,7 @@ INSTALLED_APPS = [
     # My moduls
     "persons",
     "orders",
-    "catalog.apps.CatalogConfig",
+    "catalog",
     "content_pages",
     "profiles",
     "crispy_forms",

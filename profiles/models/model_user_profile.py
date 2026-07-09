@@ -77,6 +77,14 @@ class UserProfile(WagtailUserProfile):
         db_index=True,
         db_comment="User profile",
     )
+    product = models.ForeignKey(
+        "catalog.ProductModel",
+        on_delete=models.SET_NULL,
+        verbose_name=_("Product"),
+        blank=True,
+        null=True,
+        related_name="product",
+    )
 
     class Meta:
         db_table = "profiles_users"
