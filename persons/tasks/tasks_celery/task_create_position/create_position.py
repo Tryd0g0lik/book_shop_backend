@@ -4,8 +4,13 @@ import logging
 
 from allauth.account.models import EmailAddress, EmailConfirmation
 from django.utils import timezone
+from playwright.sync_api import expect
+from wagtail.users.models import UserProfile
+
+from persons.models import Users
 
 log = logging.getLogger(__name__)
+
 
 async def create_position_for_EmailConfiguration(*args, **kwargs):
     log_t = "[task_create_position_for_EmailConfiguration]:"
@@ -23,4 +28,11 @@ async def create_position_for_EmailConfiguration(*args, **kwargs):
         email_address_id=email_address.id,
     )
     await email_conf.asave()
+    try:
+        user = await Users.objects.aget(email=one_email)
+        await UserProfile.objects.aget(user_id=user.id)
+    except UserProfile.DoesNotExist:
+        await UserProfile.objects.acreate(
+            user=user,
+        )
     log.info(log_t + "# save a verification code")

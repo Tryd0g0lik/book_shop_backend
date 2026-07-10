@@ -1,0 +1,102 @@
+# persons/tasks/tasks_celery/task_create_position/create_position_allauth.py:1
+# Adding of positions to the Alliauth's  EmailAddress & EmailConfirmation
+# This task run after an event of login
+import asyncio
+import logging
+from typing import Optional
+
+from allauth.account.models import EmailAddress, EmailConfirmation
+
+log = logging.getLogger(__name__)
+
+
+async def create_some_position_allauth(*args, **kwargs: dict[str, int]) -> None:
+    """
+    :param args: -
+    :param kwargs: "{'user_id':int, 'timeout_server':int}"
+    :return: None
+    """
+    from persons.models import Users as UsersModel
+
+    if kwargs is not None or len(dict(kwargs).keys()) == 0:
+        return
+    log_t = f"[{create_some_position_allauth.__name__}]:"
+    # number of user that just  now created (in process) account
+    user_id: Optional[int] = kwargs.get("user_id")
+    # number of seconds
+    timeout_server: Optional[int] = kwargs.get("timeout_server")
+    if user_id is None or timeout_server is None or user_id < 0 or timeout_server < 0:
+        log.warning(
+            log_t
+            + f" 'user_id' or 'timeout_server' is incorrect! args: {str(args)} & kwargs: {str(kwargs)}"
+        )
+        return None
+    # Getting obj of last of user for will add of positions to the Alliauth's  EmailAddress & EmailConfirmation
+    user = None
+    try:
+        user = await UsersModel.objects.aget(id=user_id)
+    except UsersModel.DoesNotExist:
+        log.warning(log_t + " 'user' not exists!")
+        return None
+    # --- Allauth EmailAddress
+    queryset = EmailAddress.objects.filter(user_id=user.id)
+    aexists = await queryset.aexists()
+    if aexists:
+        account_email = await queryset.afirst()
+
+        if not account_email.verified:
+            setattr(account_email, "verified", True)
+
+            asave = account_email.asave
+            try:
+                await asyncio.wait_for(
+                    asave(update_fields=["verified"]), timeout_server
+                )
+            except asyncio.TimeoutError:
+                log.warning(
+                    log_t
+                    + " TimeoutError data didn't update in the 'EmailAddress' database!"
+                )
+                return None
+            except Exception as e:
+                log.warning(log_t + " ERROR => " + e.args[0] if e.args else str(e))
+                return None
+        else:
+            # Allauth
+            log.info(log_t + " has exists 'verified' in database!")
+            return None
+
+        # --- Allauth EEmailConfirmation
+        email_conf = EmailConfirmation.objects.filter(
+            email_address_id=account_email.id,
+        )
+        exists = await email_conf.aexists()
+        if not exists:
+            log.warning(log_t + "At 'EmailConfirmation' the user has not exists!")
+            return None
+        afirst = email_conf.afirst()
+
+        email_obj = await afirst
+        if email_obj is not None:
+            if not email_obj.verified:
+                email_obj.verified = True
+                try:
+                    await asyncio.wait_for(email_obj.asave(), timeout_server)
+                except asyncio.TimeoutError:
+                    log.warning(log_t + " TimeoutError data didn't update in database!")
+                    return None
+                except Exception as e:
+                    log.warning(log_t + " ERROR => " + e.args[0] if e.args else str(e))
+                    return None
+            else:
+                log.info(
+                    log_t
+                    + "At 'EmailConfirmation' the user did not find in the 'EmailConfirmation' database!"
+                )
+                return None
+        else:
+            log.info(log_t + "Allauth did not save new email!")
+            return None
+    else:
+        log.error(log_t + " User not exists!")
+        return None

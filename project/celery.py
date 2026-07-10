@@ -22,11 +22,12 @@ celery_app = Celery(
         "persons.tasks.tasks_celery.task_set_cache",
         "persons.tasks.tasks_celery.task_send_letter_to_user_email",
         "persons.tasks.tasks_celery.task_create_position",
+        "persons.tasks.tasks_celery.task_allauth",
+        "persons.tasks.tasks_celery.tasks_wagtail",
     ],
 )
 
 celery_app.config_from_object("project.celeryconfig", namespace="CELERY")
-# celery_app.config_from_object('django.conf:settings', namespace='CELERY')
 celery_app.conf.task_queues = (
     Queue("default", Exchange("default"), routing_key="task.#"),
     Queue("high", Exchange("high"), routing_key="high.#"),

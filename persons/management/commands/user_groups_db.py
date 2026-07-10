@@ -7,7 +7,7 @@ class Command(BaseCommand):
     help = "Chek and Add additional users groups of database."
 
     def handle(self, *args, **options):
-        from persons import CATEGORY_STATUS
+        from utilities import CATEGORY_STATUS
 
         try:
             Group.objects.all()

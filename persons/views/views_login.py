@@ -7,7 +7,6 @@ import datetime
 import json
 import logging
 
-from allauth.account.models import EmailAddress, EmailConfirmation
 from allauth.account.views import LoginView
 from django.contrib import messages
 from django.contrib.auth import authenticate, login
@@ -18,10 +17,13 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from rest_framework import status
 
-from persons import CATEGORY_STATUS
 from persons.exceptions.error_person import PersonLogingError
 from persons.forms import UsersLoginForm
 from persons.forms.verification_form import UsersCheckCodeVerificationForm
+from persons.tasks.tasks_celery.task_allauth import tasks_position_allauth
+from persons.tasks.tasks_celery.tasks_wagtail import tasks_position_wagtail
+from profiles.tasks.task_signals.task_create_profile import create_profile_signal
+from utilities import CATEGORY_STATUS
 
 log = logging.getLogger(__name__)
 
@@ -143,36 +145,18 @@ class UserLoginView(LoginView):
                     ]
                 )
                 # --- Profile
+                kwargs = {"user_id": user.id, "timeout_server": user.email}
+                args = []
+                log.info(f"DEBUG Profile args: {str(args)} & kwargs: {str(kwargs)}")
+                tasks_position_allauth.delay(*args, **kwargs)
+                kwargs = {"user_id": user.id, "timeout_server": user.email}
+                log.info(f"DEBUG Profile args: {str(args)} & kwargs: {str(kwargs)}")
+                tasks_position_wagtail.delay(args, **kwargs)
+                kwargs = {"user_id": user.id}
+                log.info(f"DEBUG Profile args: {str(args)} & kwargs: {str(kwargs)}")
+                create_profile_signal.send(sender=self.__class__, **kwargs)
 
-                # --- Allauth
-                queryset = EmailAddress.objects.filter(user=user)
-                if queryset.exists():
-                    account_email = queryset.first()
-                    email_conf = None
-                    if account_email.email == user.email:
-                        setattr(account_email, "verified", True)
-                        account_email.save(update_fields=["verified"])
-                        email_conf = EmailConfirmation.objects.filter(
-                            email_address_id=account_email.id,
-                        )
-                    else:
-                        log.warning(
-                            self.log_t[-1]
-                            + f"[{self.post.__name__}]:"
-                            + "Allauth did not save new verified!"
-                        )
-                    email_obj = email_conf.first() if email_conf.exists() else None
-                    if email_obj is not None:
-                        email_obj.verified = True
-                        email_obj.save()
-                    else:
-                        log.warning(
-                            self.log_t[-1]
-                            + f"[{self.post.__name__}]:"
-                            + "Allauth did not save new email!"
-                        )
-
-                # ---
+                # --- USER LOGIN
                 request.session.save()
                 user_auth = authenticate(
                     request=request, email=email, password=password
@@ -193,7 +177,7 @@ class UserLoginView(LoginView):
                     queryset_profile = user.groups.values_list("name", flat=True)
                     if queryset_profile.exists():
                         profile = queryset_profile.first()
-                        if profile in [
+                        if profile.upper() in [
                             CATEGORY_STATUS[1][0],
                             CATEGORY_STATUS[1][0],
                             CATEGORY_STATUS[2][0],
@@ -203,7 +187,7 @@ class UserLoginView(LoginView):
                             return redirect(
                                 "wagtailadmin_home",
                             )
-                        return redirect("catalog/")
+                        return redirect("catalog")
                 messages.warning(request, "User login or password is invalid!")
                 return render(
                     request,

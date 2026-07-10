@@ -19,12 +19,13 @@ from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.decorators.http import require_GET, require_POST
 
-from persons import CATEGORY_STATUS, PATH_NAMES
+from persons import PATH_NAMES
 from persons.apps import account_manager, cachemanager
 from persons.forms import UsersRegistrationForm
 from persons.forms.verification_form import UsersCheckCodeVerificationForm
 from persons.models import Users
 from persons.tasks.tasks_celery.task_send_letter_to_user_email import task_postman
+from utilities import CATEGORY_STATUS
 
 # from project.settings_conf.settings_first import LOGIN_URL
 
@@ -319,6 +320,9 @@ class UsersRegistrationView(AllauthSignupView):
             log_t = f"[UsersRegistrationView]: {e.args[0] if e.args else str(e)}"
             raise ValueError(log_t)
         finally:
+            log.debug(
+                f"[UsersRegistrationView]: DEBUG *args: {str(args)}, **kwargs: {str(kwargs)}"
+            )
             task_postman.delay(*args, **kwargs)
         # messages.success(self.request, message)
 

@@ -145,9 +145,11 @@ class UsersPydantic(BaseModel):
                 "date_joined",
             }
         )
-        category = self.get_category()
+        get_category = self.get_category()
 
-        data_dict.__setitem__("category", category if category is not None else None)
+        data_dict.__setitem__(
+            "category", get_category if get_category is not None else None
+        )
 
         if self.last_login is not None:
             data_dict.__setitem__(
@@ -190,9 +192,11 @@ class UsersPydantic(BaseModel):
                 "is_verified",
             }
         )
-        category = self.get_category()
+        get_category = self.get_category()
 
-        data_dict.__setitem__("category", category if category is not None else None)
+        data_dict.__setitem__(
+            "category", get_category if get_category is not None else None
+        )
 
         if self.last_login is not None:
             data_dict.__setitem__(
@@ -236,3 +240,9 @@ class UsersPydantic(BaseModel):
                 group_names_str = ",".join(group_names)
                 return group_names_str
         return None
+
+
+# persons.tasks.tasks_celery.task_create_position.create_position_allauth.create_some_position_allauth
+class DataStartPosition(TypedDict):
+    user_id: int
+    timeout_server: int

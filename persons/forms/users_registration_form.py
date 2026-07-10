@@ -15,7 +15,6 @@ from django.core.validators import (
 )
 from django.utils.translation import gettext_lazy as _
 
-from persons import CATEGORY_STATUS
 from persons.models import Users
 from persons.validators import EmailValidatorPerson
 
@@ -24,6 +23,7 @@ from project.settings_conf.settings_env import (
     APP_MAX_PASSWORD_LENGTH,
     APP_MINIMUM_PASSWORD_LENGTH,
 )
+from utilities import CATEGORY_STATUS
 
 log = logging.getLogger(__name__)
 
