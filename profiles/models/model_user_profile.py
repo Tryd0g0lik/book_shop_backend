@@ -1,12 +1,13 @@
 # profiles/models/model_user_profile.py:1
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from wagtail.users.models import UserProfile as WagtailUserProfile
 
 from profiles.exceptions.error_profile import ProfileNotFound, ProfileValueError
 
+# from wagtail.users.models import UserProfile as WagtailUserProfile
 
-class UserProfile(WagtailUserProfile):
+
+class UserProfileModel(models.Model):
     """
     Params that inherited from the 'wagtail.users.models.UserProfile'
     :param int id.
@@ -26,6 +27,7 @@ class UserProfile(WagtailUserProfile):
     And added additional cell is profiles
     """
 
+    # id = models.AutoField(primary_key=True)
     moderator = models.ForeignKey(
         "profiles.ModeratorProfileModel",
         on_delete=models.CASCADE,
@@ -77,14 +79,14 @@ class UserProfile(WagtailUserProfile):
         db_index=True,
         db_comment="User profile",
     )
-    product = models.ForeignKey(
-        "catalog.ProductModel",
-        on_delete=models.SET_NULL,
-        verbose_name=_("Product"),
-        blank=True,
-        null=True,
-        related_name="product",
-    )
+    # product = models.ForeignKey(
+    #     "catalog.ProductModel",
+    #     on_delete=models.SET_NULL,
+    #     verbose_name=_("Product"),
+    #     blank=True,
+    #     null=True,
+    #     related_name="product",
+    # )
 
     class Meta:
         db_table = "profiles_users"

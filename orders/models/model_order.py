@@ -44,13 +44,18 @@ class OrderModel(models.Model):
         UMONEY = "UMoney", _("ЮMoney")
 
     # === BASIS FIELDS
-    profile = models.ForeignKey(
-        "profiles.UserProfile",
-        on_delete=models.SET_NULL,
-        null=True,
+    # profile = models.ForeignKey(
+    #     "profiles.UserProfile",
+    #     on_delete=models.SET_NULL,
+    #     null=True,
+    #     blank=True,
+    #     related_name="+",
+    #     verbose_name=_("Profile"),
+    # )
+    profile = models.PositiveIntegerField(
+        verbose_name=_("Profile ID"),
         blank=True,
-        related_name="user_orders",
-        verbose_name=_("Profile"),
+        null=True,
     )
     # === INFO ABOUT THE OWNER OF THE ORDER
     customer_email = models.EmailField(
@@ -227,7 +232,7 @@ class OrderModel(models.Model):
         verbose_name_plural = _("Orders")
         ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["profile", "created_at"]),
+            # models.Index(fields=["profile_id", "created_at"]),
             models.Index(fields=["status", "created_at"]),
             models.Index(fields=["payment_status", "created_at"]),
         ]

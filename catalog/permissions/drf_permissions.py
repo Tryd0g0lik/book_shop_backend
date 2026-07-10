@@ -6,7 +6,7 @@ from rest_framework.permissions import BasePermission
 from rest_framework.request import Request
 
 from persons.interfaces import Users
-from profiles.models import UserProfile
+from profiles.models import UserProfileModel
 
 from .permissions_checker import PermissionsChecker
 
@@ -32,7 +32,7 @@ class DRFPermissionsChecker(BasePermission):
     def has_object_permission(self, request: Request, view, obj):
         user = request.user
         own_user: Optional[Users] = None
-        profile_queryset = UserProfile.objects.filter(
+        profile_queryset = UserProfileModel.objects.filter(
             Q(product__isnull=False) and Q(product=obj.id) and Q(user=user)
         )
         if profile_queryset.exists():
