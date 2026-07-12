@@ -9,9 +9,6 @@ from django.core.validators import (
 )
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from wagtail.admin.panels import FieldPanel
-
-from project.settings_conf.settings_first import DATETIME_FORMAT
 
 
 class AbstractModel(models.Model):
@@ -22,7 +19,7 @@ class AbstractModel(models.Model):
         auto_now=True, help_text=_("The last update date")
     )
     created_by = models.ForeignKey(
-        "account.EmailAddress",
+        "profiles.UserProfileModel",
         on_delete=models.SET_NULL,
         help_text=_("THe user who created the position"),
         null=True,
@@ -30,7 +27,7 @@ class AbstractModel(models.Model):
         related_name="%(app_label)s_%(class)s_product_characteristics_created",
     )
     updated_by = models.ForeignKey(
-        "account.EmailAddress",
+        "profiles.UserProfileModel",
         on_delete=models.SET_NULL,
         help_text=_("The user who last updated the position"),
         null=True,
