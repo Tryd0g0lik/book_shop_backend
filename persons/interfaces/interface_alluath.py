@@ -2,25 +2,22 @@
 from datetime import datetime
 from typing import Protocol
 
-from allauth.account.managers import EmailAddressManager, EmailConfirmationManager
-from allauth.account.models import (
-    EmailConfirmation,
-    EmailConfirmationHMAC,
-    EmailConfirmationMixin,
-)
 from django.db import models
 from django.http import HttpRequest
 
-from persons.interfaces import Users
+# from allauth.account.managers import (EmailAddressManager, EmailConfirmationManager)
 
 
-class EmailAddress(models.Model):
-    user: Users
-    email: str
-    verified: bool
-    primary: bool
+class EmailConfirmationMixin:
+    def confirm(self, request: HttpRequest): ...
 
-    objects: EmailAddressManager
+    def send(
+        self, request: HttpRequest | None = None, signup: bool = False
+    ) -> None: ...
+
+
+class EmailAddress(Protocol):
+    """Interface for Allauth.EmailAddress model."""
 
     def __str__(self) -> str: ...
 
@@ -34,18 +31,18 @@ class EmailAddress(models.Model):
 
     def send_confirmation(
         self, request: HttpRequest | None = None, signup: bool = False
-    ) -> EmailConfirmation | EmailConfirmationHMAC: ...
+    ): ...
 
     def remove(self) -> None: ...
 
 
-class EmailConfirmation(EmailConfirmationMixin, models.Model, Protocol):
+class EmailConfirmation(EmailConfirmationMixin):
+    """Interface for Allauth.EmailConfirmation model."""
+
     email_address: EmailAddress
     created: datetime
     sent: datetime
     key: str
-
-    objects: EmailConfirmationManager
 
     def __str__(self) -> str: ...
 

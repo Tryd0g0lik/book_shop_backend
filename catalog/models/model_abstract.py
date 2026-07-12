@@ -25,6 +25,10 @@ class AbstractModel(models.Model):
         null=True,
         blank=True,
         related_name="%(app_label)s_%(class)s_product_characteristics_created",
+        db_comment="""This is a user created position. Just this is goes not a direct user. That is
+        profile user is through the 'ProfilesModel' model.
+        If need  a direct user mean we get of user through the 'ProfilesModel' model..
+        """,
     )
     updated_by = models.ForeignKey(
         "profiles.UserProfileModel",
@@ -33,6 +37,8 @@ class AbstractModel(models.Model):
         null=True,
         blank=True,
         related_name="%(app_label)s_%(class)s_product_characteristics_updated",
+        db_comment="""This is a user last updated position.
+        If need a direct user mean we act by analogy the 'self.created_by """,
     )
     is_active = models.BooleanField(
         default=False, help_text=_("Designates whether this item is used or not")
@@ -41,6 +47,8 @@ class AbstractModel(models.Model):
     class Meta:
         abstract = True
         ordering = ["-updated_at"]
+
+    # created_by
 
 
 class AbstractCategoryPage(models.Model):

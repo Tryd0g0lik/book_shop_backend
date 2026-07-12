@@ -29,21 +29,22 @@ class DRFPermissionsChecker(BasePermission):
             return True
         return False
 
-    def has_object_permission(self, request: Request, view, obj):
-        user = request.user
-        own_user: Optional[Users] = None
-        profile_queryset = UserProfileModel.objects.filter(
-            Q(product__isnull=False) and Q(product=obj.id) and Q(user=user)
-        )
-        if profile_queryset.exists():
-            own_user = profile_queryset.first()
-        if view.action == "retrieve":
-            return PermissionsChecker.can_view_to_product()
-        elif view.action == ["update", "partial_update"]:
-            # For PUT/PATCH request (update)
-            return PermissionsChecker.can_edit_product(user, own_user)
-        elif view.action == "destroy":
-            # For DELETE request (destroy)
-            return PermissionsChecker.can_delete_product(user, own_user)
-
-        return False
+    # def has_object_permission(self, request: Request, view, obj):
+    #     user = request.user
+    #     own_user: Optional[Users] = None
+    #     profile_queryset = (UserProfileModel
+    #     .objects.filter( rewrite
+    #         Q(product__isnull=False) and Q(product=obj.id) and Q(user=user)
+    #     ))
+    #     if profile_queryset.exists():
+    #         own_user = profile_queryset.first()
+    #     if view.action == "retrieve":
+    #         return PermissionsChecker.can_view_to_product()
+    #     elif view.action == ["update", "partial_update"]:
+    #         # For PUT/PATCH request (update)
+    #         return PermissionsChecker.can_edit_product(user, own_user)
+    #     elif view.action == "destroy":
+    #         # For DELETE request (destroy)
+    #         return PermissionsChecker.can_delete_product(user, own_user)
+    #
+    #     return False

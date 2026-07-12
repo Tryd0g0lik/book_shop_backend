@@ -13,11 +13,16 @@ __all__ = [
     "CacherAdapter",
     "AsyncCacherAdapter",
     "Users",
+    "EmailConfirmationMixin",
     "EmailConfirmation",
     "EmailAddress",
 ]
 
-from persons.interfaces.interface_alluath import EmailAddress, EmailConfirmation
+from persons.interfaces.interface_alluath import (
+    EmailAddress,
+    EmailConfirmation,
+    EmailConfirmationMixin,
+)
 from persons.interfaces.interface_cache_adapter import (
     AsyncCacherAdapter,
     CacheManager,

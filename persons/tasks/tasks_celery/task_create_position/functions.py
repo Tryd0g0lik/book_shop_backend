@@ -14,7 +14,7 @@ from persons.interfaces import Users
 
 log = logging.getLogger(__name__)
 
-E = NewType["E", EmailAddress]
+E = type(EmailAddress)
 M = NewType("M", E | Users)
 
 
