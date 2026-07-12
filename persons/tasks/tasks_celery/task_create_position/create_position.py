@@ -4,7 +4,6 @@ import logging
 
 from allauth.account.models import EmailAddress, EmailConfirmation
 from django.utils import timezone
-from playwright.sync_api import expect
 from wagtail.users.models import UserProfile
 
 from persons.models import Users

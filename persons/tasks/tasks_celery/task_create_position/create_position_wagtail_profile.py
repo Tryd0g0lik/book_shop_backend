@@ -5,6 +5,8 @@ from typing import Optional
 
 from allauth.account.models import EmailConfirmation
 
+from persons.tasks.tasks_celery.task_create_position.functions import aget_object_of_log
+
 log = logging.getLogger(__name__)
 
 
@@ -31,23 +33,21 @@ async def create_some_position_at_wagtail_profile(
             + f" 'user_id' or 'timeout_server' is incorrect! args: {str(args)} & kwargs: {str(kwargs)}"
         )
         return None
+    user = await aget_object_of_log(Users, user_id, log_t)
+    if user is None:
+        return None
+
     try:
-        user = await Users.objects.aget(id=user_id)
-        if user:
-            try:
-                await asyncio.wait_for(
-                    UserProfile.objects.aget_or_create(user=user),
-                    timeout=timeout_server,
-                )
-            except asyncio.TimeoutError:
-                log.warning(
-                    log_t
-                    + " TimeoutError data didn't update in the 'wagtail.users.UserProfile' database!"
-                )
-                return None
-            except Exception as e:
-                log.warning(log_t + " ERROR => " + e.args[0] if e.args else str(e))
-                return None
-    except EmailConfirmation.DoesNotExist:
-        log.error(log_t + " 'user' not exists in database!")
+        await asyncio.wait_for(
+            UserProfile.objects.aget_or_create(user=user),
+            timeout=timeout_server,
+        )
+    except asyncio.TimeoutError:
+        log.warning(
+            log_t
+            + " TimeoutError data didn't update in the 'wagtail.users.UserProfile' database!"
+        )
+        return None
+    except Exception as e:
+        log.warning(log_t + " ERROR => " + e.args[0] if e.args else str(e))
         return None
