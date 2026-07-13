@@ -7,9 +7,10 @@ from profiles.exceptions.error_profile import ProfileNotFound, ProfileValueError
 # from wagtail.users.models import UserProfile as WagtailUserProfile
 
 
-class UserProfileModel(models.Model):
+# Was renamed from UserProfileModel to
+class UserProfileManagerModel(models.Model):
     """
-    Params that inherited from the 'wagtail.users.models.UserProfile'
+
     :param int id.
     :param bool submitted_notifications
     :param bool approved_notifications
@@ -92,6 +93,13 @@ class UserProfileModel(models.Model):
         db_table = "profiles_users"
         verbose_name_plural = _("User profiles")
         verbose_name = _("User profiles")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["moderator", "manager", "editor", "admin", "client"],
+                name="unique_of_profile_manager",
+                violation_error_message="Combination of users profiles already exists.",
+            )
+        ]
 
     def __str__(self):
         list_profiles = [

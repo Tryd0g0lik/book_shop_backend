@@ -21,7 +21,7 @@ def task_create_profile_from_signal(*args, **kwargs) -> None:
         EditorProfileModel,
         ManagerProfileModel,
         ModeratorProfileModel,
-        UserProfileModel,
+        UserProfileManagerModel,
     )
 
     log_t = f"[{task_create_profile_from_signal.__name__}]:"
@@ -30,7 +30,7 @@ def task_create_profile_from_signal(*args, **kwargs) -> None:
         "client": ClientProfileModel,
         "manager": ManagerProfileModel,
         "editor": EditorProfileModel,
-        "user": UserProfileModel,
+        "user": UserProfileManagerModel,
         "admin": AdminProfileModel,
     }
 

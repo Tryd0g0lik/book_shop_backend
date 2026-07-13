@@ -12,8 +12,10 @@ class ManagerProfileModel(ProfilesModel):
         on_delete=models.CASCADE,
         related_name="+",
         verbose_name=_("User"),
-        blank=True,
-        null=True,
+        # blank=True,
+        # null=True,
+        unique=True,
+        db_comment="It is from the 'wagtail.users.models.UserProfile'",
     )
 
     class Meta:
