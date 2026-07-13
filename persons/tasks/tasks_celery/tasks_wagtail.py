@@ -30,9 +30,6 @@ def tasks_position_wagtail(self, *args, **kwargs) -> None:
         custom_loop = CustomizationSyncAsyncLoop(*args, **kwargs)
         custom_loop.get_new_function = create_some_position_at_wagtail_profile
         wrapper = custom_loop.get_new_loop()
-        log.info(
-            log_t + " After opening a new loop. & Before run the threading.Thread."
-        )
         Thread(target=wrapper).start()
     except Exception as e:
         log.info(log_t + str(e))

@@ -3,14 +3,10 @@ import asyncio
 import logging
 from typing import Optional
 
-from allauth.account.models import EmailConfirmation
-from django.db.models import QuerySet
-
 from persons.tasks.tasks_celery.task_create_position.functions import (
     aget_object_of_log,
     greate_of_profile,
 )
-from utilities import CATEGORY_STATUS
 
 log = logging.getLogger(__name__)
 
@@ -35,7 +31,6 @@ async def create_some_position_at_wagtail_profile(
         ModeratorProfileModel,
     )
 
-    log.info("WAGTAIL  DEBUG 0")
     log_t = f"[{create_some_position_at_wagtail_profile.__name__}]:"
     # number of user that just  now created (in process) account
     user_id: Optional[int] = kwargs.get("user_id")
@@ -47,29 +42,15 @@ async def create_some_position_at_wagtail_profile(
             + f" 'user_id': {user_id} or 'timeout_server': {timeout_server} is incorrect! args: {str(args)} & kwargs: {str(kwargs)}"
         )
         return None
-    log.info("WAGTAIL  DEBUG 1")
     # 'Users' model from the 'person.models.model_persons.Users'
     user: UsersInterface = await aget_object_of_log(Users, user_id, log_t)
     if user is None:
         return None
-    log.info("WAGTAIL  DEBUG 2")
     try:
         wagtail_user_profile_obj, wagtail_user_bool = await asyncio.wait_for(
             WagtailUserProfile.objects.aget_or_create(user=user),
             timeout=timeout_server,
         )
-        log.info("WAGTAIL  DEBUG 3")
-        # if not wagtail_user_bool:
-        #     log.warning(
-        #         "{} User not found at the Wagtail's profile of user".format(log_t)
-        #     )
-        #     return None
-
-        # group_name: str = user.groups.values_list("name", flat=True)
-        # if group_name.lower() == CATEGORY_STATUS[1][0].lower():
-        #     # admin
-        log.info("WAGTAIL  DEBUG 4")
-
         await greate_of_profile(
             [
                 ManagerProfileModel,
@@ -81,16 +62,13 @@ async def create_some_position_at_wagtail_profile(
             wagtail_user_profile_obj,
             log_t[:-1],
         )
-        log.info("WAGTAIL  DEBUG 5")
         pass
     except asyncio.TimeoutError:
         log.warning(
             log_t
             + " TimeoutError data didn't update in the 'wagtail.users.UserProfile' database!"
         )
-        log.info("WAGTAIL  DEBUG 6")
         return None
     except Exception as e:
-        log.info("WAGTAIL  DEBUG 7")
-        log.warning(log_t + " 000 ERROR => " + e.args[0] if e.args else str(e))
+        log.warning(log_t + " ERROR => " + e.args[0] if e.args else str(e))
         return None

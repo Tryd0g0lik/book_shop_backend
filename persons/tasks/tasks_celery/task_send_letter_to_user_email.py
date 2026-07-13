@@ -289,91 +289,92 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
                     context_ = {
                         "user": person_object,
                     }
-                    # async with lock:
-                    text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value
-                    log.info("  < = > 0")
-                    # --- Sending a letter
-                    sub_function_send_mail(
-                        [one_email],
-                        subject,
-                        text_context,
-                        context_,
-                    )
-                    # --- Sending a letter second
-                    log.info("# The First letter is gone")
-                    text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_1.value
-                    generate_login_code = (
-                        accountAdapter.generate_email_verification_code()
-                    )
-
-                    context_ = {
-                        "user": person_object,
-                        "code": generate_login_code,
-                    }
-                    sub_function_send_mail(
-                        [one_email],
-                        subject,
-                        text_context,
-                        context_,
-                    )
-
-                    task_create_position_for_EmailConfiguration.delay(
-                        one_email, generate_login_code
-                    )
-                    # ---
-
-                    log.info(
-                        log_t
-                        + """
-                    # ============================================
-                    # INITIAL DATA WILL BE SAVING IN CACHE
-                    # ============================================"""
-                    )
-                    cachemanager = CacheManager()
-                    k: str = EnumTemplatesKeysCache.USER_PENDING_LETTER.value % re.sub(
-                        r"[@.]+", "", one_email
-                    )
-                    collection_: list[bytes] = []
-                    # ---
-                    await cachemanager.aget(key=k, collection=collection_, exat=1)
-                    await cachemanager.asynccacher.close()
-
-                    # ---
-                    for one_dict in collection_:
-                        user_data_json: dict = json.loads(
-                            (one_dict).decode(DEFAULT_CHARSET)
+                    async with lock:
+                        text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_0.value
+                        log.info("  < = > 0")
+                        # --- Sending a letter
+                        sub_function_send_mail(
+                            [one_email],
+                            subject,
+                            text_context,
+                            context_,
+                        )
+                        # --- Sending a letter second
+                        log.info("# The First letter is gone")
+                        text_context: str = EnumEmailLetter.CONFIRM_EMAIL_Letter_1.value
+                        generate_login_code = (
+                            accountAdapter.generate_email_verification_code()
                         )
 
-                        user_data_json["verification_code"] = generate_login_code
+                        context_ = {
+                            "user": person_object,
+                            "code": generate_login_code,
+                        }
+                        sub_function_send_mail(
+                            [one_email],
+                            subject,
+                            text_context,
+                            context_,
+                        )
+
+                        task_create_position_for_EmailConfiguration.delay(
+                            one_email, generate_login_code
+                        )
+                        # ---
+
                         log.info(
                             log_t
-                            + f"# save a verification code user_data_json: {str(user_data_json)}"
+                            + """
+                        # ============================================
+                        # INITIAL DATA WILL BE SAVING IN CACHE
+                        # ============================================"""
                         )
-                        await cachemanager.asave(
-                            key=k, default=user_data_json, ttl=86400
+                        cachemanager = CacheManager()
+                        k: str = (
+                            EnumTemplatesKeysCache.USER_PENDING_LETTER.value
+                            % re.sub(r"[@.]+", "", one_email)
                         )
+                        collection_: list[bytes] = []
+                        # ---
+                        await cachemanager.aget(key=k, collection=collection_, exat=1)
                         await cachemanager.asynccacher.close()
-                    # ---
-                    log.info(
-                        log_t
-                        + """
-                    # ============================================
-                    # SAME DATA WILL BE SAVING IN DATABASE
-                    # ============================================"""
-                    )
-                    person_object.is_sent = True
-                    person_object.updated_at = datetime.now()
-                    await asyncio.to_thread(
-                        lambda: person_object.save(
-                            update_fields=["is_sent", "updated_at"]
+
+                        # ---
+                        for one_dict in collection_:
+                            user_data_json: dict = json.loads(
+                                (one_dict).decode(DEFAULT_CHARSET)
+                            )
+
+                            user_data_json["verification_code"] = generate_login_code
+                            log.info(
+                                log_t
+                                + f"# save a verification code user_data_json: {str(user_data_json)}"
+                            )
+                            await cachemanager.asave(
+                                key=k, default=user_data_json, ttl=86400
+                            )
+                            await cachemanager.asynccacher.close()
+                        # ---
+                        log.info(
+                            log_t
+                            + """
+                        # ============================================
+                        # SAME DATA WILL BE SAVING IN DATABASE
+                        # ============================================"""
                         )
-                    )
-                    # ---
+                        person_object.is_sent = True
+                        person_object.updated_at = datetime.now()
+                        await asyncio.to_thread(
+                            lambda: person_object.save(
+                                update_fields=["is_sent", "updated_at"]
+                            )
+                        )
+                        # ---
 
-                    log.info(log_t + "# The second letter is gone")
+                        log.info(log_t + "# The second letter is gone")
 
-                    # ---
-                    del result_bool, text_context, context_
+                        # ---
+                        del result_bool, text_context, context_
     except queue.Full:
 
         raise
