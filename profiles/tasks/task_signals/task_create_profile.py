@@ -1,11 +1,7 @@
 # profiles/tasks/task_signals/task_create_profile.py:1
-import asyncio
 import logging
 
-from django.core.signals import request_finished
 from django.dispatch import Signal, receiver
-
-from persons.interfaces import Users
 
 create_profile_signal = Signal()
 log = logging.getLogger(__name__)
@@ -56,12 +52,12 @@ def task_create_profile_from_signal(*args, **kwargs) -> None:
             if not profile_class:
                 log.error(
                     log_t + " ERROR => "
-                    f"User's role hae not cound! args: {str(args)} & kwargs: {str(kwargs)}, \
+                    f"User's role have not found! args: {str(args)} & kwargs: {str(kwargs)}, \
                                   group_names: {group_names} \
                                   group_name: {str(group_name)} & profile_class: {str(profile_class)}"
                 )
                 return None
-            profile_class.objects.aget_or_create(user=user)
+            profile_class.objects.get_or_create(user=user)
             log.info(log_t + f" Created {profile_class.__name__} for user {user_id}")
             break
 

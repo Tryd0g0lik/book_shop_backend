@@ -320,7 +320,7 @@ class UsersRegistrationView(AllauthSignupView):
             log_t = f"[UsersRegistrationView]: {e.args[0] if e.args else str(e)}"
             raise ValueError(log_t)
         finally:
-            log.debug(
+            log.info(
                 f"[UsersRegistrationView]: DEBUG *args: {str(args)}, **kwargs: {str(kwargs)}"
             )
             task_postman.delay(*args, **kwargs)

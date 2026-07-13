@@ -78,7 +78,7 @@ async def create_some_position_allauth(*args, **kwargs: dict[str, int]) -> None:
             return None
 
         # --- Allauth EEmailConfirmation
-        email_obj = await aget_object_from_allauth_or_log(account_email.pk, log_t)
+        email_obj = await aget_object_from_allauth_or_log(account_email.id, log_t)
 
         if email_obj is None:
             return None

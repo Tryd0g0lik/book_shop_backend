@@ -83,6 +83,7 @@ class UserLoginView(LoginView):
           - Создать (редирект для клиента) маршрут в аккаунт или в каталог для клиента
           - Прописать JWT токен тут или при редиректе (после удачной авторизации)
           - роли client, manager, editor не имеют страницы для редиректа в случае удачного логина.
+          - 'redirect("catalog")' изменить ссылку для редиректа
          Функцию - восстановить пароль - проверить после настройки посты на внешний провайдер.
         :param request:
         :return:
@@ -145,15 +146,21 @@ class UserLoginView(LoginView):
                     ]
                 )
                 # --- Profile
-                kwargs = {"user_id": user.id, "timeout_server": user.email}
+                kwargs = {"user_id": user.id, "timeout_server": 3}
                 args = []
-                log.info(f"DEBUG Profile args: {str(args)} & kwargs: {str(kwargs)}")
+                log.info(
+                    f"Before 'tasks_position_allauth': DEBUG Profile args: {str(args)} & kwargs: {str(kwargs)}"
+                )
                 tasks_position_allauth.delay(*args, **kwargs)
-                kwargs = {"user_id": user.id, "timeout_server": user.email}
-                log.info(f"DEBUG Profile args: {str(args)} & kwargs: {str(kwargs)}")
+                kwargs = {"user_id": user.id, "timeout_server": 3}
+                log.info(
+                    f"Before 'tasks_position_wagtail': DEBUG Profile args: {str(args)} & kwargs: {str(kwargs)}"
+                )
                 tasks_position_wagtail.delay(args, **kwargs)
                 kwargs = {"user_id": user.id}
-                log.info(f"DEBUG Profile args: {str(args)} & kwargs: {str(kwargs)}")
+                log.info(
+                    f"Before 'create_profile_signal': DEBUG Profile args: {str(args)} & kwargs: {str(kwargs)}"
+                )
                 create_profile_signal.send(sender=self.__class__, **kwargs)
 
                 # --- USER LOGIN

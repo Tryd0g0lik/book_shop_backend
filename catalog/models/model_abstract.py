@@ -19,19 +19,21 @@ class AbstractModel(models.Model):
         auto_now=True, help_text=_("The last update date")
     )
     created_by = models.ForeignKey(
-        "profiles.UserProfileModel",
+        "profiles.UserProfileManagerModel",
         on_delete=models.SET_NULL,
         help_text=_("THe user who created the position"),
         null=True,
         blank=True,
         related_name="%(app_label)s_%(class)s_product_characteristics_created",
-        db_comment="""This is a user created position. Just this is goes not a direct user. That is
-        profile user is through the 'ProfilesModel' model.
+        db_comment="""This is a user's profile created position. Just that is goes not to the direct user. That is go to
+        the profile user: 'UserProfileManagerModel' => \
+        'profiles.models.model_<client | admin | editor | manager | client| moderator >' => \
+        'wagtail.users.models.UserProfile' => 'persons.models.Users' model.
         If need  a direct user mean we get of user through the 'ProfilesModel' model..
         """,
     )
     updated_by = models.ForeignKey(
-        "profiles.UserProfileModel",
+        "profiles.UserProfileManagerModel",
         on_delete=models.SET_NULL,
         help_text=_("The user who last updated the position"),
         null=True,

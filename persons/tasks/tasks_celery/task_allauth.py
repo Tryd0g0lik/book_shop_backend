@@ -1,4 +1,5 @@
-# persons/tasks/tasks_celery/task_create_position_after_first_login.py:1
+# persons/tasks/tasks_celery/task_allauth.py:1
+
 import logging
 
 from celery import shared_task
@@ -11,7 +12,7 @@ log = logging.getLogger(__name__)
 
 
 @shared_task(
-    name="task_get_send_letter",
+    name="task_add_some_positions_of_allauth",
     bind=True,
     ignore_result=True,
     autoretry_for=(TimeoutError, ConnectionError, OSError),

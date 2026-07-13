@@ -97,6 +97,7 @@ class UserProfileManagerModel(models.Model):
             models.UniqueConstraint(
                 fields=["moderator", "manager", "editor", "admin", "client"],
                 name="unique_of_profile_manager",
+                violation_error_code="unique_review",
                 violation_error_message="Combination of users profiles already exists.",
             )
         ]

@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 
 @shared_task(
-    name="task_get_send_letter",
+    name="task_add_to_position_wagtail_profile",
     bind=True,
     ignore_result=True,
     autoretry_for=(TimeoutError, ConnectionError, OSError),
