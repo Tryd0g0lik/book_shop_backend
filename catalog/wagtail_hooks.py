@@ -1,4 +1,5 @@
 # catalog/wagtail_hooks.py:1
+# Work with statics files.
 import json
 import os
 import re
