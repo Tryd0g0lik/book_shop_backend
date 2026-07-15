@@ -1,5 +1,6 @@
 """
 persons/views/views_login.py
+Login
 """
 
 import asyncio
@@ -20,10 +21,13 @@ from rest_framework import status
 from persons.exceptions.error_person import PersonLogingError
 from persons.forms import UsersLoginForm
 from persons.forms.verification_form import UsersCheckCodeVerificationForm
+from persons.interfaces import Users as UsersInterface
+from persons.models import Users
 from persons.tasks.tasks_celery.task_allauth import tasks_position_allauth
 from persons.tasks.tasks_celery.tasks_wagtail import tasks_position_wagtail
 from profiles.tasks.task_signals.task_create_profile import create_profile_signal
 from utilities import CATEGORY_STATUS
+from utilities.middleware.functions_jwt_tokens import get_tokens_for_user
 
 log = logging.getLogger(__name__)
 
@@ -36,12 +40,11 @@ class UserLoginView(LoginView):
 
     def get(self, request, *args, **kwargs):
         """
+        THis is method is  opening the form's page for a login-ing
         :param request:
         :return:
         """
-
         try:
-
             user = request.user
             form = self.form_class
             context = {"form": form}
@@ -85,92 +88,44 @@ class UserLoginView(LoginView):
           - роли client, manager, editor не имеют страницы для редиректа в случае удачного логина.
           - 'redirect("catalog")' изменить ссылку для редиректа
          Функцию - восстановить пароль - проверить после настройки посты на внешний провайдер.
-        :param request:
-        :return:
+        :param str email: Required. Form data. Email of user for a logining.
+        :param str password: Required. Form data. Password for user for a logining.
+        :return: If all successful mean we returning a redirect to the admin (if it is user with right) or
+            catalog (if it is a client).
         """
-        from persons.models import Users
-
-        ERROR_TEXT = f"{self.log_t[:-1]}[{self.post.__name__}]: Error =>"
+        LOG_TEXT = f"{self.log_t[:-1]}[{self.post.__name__}]: Error =>"
         user_request = request.user
         email = request.POST.get("email")
         password = request.POST.get("password")
-        user = None
+
         is_anonymous: bool = user_request.is_anonymous
         if is_anonymous:
-            # Getting of user from database
-            user_queryset: QuerySet[Users] = Users.objects.filter(email=email)
-            if not user_queryset.exists():
-
-                log.warning(ERROR_TEXT + " User does not exists!")
-                messages.warning(request, _("User does not exists!"))
-                return JsonResponse(
-                    data={
-                        "details": ERROR_TEXT
-                        + f" {PersonLogingError('User does not exists!')}"
-                    },
-                    status=status.HTTP_404_NOT_FOUND,
-                )
+            # ============================================
+            # GETTING OF USER FROM DATABASE & UPDATING DATS
+            # ============================================
+            user_queryset: QuerySet[Users, Users] = Users.objects.filter(email=email)
+            response: JsonResponse | None = self.sub_user_updating_db(
+                request, user_queryset, email, password, LOG_TEXT
+            )
+            if response is None:
+                return response
             try:
                 user = user_queryset.first()
-                password_hashed = user.check_password(password)
-                if not password_hashed:
-                    t = _("User's password is invalid!")
-                    log.warning(ERROR_TEXT + f" {t}")
-                    messages.warning(request, t)
-                    return JsonResponse(
-                        data={"details": ERROR_TEXT + f" {PersonLogingError(t)}"},
-                        status=status.HTTP_401_UNAUTHORIZED,
-                    )
-            except Exception as e:
-                return JsonResponse(
-                    data={
-                        "details": ERROR_TEXT
-                        + f" {PersonLogingError(e.args if e.args else str(e))}"
-                    },
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-
-            try:
-                # --- Person
-                dtime = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
-                user.is_active = True
-                user.is_verified = True
-                user.date_joined = dtime
-                user.updated_at = dtime
-                user.save(
-                    update_fields=[
-                        "is_active",
-                        "date_joined",
-                        "updated_at",
-                        "is_verified",
-                    ]
-                )
+                # ============================================
+                # THE TASKS AT THE ANOTHER THREAD
                 # --- Profile
-                kwargs = {"user_id": user.id, "timeout_server": 3}
-                args = []
-                log.info(
-                    f"Before 'tasks_position_allauth': DEBUG Profile args: {str(args)} & kwargs: {str(kwargs)}"
-                )
-                tasks_position_allauth.delay(*args, **kwargs)
-                kwargs = {"user_id": user.id, "timeout_server": 3}
-                log.info(
-                    f"Before 'tasks_position_wagtail': DEBUG Profile args: {str(args)} & kwargs: {str(kwargs)}"
-                )
-                tasks_position_wagtail.delay(args, **kwargs)
-                kwargs = {"user_id": user.id}
-                log.info(
-                    f"Before 'create_profile_signal': DEBUG Profile args: {str(args)} & kwargs: {str(kwargs)}"
-                )
-                create_profile_signal.send(sender=self.__class__, **kwargs)
-
-                # --- USER LOGIN
+                # ============================================
+                self.run_tasks(user.id, self.__class__)
+                # ============================================
+                # USER LOGIN & AUTHENTICATE
+                # ============================================
                 request.session.save()
                 user_auth = authenticate(
                     request=request, email=email, password=password
                 )
                 if user_auth is not None:
                     login(request, user_auth)
-                    request.user = user_queryset.first()
+                    request.user = user
                     session_data_json_str = json.dumps(
                         {
                             "username": user.username,
@@ -181,21 +136,24 @@ class UserLoginView(LoginView):
                         }
                     )
                     request.session[user.verification_code] = session_data_json_str
+                    # ============================================
+                    # JWT OF USER
+                    # ============================================
+                    tokens = get_tokens_for_user(request.user)
+                    setattr(
+                        request.headers, "Authorization", "Bearer {}".format(tokens)
+                    )
+
                     queryset_profile = user.groups.values_list("name", flat=True)
+                    # ---
                     if queryset_profile.exists():
                         profile = queryset_profile.first()
-                        if profile.upper() in [
-                            CATEGORY_STATUS[1][0],
-                            CATEGORY_STATUS[1][0],
-                            CATEGORY_STATUS[2][0],
-                            CATEGORY_STATUS[4][0],
-                            CATEGORY_STATUS[5][0],
-                        ]:
+                        if profile.upper() in [item[0] for item in CATEGORY_STATUS[1:]]:
                             return redirect(
                                 "wagtailadmin_home",
                             )
                         return redirect("catalog")
-                messages.warning(request, "User login or password is invalid!")
+                messages.warning(request, _("User login or password is invalid!"))
                 return render(
                     request,
                     "auth/login.html",
@@ -220,3 +178,98 @@ class UserLoginView(LoginView):
                     {"details": ERROR_TEXT},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
+
+        return render(
+            request,
+            "index.html",
+            {"details": _("User hase already logged")},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    @staticmethod
+    def run_tasks(
+        user_id,
+        sender_,
+        timeout=3,
+    ):
+        kwargs = {"user_id": user_id, "timeout_server": timeout}
+        args = []
+        tasks_position_allauth.delay(*args, **kwargs)
+        kwargs = {"user_id": user_id, "timeout_server": timeout}
+        tasks_position_wagtail.delay(args, **kwargs)
+        kwargs = {"user_id": user_id}
+        create_profile_signal.send(sender=sender_, **kwargs)
+
+    @staticmethod
+    def sub_user_updating_db(
+        request,
+        user_queryset: QuerySet[Users, Users],
+        email_: str,
+        password_: str,
+        prefix_log="",
+    ):
+        """
+
+        :param request:
+        :param person.models.Users user: On the external code we continue a work
+        :param email_: Required. User email
+        :param password_: Required. User password. The password variable will be changing/rename after a hashing.
+
+        :param prefix_log: Start text to logging
+        :return: JsonResponse if something is wrong
+        """
+
+        ERROR_TEXT = (
+            "[{}]:".format(UserLoginView.sub_user_updating_db.__name__)
+            if len(prefix_log) == 0
+            else "{}[{}]:".format(
+                prefix_log, UserLoginView.sub_user_updating_db.__name__
+            )
+        )
+        if not user_queryset.exists():
+
+            log.warning("{} User does not exists!".format(ERROR_TEXT))
+            messages.warning(request, _("User does not exists!"))
+            return JsonResponse(
+                data={
+                    "details": "{} {}".format(
+                        ERROR_TEXT, PersonLogingError("User does not exists!")
+                    )
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        try:
+            user = user_queryset.first()
+            # --- Person
+            dtime = timezone.now().strftime("%Y-%m-%d %H:%M:%S")
+            user.is_active = True
+            user.is_verified = True
+            user.date_joined = dtime
+            user.updated_at = dtime
+            user.save(
+                update_fields=[
+                    "is_active",
+                    "date_joined",
+                    "updated_at",
+                    "is_verified",
+                ]
+            )
+            password_hashed = user.check_password(password_)
+            if not password_hashed:
+                t = _("User's password is invalid!")
+                log.warning("{} {}".format(ERROR_TEXT, t))
+                messages.warning(request, t)
+                return JsonResponse(
+                    data={"details": "{} {}".format(ERROR_TEXT, PersonLogingError(t))},
+                    status=status.HTTP_401_UNAUTHORIZED,
+                )
+        except Exception as e:
+            return JsonResponse(
+                data={
+                    "details": "{} {}".format(
+                        ERROR_TEXT, PersonLogingError(e.args if e.args else str(e))
+                    )
+                },
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        return None

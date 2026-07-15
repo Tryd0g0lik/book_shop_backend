@@ -124,6 +124,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "utilities.middleware.JWTAuthenticationMiddleware",
     # "wagtail.core.middleware.SiteMiddleware",
     # "wagtail.contrib.redirects.middleware.RedirectMiddleware",
 ]

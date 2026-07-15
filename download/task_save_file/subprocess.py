@@ -42,8 +42,8 @@ async def subprocess_data(data: pd.array):
         index_key = keys.index("is_active")
         product.is_active = view_list[index_key]
         # ---
-        product_name_index = view_list.index("product_name")
-        for index in range(0, shape[1] - 1):
+        product_name_index = checklist.index("product_name")
+        for index in range(0, shape[1]):
             k = None
             v = None
             # ============================================
@@ -122,9 +122,9 @@ async def subprocess_data(data: pd.array):
                 await product.asave()
             except Exception as e:
                 log.warning(
-                    f"[subprocess_data]: It seems this product was created before that. WARNING => {
-                    e.args[0] if len(e.args) > 0 else str(e)
-                    }"
+                    "[subprocess_data]: It seems this product was created before that. WARNING => {}".format(
+                        e.args[0] if len(e.args) > 0 else str(e)
+                    )
                 )
                 await write_error_data(q, [k, v, view_list[product_name_index]])
                 continue
