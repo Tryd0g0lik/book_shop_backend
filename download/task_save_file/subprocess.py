@@ -24,8 +24,6 @@ log = logging.getLogger(__name__)
 
 
 async def subprocess_data(data: pd.array, user_id):
-    from django.contrib.auth import get_user_model
-
     from catalog.models import (
         BrandModel,
         CategoryModel,
@@ -126,7 +124,7 @@ async def subprocess_data(data: pd.array, user_id):
             # ============================================
             try:
                 # ============================================
-                # LOOK UP AN EXECUTOR
+                # LOOK UP OF EXECUTOR
                 # ============================================
                 profile_manager = UserProfileManagerModel()
                 fields_exclude = ["id", "client"]

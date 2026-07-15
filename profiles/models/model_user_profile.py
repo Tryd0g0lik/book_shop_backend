@@ -134,7 +134,40 @@ class UserProfileManagerModel(models.Model):
 
     def get_profile_by_user_id(self, user_id, fields_exclude=["id"]) -> Q | None:
         """
-        :param int user_id: User id it that us need to find
+        Here we create Q - script for request to the all db. It is from single request receive of user by 'user_id'
+        next We get a UserProfileManagerModel's line and from that line we get of user.
+        Example:```text
+        profile_manager = UserProfileManagerModel()
+        fields_exclude = ["id", "client"]
+        q_objects = profile_manager.get_profile_by_user_id(
+                    user_id, fields_exclude
+                )
+        if q_objects is not None:
+            # --- All fields/column
+            manager: Users | None = (
+                await profile_manager.__class__.objects.filter(
+                    q_objects
+                ).afirst()
+            )
+            if manager is not None:
+                fields_names_list = [
+                    item.name for item in manager.__class__._meta.fields
+                ]
+                q_objects = Q()
+                # --- One field/column
+                for item in fields_names_list:
+                    if item in fields_exclude:
+                        continue
+                    q_objects |= Q(
+                        **{f"{item}__isnull": False},
+                        **{f"{item}__user__user_id": user_id},
+                    )
+
+                product.created_by = await manager.__class__.objects.aget(
+                    q_objects
+                )
+        ```
+        :param int user_id: User id it that us need to find/
         :return: Q | None
         """
 
