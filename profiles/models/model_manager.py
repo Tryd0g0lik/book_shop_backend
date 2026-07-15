@@ -24,4 +24,4 @@ class ManagerProfileModel(ProfilesModel):
         verbose_name_plural = _("Manager profiles")
 
     def __str__(self):
-        return f"Manager profile: {self.id}"
+        return f"Manager profile: {self.user.user.username if len(self.user.user.username) > 0 else self.user.user.first_name}"

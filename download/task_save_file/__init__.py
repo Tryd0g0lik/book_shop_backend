@@ -24,12 +24,11 @@ def task_saving_data_oFfile(*args, **kwargs):
     try:
 
         def wraper():
-            print(path + file_name)
             data = pd.read_excel(path + file_name, engine="xlrd")
             # ---
             loop = asyncio.new_event_loop()
             asyncio.set_event_loop(loop)
-            loop.run_until_complete(subprocess_data(data))
+            loop.run_until_complete(subprocess_data(data, list(args)[1]))
             return
 
         threading.Thread(target=wraper).start()

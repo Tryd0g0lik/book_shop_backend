@@ -79,7 +79,7 @@ class CatalogViewSet(ViewSet):
 
                                 f.write(part_file.read())
                             os.remove(part_path)
-                        task_saving_data_oFfile(field_name)
+                        task_saving_data_oFfile(field_name, request.user.id)
                     # ---
                     return JsonResponse(
                         {"success": True}, status=status.HTTP_201_CREATED

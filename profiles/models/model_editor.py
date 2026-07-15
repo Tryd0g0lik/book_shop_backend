@@ -24,4 +24,4 @@ class EditorProfileModel(ProfilesModel):
         verbose_name_plural = _("Editor profiles")
 
     def __str__(self):
-        return f"Editor profile: {self.id}"
+        return f"Editor profile: {self.user.user.username if len(self.user.user.username) > 0 else self.user.user.first_name}"

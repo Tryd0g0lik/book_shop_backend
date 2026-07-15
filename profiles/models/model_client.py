@@ -24,4 +24,8 @@ class ClientProfileModel(ProfilesModel):
         verbose_name_plural = _("Client's profiles")
 
     def __str__(self):
-        return f"Client profile: {self.id}"
+        return "Client profile: {}".format(
+            self.user.user.username
+            if len(self.user.user.username) > 0
+            else self.user.user.first_name
+        )

@@ -5,8 +5,11 @@ import queue
 import re
 
 import pandas as pd
+from django.db.models import Q
+from pandas import isnull
 
 from download.task_save_file.storage_errors import storage_errors, write_error_data
+from persons.interfaces import Users
 
 q = queue.Queue(maxsize=2000)
 CHECKLIST = [
@@ -20,13 +23,16 @@ CHECKLIST = [
 log = logging.getLogger(__name__)
 
 
-async def subprocess_data(data: pd.array):
+async def subprocess_data(data: pd.array, user_id):
+    from django.contrib.auth import get_user_model
+
     from catalog.models import (
         BrandModel,
         CategoryModel,
         ProductCharacteristics,
         ProductModel,
     )
+    from profiles.models.model_user_profile import UserProfileManagerModel
 
     lock = asyncio.Lock()
     # Keys of file
@@ -102,6 +108,7 @@ async def subprocess_data(data: pd.array):
                 elif k != "attributes":
                     setattr(product, k, v)
                     continue
+
                 else:
                     continue
             except Exception as e:
@@ -118,7 +125,41 @@ async def subprocess_data(data: pd.array):
             # CREATE POSITIONS IN DATABASE
             # ============================================
             try:
+                # ============================================
+                # LOOK UP AN EXECUTOR
+                # ============================================
+                profile_manager = UserProfileManagerModel()
+                fields_exclude = ["id", "client"]
+                q_objects = profile_manager.get_profile_by_user_id(
+                    user_id, fields_exclude
+                )
+                if q_objects is not None:
+                    # --- All fields/column
+                    manager: Users | None = (
+                        await profile_manager.__class__.objects.filter(
+                            q_objects
+                        ).afirst()
+                    )
+                    if manager is not None:
+                        fields_names_list = [
+                            item.name for item in manager.__class__._meta.fields
+                        ]
+                        q_objects = Q()
+                        # --- One field/column
+                        for item in fields_names_list:
+                            if item in fields_exclude:
+                                continue
+                            q_objects |= Q(
+                                **{f"{item}__isnull": False},
+                                **{f"{item}__user__user_id": user_id},
+                            )
 
+                        product.created_by = await manager.__class__.objects.aget(
+                            q_objects
+                        )
+                # ============================================
+                # RECORD IN DATABASE
+                # ============================================
                 await product.asave()
             except Exception as e:
                 log.warning(

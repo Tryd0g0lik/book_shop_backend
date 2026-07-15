@@ -69,10 +69,10 @@ class DRFPermissionsChecker(BasePermission):
 
             # Check the fields "updated_by" & "created_by" - this is an exists or not
             obj_updated_by = (
-                hasattr(obj, "updated_by") if hasattr(obj, "updated_by") else None
+                getattr(obj, "updated_by") if hasattr(obj, "updated_by") else None
             )
             obj_created_by = (
-                hasattr(obj, "created_by") if hasattr(obj, "created_by") else None
+                getattr(obj, "created_by") if hasattr(obj, "created_by") else None
             )
             if obj_created_by is None and obj_updated_by is None:
                 raise ProductValueError(

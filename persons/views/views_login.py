@@ -107,7 +107,7 @@ class UserLoginView(LoginView):
             response: JsonResponse | None = self.sub_user_updating_db(
                 request, user_queryset, email, password, LOG_TEXT
             )
-            if response is None:
+            if response is not None:
                 return response
             try:
                 user = user_queryset.first()

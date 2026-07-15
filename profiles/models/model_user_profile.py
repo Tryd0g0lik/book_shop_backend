@@ -1,10 +1,14 @@
 # profiles/models/model_user_profile.py:1
+import logging
+
 from django.db import models
+from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
 from profiles.exceptions.error_profile import ProfileNotFound, ProfileValueError
+from profiles.interfaces import UserProfilePydantic
 
-# from wagtail.users.models import UserProfile as WagtailUserProfile
+log = logging.getLogger(__name__)
 
 
 # Was renamed from UserProfileModel to
@@ -111,7 +115,7 @@ class UserProfileManagerModel(models.Model):
             self.moderator,
         ]
         list_profiles = [item for item in list_profiles if item is not None]
-        return f"{self.user.username} Profile {list_profiles[0] if len(list_profiles) == 1 else ''}"
+        return f"Id: {self.id} Profile {list_profiles[0] if len(list_profiles) == 1 else ''}"
 
     def clean_profile_name(self):
         list_profiles = [
@@ -127,3 +131,33 @@ class UserProfileManagerModel(models.Model):
 
         if len(list_profiles) == 0:
             raise ProfileNotFound()
+
+    def get_profile_by_user_id(self, user_id, fields_exclude=["id"]) -> Q | None:
+        """
+        :param int user_id: User id it that us need to find
+        :return: Q | None
+        """
+
+        log_t = "[{}][{}]".format(
+            UserProfileManagerModel.__class__.__name__,
+            self.get_profile_by_user_id.__name__,
+        )
+        from persons.tasks.tasks_celery.task_create_position.functions import (
+            get_fields_of_model,
+        )
+
+        fields_names = get_fields_of_model(self.__class__)
+        q_objects = Q()
+        try:
+            for item in fields_names:
+                if item in fields_exclude:
+                    continue
+                q_objects |= Q(
+                    **{f"{item}__isnull": False}, **{f"{item}__user__user_id": user_id}
+                )
+            return q_objects
+        except Exception as e:
+            log.warning(
+                "{} Error => {}".format(log_t, e.args[0] if len(e.args) > 0 else str(e))
+            )
+            return None

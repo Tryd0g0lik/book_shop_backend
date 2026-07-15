@@ -24,4 +24,4 @@ class ModeratorProfileModel(ProfilesModel):
         verbose_name_plural = _("Moderator's profiles")
 
     def __str__(self):
-        return f"Moderator profile: {self.id}"
+        return f"Moderator profile: {self.user.user.username if len(self.user.user.username) > 0 else self.user.user.first_name}"
