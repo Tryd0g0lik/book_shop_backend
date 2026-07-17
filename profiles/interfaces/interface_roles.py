@@ -35,7 +35,7 @@ class EditorProfileModel(ClientProfileModel):
     def __str__(self) -> str: ...
 
 
-class UserProfile(Basis):
+class UserProfileType(Basis):
     user: int
     submitted_notifications: bool
     approved_notifications: bool

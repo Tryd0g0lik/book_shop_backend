@@ -5,6 +5,7 @@ __all__ = [
     "ManagerProfileModel",
     "EditorProfileModel",
     "UserProfilePydantic",
+    "UserProfileType",
 ]
 
 from profiles.interfaces.interface_roles import (
@@ -14,4 +15,5 @@ from profiles.interfaces.interface_roles import (
     ManagerProfileModel,
     ModeratorProfileModel,
     UserProfilePydantic,
+    UserProfileType,
 )

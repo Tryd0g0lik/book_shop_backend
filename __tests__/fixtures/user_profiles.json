@@ -1,0 +1,9 @@
+[
+    {
+        "model": "profiles.userprofile",
+        "pk": 100,
+        "fields": {
+            "user": 1
+        }
+    }
+]

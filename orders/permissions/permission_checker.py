@@ -2,13 +2,13 @@
 from typing import Optional
 
 from persons.interfaces import Users
-from profiles.interfaces.interface_roles import UserProfile
+from profiles.interfaces import UserProfileType
 from utilities.permissions import PermissionsMixin
 
 
 class PermissionsChecker(PermissionsMixin):
     @staticmethod
-    def is_owner(user: Optional[Users], user_owner: UserProfile) -> bool:
+    def is_owner(user: Optional[Users], user_owner: UserProfileType) -> bool:
         user_owner = (
             getattr(user_owner, "user") if hasattr(user_owner, "user") else None
         )
@@ -30,7 +30,7 @@ class PermissionsChecker(PermissionsMixin):
         return False
 
     @staticmethod
-    def can_view_orders(user: Optional[Users], user_owner: UserProfile) -> bool:
+    def can_view_orders(user: Optional[Users], user_owner: UserProfileType) -> bool:
         is_active = PermissionsChecker.is_active(user)
         is_owner = PermissionsChecker.is_owner(user, user_owner)
         is_editor = PermissionsChecker.is_editor(user)
@@ -51,7 +51,7 @@ class PermissionsChecker(PermissionsMixin):
         return False
 
     @staticmethod
-    def can_do_pay(user: Optional[Users], user_owner: UserProfile) -> bool:
+    def can_do_pay(user: Optional[Users], user_owner: UserProfileType) -> bool:
         is_active = PermissionsChecker.is_active(user)
         is_owner = PermissionsChecker.is_owner(user, user_owner)
         if is_active and is_owner:

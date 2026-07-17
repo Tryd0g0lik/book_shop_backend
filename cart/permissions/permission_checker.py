@@ -3,7 +3,7 @@ from typing import Optional
 
 from django.contrib.auth import get_user_model
 
-from profiles.interfaces.interface_roles import UserProfile
+from profiles.interfaces import UserProfileType
 from utilities.permissions import PermissionsMixin
 
 Users = get_user_model()
@@ -13,7 +13,7 @@ Users = get_user_model()
 class PermissionsChecker(PermissionsMixin):
 
     @staticmethod
-    def is_owner(user: Optional[Users], user_owner: UserProfile) -> bool:
+    def is_owner(user: Optional[Users], user_owner: UserProfileType) -> bool:
         user_owner = (
             getattr(user_owner, "user") if hasattr(user_owner, "user") else None
         )
@@ -27,7 +27,7 @@ class PermissionsChecker(PermissionsMixin):
     @staticmethod
     def can_add_to_card(
         user: Optional[Users],
-        cart_owner: UserProfile,
+        cart_owner: UserProfileType,
     ) -> bool:
         """Everyone user can add to cart"""
         user_owner = (
@@ -41,7 +41,7 @@ class PermissionsChecker(PermissionsMixin):
         return False
 
     @staticmethod
-    def can_edit_to_cart(user: Users, cart_owner: UserProfile) -> bool:
+    def can_edit_to_cart(user: Users, cart_owner: UserProfileType) -> bool:
         result_bool = PermissionsChecker.can_add_to_card(user, cart_owner)
         if result_bool or (
             PermissionsChecker.is_admin(user) and PermissionsChecker.is_active(user)
@@ -50,7 +50,7 @@ class PermissionsChecker(PermissionsMixin):
         return False
 
     @staticmethod
-    def can_delete_to_cart(user: Users, cart_owner: UserProfile) -> bool:
+    def can_delete_to_cart(user: Users, cart_owner: UserProfileType) -> bool:
         if PermissionsChecker.can_edit_to_cart(user, cart_owner):
             return True
         elif (
@@ -62,7 +62,7 @@ class PermissionsChecker(PermissionsMixin):
         return False
 
     @staticmethod
-    def can_view_to_cart(user: Users, cart_owner: UserProfile) -> bool:
+    def can_view_to_cart(user: Users, cart_owner: UserProfileType) -> bool:
         if PermissionsChecker.can_delete_to_cart(user, cart_owner):
             return True
         return False

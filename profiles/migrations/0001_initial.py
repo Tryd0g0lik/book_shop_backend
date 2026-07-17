@@ -9,19 +9,4 @@ class Migration(migrations.Migration):
 
     dependencies = []
 
-    operations = [
-        migrations.CreateModel(
-            name="ProfilesModels",
-            fields=[
-                (
-                    "id",
-                    models.BigAutoField(
-                        auto_created=True,
-                        primary_key=True,
-                        serialize=False,
-                        verbose_name="ID",
-                    ),
-                ),
-            ],
-        ),
-    ]
+    operations = []

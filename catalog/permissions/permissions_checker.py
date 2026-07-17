@@ -2,14 +2,14 @@
 from typing import Optional
 
 from persons.interfaces import Users
-from profiles.interfaces.interface_roles import UserProfile
+from profiles.interfaces import UserProfileType
 from utilities.permissions import PermissionsMixin
 
 
 class PermissionsChecker(PermissionsMixin):
 
     @staticmethod
-    def is_owner(user: Optional[Users], user_owner: UserProfile) -> bool:
+    def is_owner(user: Optional[Users], user_owner: UserProfileType) -> bool:
         user_owner = (
             getattr(user_owner, "user") if hasattr(user_owner, "user") else None
         )
@@ -40,7 +40,7 @@ class PermissionsChecker(PermissionsMixin):
         return False
 
     @staticmethod
-    def can_delete_product(user: Optional[Users], user_owner: UserProfile) -> bool:
+    def can_delete_product(user: Optional[Users], user_owner: UserProfileType) -> bool:
         is_admin = PermissionsChecker.is_admin(user)
         is_manager = PermissionsChecker.is_manager(user)
         is_editor = PermissionsChecker.is_editor(user)
@@ -53,7 +53,7 @@ class PermissionsChecker(PermissionsMixin):
         return False
 
     @staticmethod
-    def can_edit_product(user: Optional[Users], user_owner: UserProfile) -> bool:
+    def can_edit_product(user: Optional[Users], user_owner: UserProfileType) -> bool:
         if PermissionsChecker.can_add_product(user):
             return True
         return False
