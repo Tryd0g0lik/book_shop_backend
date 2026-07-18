@@ -7,6 +7,7 @@ the property: 'is_authenticated' or/and 'not is_anonymouse'.
 
 import logging
 
+from __tests__.fixtures.fixture_django import pytest_generate_tests
 from __tests__.fixtures.fixture_mock_patch import (
     mock_database_get_user_model_2,
 )

@@ -36,8 +36,12 @@ async def cache_user_data(*args, **kwargs) -> bool:
     )
     log_t = "[task cache_user_data]:"
 
+    log.info(log_t + f"TEST DEBUG CHECK args: {str(args)}")
     for k in args:
-        log.info(log_t + f"TEST DEBUG k: {str(k)}")
+        log.info(
+            log_t
+            + f"TEST DEBUG k: {str(k)} & PERSON_KEYS_OF_CACHE_IN_REGEX: {PERSON_KEYS_OF_CACHE_IN_REGEX}"
+        )
         # It is an REGEX expression - Check
         if not PERSON_KEYS_OF_CACHE_IN_REGEX.search(k):
             log.error(
@@ -73,6 +77,7 @@ async def cache_user_data(*args, **kwargs) -> bool:
             )
             try:
                 await task
+                log.info(log_t + f"TEST TASKS PASSED: {str(task)}")
             except asyncio.CancelledError as e:
                 log.warning(
                     " ".join(

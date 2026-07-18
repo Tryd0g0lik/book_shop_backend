@@ -3,6 +3,7 @@ import json
 import logging
 import re
 
+from __tests__.fixtures.fixture_django2 import pytest_generate_tests
 from project.settings_conf.settings_first import DEFAULT_CHARSET
 
 log = logging.getLogger(__name__)
@@ -31,8 +32,9 @@ class TestResaveCacheAfterSentLetter:
             string=f"user:pending:letter:{new_users_registration["email"]}",
             flags=re.ASCII,
         )
-        assert k1.count(":") == 2
-        assert k2.count(":") == 3
+        assert k1.count(":") == 3 and k2.count(":") == 3, "Checking a count of the ':' symbols  in string."
+        assert k1.count("@") == 0 and k2.count("@") == 0, "Checking a count of the '@' symbols  in string."
+        assert k1.count(".") == 0 and k2.count(".") == 0, "Checking a count of the '.' symbols  in string."
 
         keys = [k1]
         tasks = []
@@ -100,4 +102,4 @@ class TestResaveCacheAfterSentLetter:
             key=k1,
             collection=data_list,
         )
-        assert result_bool is None
+        assert result_bool is True
