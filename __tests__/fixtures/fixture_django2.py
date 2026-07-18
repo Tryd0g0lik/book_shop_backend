@@ -26,7 +26,7 @@ def generate_regisration(metafunc):
                 "first_name": "Moderator",
                 "last_name": "Staff",
                 "email": "moderator@example.com",
-                "category": "STAFF",
+                "category": "CLIENT",
                 "check_user": "on",
                 "password1": "pbkdf2_sha256$hash_staff_2",
                 "password2": "pbkdf2_sha256$hash_staff_2",
