@@ -21,3 +21,7 @@ class ProductViewSet(ModelViewSet):
     queryset = ProductModel.objects.all()
     serializer_class = ProductSerializer
     permission_classes = [DRFPermissionsChecker]
+
+    async def create(self, request, *args, **kwargs):
+        pass
+        return super().create(request, *args, **kwargs)

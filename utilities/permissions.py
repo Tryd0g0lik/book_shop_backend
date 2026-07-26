@@ -8,43 +8,39 @@ class PermissionsMixin:
     def is_active(user: Optional[Users]) -> bool:
         if user is None:
             return False
-        if (
-            user is not None
-            and getattr(user, "is_verified")
-            and getattr(user, "is_active")
-        ):
+        elif getattr(user, "is_verified") and getattr(user, "is_active"):
             return True
         return False
 
     @staticmethod
     def is_anonymous(user: Optional[Users]) -> bool:
-        return getattr(user, "is_anonymous")
+        return hasattr(user, "is_anonymous")
 
     @staticmethod
     def is_authenticated(user: Optional[Users]) -> bool:
-        return getattr(user, "is_authenticated")
+        return hasattr(user, "is_authenticated") and getattr(user, "is_authenticated")
 
     @staticmethod
     def is_admin(user: Optional[Users]) -> bool:
 
-        return getattr(user, "is_superuser")
+        return hasattr(user, "is_superuser") and bool(getattr(user, "is_superuser"))
 
     @staticmethod
     def is_editor(user: Users) -> bool:
-        group = getattr(user, "group")
-        return group.name.lower() == "editors"
+        group = getattr(user, "groups")
+        return isinstance(group.name, str) and group.name.lower() == "editors"
 
     @staticmethod
     def is_moderator(user: Users) -> bool:
-        group = getattr(user, "group")
-        return group.name.lower() == "moderators"
+        group = getattr(user, "groups")
+        return isinstance(group.name, str) and group.name.lower() == "moderators"
 
     @staticmethod
     def is_manager(user: Users) -> bool:
-        group = getattr(user, "group")
-        return group.name.lower() == "manager"
+        group = getattr(user, "groups")
+        return isinstance(group.name, str) and group.name.lower() == "manager"
 
     @staticmethod
     def is_client(user: Users) -> bool:
-        group = getattr(user, "group")
-        return group.name.lower() == "client"
+        group = getattr(user, "groups")
+        return isinstance(group.name, str) and group.name.lower() == "client"

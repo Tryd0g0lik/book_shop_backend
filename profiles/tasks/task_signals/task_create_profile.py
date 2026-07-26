@@ -9,10 +9,10 @@ log = logging.getLogger(__name__)
 
 @receiver(create_profile_signal)
 def task_create_profile_from_signal(*args, **kwargs) -> None:
-    from wagtail.users import apps as wagtail_users_apps
+    # from wagtail.users import apps as wagtail_users_apps
+    from wagtail.users.models import UserProfile
 
-    UserProfile = wagtail_users_apps.AppConfig.get_model("wagtailusers.UserProfile")
-
+    # UserProfile = wagtail_users_apps.AppConfig.get_model("wagtailusers.UserProfile")
     from profiles.models import (
         AdminProfileModel,
         ClientProfileModel,

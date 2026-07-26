@@ -1,5 +1,7 @@
 # __tests__/tests_api/test_api_catalogs/test_products.py:1
 import asyncio
+import base64
+import json
 import logging
 import math
 import os
@@ -10,9 +12,15 @@ from aiohttp import ClientSession, FormData
 from django.db.models import QuerySet
 from django.test import override_settings
 from rest_framework import status
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from __tests__.fixtures.fixture_django2 import pytest_generate_tests
 from project import BASE_DIR
+from utilities.middleware.functions_jwt_tokens import (
+    decode_tokens_from_base64,
+    get_tokens_for_user,
+)
 
 # Will run the APP !!
 
@@ -70,7 +78,9 @@ class TestApiCatalogsValid:
 
     # @override_settings(MIDDLEWARE=TEST_MIDDLEWARE)
     @pytest.mark.django_db(transaction=True)
-    async def test_file_send_to_user_email_valid(self, fixture_reade_file, fixture_create_user):
+    async def test_file_send_to_user_email_valid(self, mocker, fixture_reade_file, fixture_create_user):
+        from django.contrib.auth import authenticate, login
+
         from catalog.permissions.permissions_checker import PermissionsChecker
         group = await fixture_create_user.groups.afirst()
         assert group is not None and hasattr(group, "name"), "Check a user role "
@@ -82,19 +92,31 @@ class TestApiCatalogsValid:
         # ============================================
         # STARTING A SESSION
         # ============================================
-        async with ClientSession() as session:
+        async with (ClientSession() as session):
             session.headers["contant_type"] = "multipart/form-data"
             setattr(session, "user", fixture_create_user)
             setattr(session.user, "is_active", True)
+            setattr(session.user, "is_sent", True)
+            setattr(session.user, "is_verified", True)
             if group.name.lower() == "admin":
-                setattr(session.user, "is_superuser", True)
-            if group.name.lower() != "client":
                 setattr(session.user, "is_staff", True)
+                setattr(session.user, "is_superuser", True)
+            elif group.name.lower() == "client":
+                setattr(session.user, "is_staff", False)
+                setattr(session.user, "is_superuser", False)
+            elif group.name.lower() != "client":
+                setattr(session.user, "is_staff", True)
+
             # ============================================
             # TEST PERMISSION
             # ============================================
             try:
-                await asyncio.to_thread(lambda: PermissionsChecker.can_add_product(session.user))
+                permission_bool = await asyncio.to_thread(lambda: PermissionsChecker.can_add_product(session.user))
+                if getattr(group, "name").lower() == "admin" or getattr(group, "name").lower() != "client":
+                    assert permission_bool == True
+                else:
+                    assert permission_bool == False
+                log.info("{} Permission check successful".format(log_t))
             except Exception as e:
                 log.error("{} Error => {}".format(log_t, e.args[0] if e.args else str(e)))
                 raise e
@@ -121,8 +143,8 @@ class TestApiCatalogsValid:
             # ============================================
             # FILE IS SENDING THROUGH CHUNKS
             # ============================================
-            for i in range(1, math.ceil(total_chunks)):
-                chunk_of_file = total_file[sent_size:i * size_chunk]
+            for i in range(0, math.ceil(total_chunks)):
+                chunk_of_file = total_file[sent_size:(i + 1) * size_chunk]
                 sent_size += i * size_chunk
                 log.info("{} Got a chunk_of_file: {}".format(log_t, chunk_of_file))
                 # ============================================
@@ -141,18 +163,29 @@ class TestApiCatalogsValid:
                     filename=str(test_path.split("\\")[-1]),  # THe file name
                 )
                 log.info("{} Got a form data: {}".format(log_t, str(form_data)))
+
+                # jwt_token = get_tokens_for_user(session.user)
+                refresh = RefreshToken.for_user(fixture_create_user)
+                refresh_dict = {
+                    "access": str(refresh.access_token),
+                    "refresh": str(refresh),
+                }
+                json_str = json.dumps(refresh_dict)
+                json_bytes = json_str.encode("utf-8")
+                base64_encode = base64.b64encode(json_bytes)
+                base64_token = base64_encode.decode("utf-8")
+
                 # ============================================
                 # SEND REQUEST TO THE SERVER
                 # ============================================
+                # session.post.headers.update({"Authorization":jwt_token})
                 async with session.post("http://127.0.0.1:8000/api/download/load/file/",
-                                        data=form_data, ) as response:
+                                        data=form_data,
+                                        headers= {"Authorization": "Bearer {}".format(base64_token)}
+                                        ) as response:
                     log.info("{} Got a load the XLS file to the request HTTP: {}".format(log_t, str(response.__dict__)))
-                    log.info("{} Response Statuce response content: {}".format(log_t, str(response.content)))
-                    log.info("{} Response Statuce code: {}".format(log_t, str(response.status)))
+                    log.info("{} Response content: {}".format(log_t, str(response.content)))
+                    log.info("{} Response Status code: {}".format(log_t, str(response.status)))
 
                     # assert "недостаточно прав" not in str(response.data["detail"])
                     assert response.status == status.HTTP_200_OK
-                    # log.info("{} Got a test request".format(log_t, client.request.user))
-                    # product_model = await asyncio.to_thread(ProductModel.objects.all)
-                    # count = await product_model.acount()
-                    # log.info("{} COunt of the product models: {}".format(log_t, str(count)))

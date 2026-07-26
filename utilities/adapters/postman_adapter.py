@@ -84,7 +84,7 @@ class PostmanAdapter:
             self.log_t = "[%s]:" % self.__class__.__name__
             super().__init__(self.log_t, person_index, person_email)
             log.info(
-                f"\n[SubPerson][get_model]: DEBUG person_index: {self.get_index} & get_email: {self.get_email}"
+                f"\n[SubPerson][__init__]: DEBUG person_index: {self.get_index} & get_email: {self.get_email}"
             )
             self.cachemanager = CacheManager()
             self.value_of_cache: Optional[list[bytes] | dict] = []

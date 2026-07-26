@@ -1,5 +1,6 @@
 # download/task_save_file/subprocess.py:1
 import asyncio
+import base64
 import logging
 import queue
 import re
@@ -32,6 +33,7 @@ async def subprocess_data(data: pd.array, user_id):
     )
     from profiles.models.model_user_profile import UserProfileManagerModel
 
+    # data = base64.b64encode(b_data)
     lock = asyncio.Lock()
     # Keys of file
     keys = list(data.keys())
