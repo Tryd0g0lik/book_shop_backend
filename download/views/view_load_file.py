@@ -11,7 +11,7 @@ import os
 import re
 import tempfile
 import zipfile
-from io import BytesIO, StringIO
+from io import BytesIO
 from pathlib import Path
 
 import pandas as pd
@@ -22,7 +22,6 @@ from rest_framework import status
 from catalog.models import ProductGalleryImageModel
 from download.permissions.permission_drf import CanLoadFilePermission
 from download.task_save_file import task_saving_data_oFfile
-from project import BASE_DIR
 from project.settings_conf import settings_first
 
 log = logging.getLogger(__name__)
@@ -35,8 +34,10 @@ class CatalogViewSet(ViewSet):
 
     async def create(self, request, *args, **kwargs):
         """
-        TODO: Put a signal for alert about loads file. xlsx - передача chunks - ломает файл.
+        TODO: Put a signal for alert about loads file.
+            xlsx - передача chunks - ломает файл.
             При этом старый файл передаётся без ошибок.
+            Попробовать через кеш
         :param request:
         :param args:
         :param kwargs:
@@ -47,8 +48,7 @@ class CatalogViewSet(ViewSet):
         post_data = await asyncio.to_thread(lambda: request.POST)
         post_files = await asyncio.to_thread(lambda: request.FILES)
 
-        field_name = post_data.get("file_name", "name_didnot_found")
-        log.warning("{} DEBUG WARN FileName: {}".format(log_t, field_name))
+        file_name = post_data.get("file_name", "name_didnot_found")
         count_str = post_data.get("total_chunks", "1")
         total_chunks = (
             int(count_str)
@@ -56,47 +56,37 @@ class CatalogViewSet(ViewSet):
             else int(float(count_str))
         )
         chunk_index = int(post_data.get("chunk_index", "0"))
-        log.warning("{} DEBUG WARN CHUNK: {}".format(log_t, str(chunk_index)))
         chunk_size = post_data.get("chunk_size", "1")
-        # ---
+        # ============================================
+        # BASIS CHECK OF THE RECEIVE FILE
+        # ============================================
         if not post_files:
             post_files = post_data.get("files")
             if post_files is None:
-
-                log.warning(f"{log_t} DEBUG WARN File: None")
                 return await asyncio.to_thread(
                     lambda: JsonResponse(
-                        {"error": "Missing file or filename"}, status=400
+                        {"detail": "Missing file or filename"}, status=400
                     )
                 )
-
-        file_values = (
-            list(post_files.values()) if not isinstance(post_files, str) else post_files
-        )
-        log.warning("{} DEBUG WARN CHUNK FILE: {}".format(log_t, str(file_values)))
-        # size_chunk = file_values[0].DEFAULT_CHUNK_SIZE if not isinstance(post_files, str) and len(file_values) > 0 else 0
         one_chunk = post_files.get("file")
-        log.warning("{} DEBUG WARN File: {}".format(log_t, str(one_chunk)))
-        if not re.search(r"(\.xls|\.xlsx)$", field_name):
+        if not re.search(r"(\.xls|\.xlsx)$", file_name):
             return await asyncio.to_thread(
                 lambda: JsonResponse(
-                    {"error": "Check your file. It need xls or xlsx"},
+                    {"detail": "Check your file. It need xls or xlsx"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             )
-
-        # field_name = (field_name.split("."))[0] + ".txt"
-        if not chunk_size or not field_name or not one_chunk:
+        if not chunk_size or not file_name or not one_chunk:
             return await asyncio.to_thread(
                 lambda: JsonResponse(
-                    {"error": "Missing file or filename"},
+                    {"detail": "Missing file or filename"},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             )
         # ---
         temp_dir = os.path.join(tempfile.gettempdir(), "chunked_uploads")
         os.makedirs(temp_dir, exist_ok=True)
-        chunk_path: str = os.path.join(str(temp_dir), f"{field_name}.part{chunk_index}")
+        chunk_path: str = os.path.join(str(temp_dir), f"{file_name}.part{chunk_index}")
         # ---
         async with lock:
             try:
@@ -104,61 +94,31 @@ class CatalogViewSet(ViewSet):
                 # CHUNKS RECORDING TO THE FILE
                 # ============================================
                 if chunk_index < total_chunks:
-                    # with open(str(chunk_path).replace("\\", "/"), "wb") as f:
-                    # with Path(str(chunk_path).replace("\\", "/")).open(mode="wb") as f:
                     with open(str(chunk_path).replace("\\", "/"), "wb") as f:
-
-                        # for chunk_part in chunk:
                         for chunk_part in one_chunk.chunks():
                             f.write(chunk_part)
+                else:
+                    return JsonResponse(
+                        {
+                            "detail": "Check count of chunks. \
+                    Count of chunk_index: {} & total_chunks: {}".format(
+                                chunk_index, total_chunks
+                            )
+                        },
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
             except Exception as e:
                 return JsonResponse(
-                    {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    {"detail": e.args[0] if e.args else str(e)},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
             # ---
             try:
                 if chunk_index == total_chunks - 1:
-                    # ============================================
-                    # COLLECTING A WHOLE FILE
-                    # ============================================
-                    final_dir = str(settings_first.MEDIA_ROOT) + "/documents"
-                    Path(final_dir).mkdir(parents=True, exist_ok=True)
-                    final_path = str(final_dir + "/" + field_name).replace("\\", "/")
-                    # with Path(final_path).open(mode="wb") as f:
-                    with open(final_path, "wb") as f:
-                        calculator = 0
-                        for i in range(0, total_chunks):
-                            part_path = os.path.join(temp_dir, f"{field_name}.part{i}")
-                            while calculator < 3:
-                                if calculator == 2 and not os.path.exists(part_path):
-                                    raise FileNotFoundError(
-                                        f"Chunk {i} not found: {part_path}"
-                                    )
-                                elif os.path.exists(part_path):
-                                    calculator = 3
-                                    break
-                                await asyncio.sleep(0.3)
-                                calculator += 1
-                            # for chunk in pd.read_excel(str(part_path), sheet_name="Sheet1", chunk_size=10000):
-                            #     df_full = pd.concat(chunk, ignore_index=True)
-                            #     df_full.to_excel(part_path.replace("\\", "/"), index=False, sheet_name="Sheet1")
-
-                            with open(part_path.replace("\\", "/"), "rb") as part_file:
-                                # with Path(part_path.replace("\\", "/")).open(mode="rb") as part_file:
-                                part_str = part_file.read()
-                                f.write(part_str)
-                            Path(part_path).unlink()
-                        f.flush()
-                        os.fsync(f.fileno())
+                    final_path: str = await self.record_to_whole_file(
+                        temp_dir, total_chunks, file_name
+                    )
                     await asyncio.sleep(0.1)
-                    file_size = Path(final_path).stat().st_size
-                    log.info("{} File size: {} bytes".format(log_t, file_size))
-                    if file_size == 0:
-                        log.error("{} File is empty after assembly".format(log_t))
-                        return JsonResponse(
-                            {"error": "File is empty after assembly"},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                        )
                     # ============================================
                     # CHECK FILE ON VALIDATION
                     # ============================================
@@ -171,20 +131,20 @@ class CatalogViewSet(ViewSet):
                         )
                         Path(final_path).unlink(missing_ok=True)
                         return JsonResponse(
-                            {"error": "Invalid file format"},
+                            {"detail": "Invalid file format"},
                             status=status.HTTP_400_BAD_REQUEST,
                         )
                     # ============================================
                     # RECORDING DATA IN DATABASE
                     # ============================================
-                    task_saving_data_oFfile(field_name, request.user.id)
+                    task_saving_data_oFfile(file_name, request.user.id)
                     # ---
                     return JsonResponse(
                         {"success": True}, status=status.HTTP_201_CREATED
                     )
             except Exception as e:
                 return JsonResponse(
-                    {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    {"detail": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
 
         return JsonResponse(
@@ -195,6 +155,45 @@ class CatalogViewSet(ViewSet):
             status=status.HTTP_200_OK,
         )
 
+    @staticmethod
+    async def record_to_whole_file(
+        path_dir: str, total_chunks: int, field_name: str
+    ) -> str:
+        """
+        Static method for records the chunks to the whole file.
+        :param str path_dir: Path name to the directory of the final one file.
+        :param itn total_chunks: Count/number of chunks (total).
+        :param str field_name: File name of the final file.
+        :return: str path of the finale one file. It is a path where app will be to take the file for records data in database.
+        """
+        # ============================================
+        # COLLECTING AT WHOLE FILE
+        # ============================================
+        final_dir = str(settings_first.MEDIA_ROOT) + "/documents"
+        Path(final_dir).mkdir(parents=True, exist_ok=True)
+        final_path = str(final_dir + "/" + field_name).replace("\\", "/")
+        with open(final_path, "wb") as f:
+            calculator = 0
+            # That we take the chunks
+            for i in range(0, total_chunks):
+                part_path = os.path.join(path_dir, f"{field_name}.part{i}")
+                while calculator < 3:
+                    if calculator == 2 and not os.path.exists(part_path):
+                        raise FileNotFoundError(f"Chunk {i} not found: {part_path}")
+                    elif os.path.exists(part_path):
+                        calculator = 3
+                        break
+                    await asyncio.sleep(0.3)
+                    calculator += 1
+                # That is we recording to the whole file.
+                with open(part_path.replace("\\", "/"), "rb") as part_file:
+                    part_str = part_file.read()
+                    f.write(part_str)
+                Path(part_path).unlink()
+            f.flush()
+            os.fsync(f.fileno())
+        return final_path
+
     def validate_file(self, file_path: str | Path, prefix_log="") -> bool:
         """CHeck that Excel file is correctly or not"""
         global df
@@ -204,8 +203,13 @@ class CatalogViewSet(ViewSet):
             else ""
         )
         try:
+
             path = file_path if isinstance(file_path, Path) else Path(file_path)
             # ---
+            file_size = Path(path).stat().st_size
+            log.info("{} File size: {} bytes".format(log_t, file_size))
+            if file_size == 0:
+                return False, "File is empty after assembly"
             # Checking the exists file or not.
             if not path.exists():
                 return False, "File does not exist"
