@@ -13,7 +13,7 @@ from django.db.models import QuerySet
 from django.test import override_settings
 from rest_framework import status
 from rest_framework_simplejwt.exceptions import TokenError
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
 from __tests__.fixtures.fixture_django2 import pytest_generate_tests
 from project import BASE_DIR
@@ -22,7 +22,7 @@ from utilities.middleware.functions_jwt_tokens import (
     get_tokens_for_user,
 )
 
-# Will run the APP !!
+# Before test need the run the APP !!
 
 log = logging.getLogger(__name__)
 log.info("============= STARTING TESTS =============")
@@ -126,7 +126,7 @@ class TestApiCatalogsValid:
 
             size_chunk = 100
             total_chunks = 0
-            total_file = b""
+            total_file = bytes()
             # ============================================
             # READING THE TEST FILE XLSX
             # ============================================
@@ -141,20 +141,26 @@ class TestApiCatalogsValid:
             sent_size = 0
             log.info("{} Got a total_chunks: {}".format(log_t, math.ceil(total_chunks)))
             # ============================================
+            # GETTING USER TOKEN
+            # ============================================
+            base64_token = get_tokens_for_user(fixture_create_user)
+            # ============================================
+            # GETTING A FORM DATA FOR THE EVERYTHING CHUNK
+            # ============================================
+            form_data = FormData()
+
+            # Add the additional fields to the request.POST
+            form_data.add_field('file_name', str(test_path.split("\\")[-1]))
+            form_data.add_field('total_chunks', str(total_chunks))
+            # ============================================
             # FILE IS SENDING THROUGH CHUNKS
             # ============================================
             for i in range(0, math.ceil(total_chunks)):
-                chunk_of_file = total_file[sent_size:(i + 1) * size_chunk]
-                sent_size += i * size_chunk
+                end_index = (i + 1) * size_chunk
+                chunk_of_file = total_file[sent_size:end_index]
+                sent_size += end_index
                 log.info("{} Got a chunk_of_file: {}".format(log_t, chunk_of_file))
-                # ============================================
-                # GETTING A FORM DATA FOR THE EVERYTHING CHUNK
-                # ============================================
-                form_data = FormData()
 
-                # Add the additional fields to the request.POST
-                form_data.add_field('file_name', str(test_path.split("\\")[-1]))
-                form_data.add_field('total_chunks', str(total_chunks))
                 form_data.add_field('chunk_index', str(i))
                 # Add (below) the additional fields to the request.FILES
                 form_data.add_field(
@@ -164,21 +170,11 @@ class TestApiCatalogsValid:
                 )
                 log.info("{} Got a form data: {}".format(log_t, str(form_data)))
 
-                # jwt_token = get_tokens_for_user(session.user)
-                refresh = RefreshToken.for_user(fixture_create_user)
-                refresh_dict = {
-                    "access": str(refresh.access_token),
-                    "refresh": str(refresh),
-                }
-                json_str = json.dumps(refresh_dict)
-                json_bytes = json_str.encode("utf-8")
-                base64_encode = base64.b64encode(json_bytes)
-                base64_token = base64_encode.decode("utf-8")
-
+                log.info("{} Got a JWT-token".format(log_t))
+                log.info("{} Got a JWT-token to the base64 coding".format(log_t))
                 # ============================================
                 # SEND REQUEST TO THE SERVER
                 # ============================================
-                # session.post.headers.update({"Authorization":jwt_token})
                 async with session.post("http://127.0.0.1:8000/api/download/load/file/",
                                         data=form_data,
                                         headers= {"Authorization": "Bearer {}".format(base64_token)}
@@ -186,6 +182,4 @@ class TestApiCatalogsValid:
                     log.info("{} Got a load the XLS file to the request HTTP: {}".format(log_t, str(response.__dict__)))
                     log.info("{} Response content: {}".format(log_t, str(response.content)))
                     log.info("{} Response Status code: {}".format(log_t, str(response.status)))
-
-                    # assert "недостаточно прав" not in str(response.data["detail"])
                     assert response.status == status.HTTP_200_OK
