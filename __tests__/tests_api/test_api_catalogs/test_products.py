@@ -1,16 +1,18 @@
 # __tests__/tests_api/test_api_catalogs/test_products.py:1
 # Whis is a Valid test. Here is checking (only) a property of load file.
-
+# This test does not contain user's permissions!
 import io
+import json
 import logging
 import os
 from enum import Enum
 from typing import Optional
 
 import pytest
-from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
 from django.db.models import QuerySet
 from rest_framework import status
+from rest_framework.response import Response
 
 from __tests__.fixtures.fixture_parametrize2 import pytest_generate_tests
 from download.views.view_load_file import DownloadOfCatalogViewSet
@@ -189,12 +191,24 @@ class TestApiUploadFileValid:
                     raise ValueError(error_t) from e
 
         return wraper
+    @pytest.fixture
+    def fixture_test_request(self, fixture_form_data):
+        FormData = fixture_form_data
+        class TestRequest:
+            def __init__(self, user, data: dict = None, files: Optional[FormData] = None):
+                self.POST = data
+                self.FILES = files
+                self.user = user
+        return TestRequest
     # @pytest.mark.parametrize("role, basis_role, expect, descript", parametrize_roles)
     @pytest.mark.django_db()
     @pytest.mark.asyncio
-    async def test_upload_file_valid(self, mocker, fixture_reade_file, fixture_form_data, fixture_open_file, fixture_session_of_user):
+    async def test_upload_file_valid(self, mocker, fixture_reade_file, fixture_form_data,
+                                     fixture_open_file, fixture_session_of_user,
+                                     fixture_test_request):
         global response, total_file_line, total_chunks
         FormData = fixture_form_data
+        TestRequest = fixture_test_request
         # ============================================
         # MOCKERS
         # ============================================
@@ -230,13 +244,37 @@ class TestApiUploadFileValid:
                 formdata = FormData(file_line=view, chunk_size=str(len(view)), total_chunks=str(data.get("total_chunks")), file_name=data.get("file_name"), )
                 files_line.close()
 
-                class TestRequest:
-                    def __init__(self,user, data: dict=None, files: Optional[FormData]=None):
-                        self.POST = data
-                        self.FILES = files
-                        self.user=user
+
                 request = TestRequest(user=fixture_session_of_user.user, data={"files":formdata, **data}, files=formdata)
                 catalog_file = DownloadOfCatalogViewSet()
                 response = await catalog_file.create(request)
 
         assert response.status_code == status.HTTP_201_CREATED
+
+    @pytest.mark.asyncio
+    async def test_upload_small_file(self, fixture_test_request,fixture_form_data, fixture_session_of_user):
+        """Test uploading empty file"""
+        log_t = "{}[test_upload_small_file]:".format(self.PREFIX_LOG, )
+        global request
+        log.info("{} start test".format(log_t))
+        TestRequest = fixture_test_request
+        FormData = fixture_form_data
+        empty_file = SimpleUploadedFile("empty.xlsx", b"dasdasdwqre 34242 rfasdfdsf", content_type=EnumExpansion.XSLX.value[1])
+        data = dict()
+        for view in empty_file.chunks():
+            data.__setitem__('total_chunks', str(len(list(empty_file.chunks()))))
+            data.__setitem__('file_name', "empty.xlsx")
+            formdata = FormData(file_line=view, chunk_size=str(len(view)),
+                                total_chunks=data.get('total_chunks'), file_name=data.get("file_name"), )
+            data.__setitem__('chunk_size', str(len(view)))
+            request = TestRequest(user=fixture_session_of_user.user, data={"file": formdata, **data}, files=formdata)
+            log.info("{} Before send to the API's handler DownloadOfCatalogViewSet".format(log_t))
+            catalog_file = DownloadOfCatalogViewSet()
+            response: Response = await catalog_file.create(request)
+            log.debug("{} DEBUG Got response: {}".format(log_t, str(response.__class__.__dict__)))
+            log.info("{} Got response: {}".format(log_t, str(response.__dict__)))
+
+        log.debug("{} response.content: {}".format(log_t, str(response.content)))
+        detail_dict = json.loads((response.content).decode())
+        assert "File to small size" in detail_dict.get("detail")
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
