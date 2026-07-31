@@ -76,5 +76,5 @@ class DRFPermissionsChecker(BasePermission):
 
             return False
         except Exception as e:
-            log.error(e.args[0])
+            log.error(list(e.args)[0])
             return False

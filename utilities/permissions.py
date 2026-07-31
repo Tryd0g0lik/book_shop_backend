@@ -6,41 +6,66 @@ from persons.interfaces import Users
 class PermissionsMixin:
     @staticmethod
     def is_active(user: Optional[Users]) -> bool:
-        if user is None:
+        try:
+            if user is None:
+                return False
+            elif getattr(user, "is_verified") and getattr(user, "is_active"):
+                return True
             return False
-        elif getattr(user, "is_verified") and getattr(user, "is_active"):
-            return True
-        return False
+        except Exception:
+            return False
 
     @staticmethod
     def is_anonymous(user: Optional[Users]) -> bool:
-        return hasattr(user, "is_anonymous")
+        try:
+            return hasattr(user, "is_anonymous")
+        except Exception:
+            return False
 
     @staticmethod
     def is_authenticated(user: Optional[Users]) -> bool:
-        return hasattr(user, "is_authenticated") and getattr(user, "is_authenticated")
+        try:
+            return hasattr(user, "is_authenticated") and getattr(
+                user, "is_authenticated"
+            )
+        except Exception:
+            return False
 
     @staticmethod
     def is_admin(user: Optional[Users]) -> bool:
-
-        return hasattr(user, "is_superuser") and bool(getattr(user, "is_superuser"))
+        try:
+            return hasattr(user, "is_superuser") and bool(getattr(user, "is_superuser"))
+        except Exception:
+            return False
 
     @staticmethod
     def is_editor(user: Users) -> bool:
-        group = getattr(user, "groups")
-        return isinstance(group.name, str) and group.name.lower() == "editors"
+        try:
+            group = getattr(user, "groups")
+            return isinstance(group.name, str) and group.name.lower() == "editors"
+        except Exception:
+            return False
 
     @staticmethod
     def is_moderator(user: Users) -> bool:
-        group = getattr(user, "groups")
-        return isinstance(group.name, str) and group.name.lower() == "moderators"
+        try:
+            group = getattr(user, "groups")
+            return isinstance(group.name, str) and group.name.lower() == "moderators"
+        except Exception:
+            return False
 
     @staticmethod
     def is_manager(user: Users) -> bool:
-        group = getattr(user, "groups")
-        return isinstance(group.name, str) and group.name.lower() == "manager"
+        try:
+            group = getattr(user, "groups")
+            return isinstance(group.name, str) and group.name.lower() == "manager"
+        except Exception:
+            return False
 
     @staticmethod
     def is_client(user: Users) -> bool:
-        group = getattr(user, "groups")
-        return isinstance(group.name, str) and group.name.lower() == "client"
+        try:
+            group = getattr(user, "groups")
+            return isinstance(group.name, str) and group.name.lower() == "client"
+        except Exception:
+            return False

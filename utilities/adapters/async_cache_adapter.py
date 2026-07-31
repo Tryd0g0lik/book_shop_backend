@@ -104,7 +104,7 @@ class AsyncCacherAdapter(CacherBaseMixin):
                 log_t = self.log_t if e.args else str(e)
                 log_t += (
                     f"[{self.related.__name__}]:"
-                    + " Connection with a cache server failed. %s" % e.args[0]
+                    + " Connection with a cache server failed. %s" % list(e.args)[0]
                 )
                 print(log_t)
                 raise ValueError(log_t)
@@ -143,7 +143,7 @@ class AsyncCacherAdapter(CacherBaseMixin):
             raise RedisError(log_t) from e
 
         except Exception as e:
-            log_t = self.log_t + e.args[0] if e.args else str(e)
+            log_t = self.log_t + list(e.args)[0] if e.args else str(e)
             await self._recreated_pool()
             raise ValueError(log_t)
         finally:
@@ -186,7 +186,7 @@ class AsyncCacherAdapter(CacherBaseMixin):
                 AsyncConnectionError(
                     self.log_t
                     + " Connection with a cache server is invalid. AsyncConnectionError: %s"
-                    % e.args[0]
+                    % list(e.args)[0]
                     if e.args
                     else str(e)
                 )
@@ -197,7 +197,7 @@ class AsyncCacherAdapter(CacherBaseMixin):
                 TimeoutError(
                     self.log_t
                     + " Connection with a cache server is invalid. TimeoutError: %s"
-                    % e.args[0]
+                    % list(e.args)[0]
                     if e.args
                     else str(e)
                 )
@@ -208,7 +208,7 @@ class AsyncCacherAdapter(CacherBaseMixin):
                 RedisError(
                     self.log_t
                     + " Connection with a cache server is invalid. RedisError: %s"
-                    % e.args[0]
+                    % list(e.args)[0]
                     if e.args
                     else str(e)
                 )
@@ -218,6 +218,6 @@ class AsyncCacherAdapter(CacherBaseMixin):
             log.error(
                 self.log_t
                 + " Connection with a cache server failed. %s"
-                % str(e.args[0] if e.args else str(e))
+                % str(list(e.args)[0] if e.args else str(e))
             )
             return False

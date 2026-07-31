@@ -156,7 +156,9 @@ class PostmanAdapter:
                 )
                 return get_data
             except Exception as e:
-                log.warning(" ".join([self.log_t, e.args[0] if e.args else str(e)]))
+                log.warning(
+                    " ".join([self.log_t, list(e.args)[0] if e.args else str(e)])
+                )
                 return None
 
         async def _get_data(
@@ -313,5 +315,5 @@ class PostmanAdapter:
                 )
                 return True
         except Exception as e:
-            raise PersonErrorImproperlyConfigured(e.args[0] if e.args else str(e))
+            raise PersonErrorImproperlyConfigured(list(e.args)[0] if e.args else str(e))
         return False

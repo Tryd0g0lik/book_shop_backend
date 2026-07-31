@@ -156,7 +156,7 @@ async def child_process_get_keys_0(
                     return response_bool
 
                 except Exception as e:
-                    log.error(lt + " ERROR => " + e.args[0] if e.args else str(e))
+                    log.error(lt + " ERROR => " + list(e.args)[0] if e.args else str(e))
                     return False
             return True
 
@@ -180,7 +180,7 @@ async def child_process_get_keys_0(
             :-1
         ] + f"[{child_process_get_keys_0.__name__}]: ERORR_TEXT: %s" % str(e)
         log.error(error_t)
-        raise PersonErrorTasks(e.args[0] if len(e.args) else str(e))
+        raise PersonErrorTasks(list(e.args)[0] if len(e.args) else str(e))
     return True
 
 
@@ -381,7 +381,7 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
 
     except Exception as e:
         log.error(log_t + "ERROR TEXT => %s" % str(e))
-        raise PersonErrorTasks(e.args[0] if len(e.args) else str(e))
+        raise PersonErrorTasks(list(e.args)[0] if len(e.args) else str(e))
 
     return True
 

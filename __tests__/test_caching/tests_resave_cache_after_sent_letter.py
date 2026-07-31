@@ -3,7 +3,7 @@ import json
 import logging
 import re
 
-from __tests__.fixtures.fixture_django2 import pytest_generate_tests
+from __tests__.fixtures.fixture_parametrize2 import pytest_generate_tests
 from project.settings_conf.settings_first import DEFAULT_CHARSET
 
 log = logging.getLogger(__name__)
@@ -82,7 +82,7 @@ class TestResaveCacheAfterSentLetter:
                     return response_bool
 
                 except Exception as e:
-                    log.error(lt + " ERROR => " + e.args[0] if e.args else str(e))
+                    log.error(lt + " ERROR => " + list(e.args)[0] if e.args else str(e))
                     return False
             return True
 

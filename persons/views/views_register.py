@@ -154,7 +154,7 @@ class UsersRegistrationView(AllauthSignupView):
                     self.log_t[-1] + f"{self.post.__name__}:",
                     datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     " Server error under user registration. URL: %s TEXT_ERROR: %s"
-                    % (pathname, e.args[0] if e.args else str(e)),
+                    % (pathname, list(e.args)[0] if e.args else str(e)),
                 ]
             )
             log.error(ERROR_TEXT)
@@ -216,7 +216,7 @@ class UsersRegistrationView(AllauthSignupView):
                     datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     (
                         " Server error to the user registration GET. ERROR_TEXT: %s"
-                        % e.args[0]
+                        % list(e.args)[0]
                         if e.args
                         else str(e)
                     ),
@@ -277,13 +277,13 @@ class UsersRegistrationView(AllauthSignupView):
             elif role.upper() in CATEGORY_STATUS[4] and (
                 queryset_staff.count() >= 0 and queryset_staff.count() <= 2
             ):
-                # Admins
+                # Admins/Moderator
                 setattr(user, "is_superuser", False)
                 setattr(user, "is_staff", True)
             elif (
                 role.upper() in CATEGORY_STATUS[2] or role.upper() in CATEGORY_STATUS[5]
             ) and (queryset.count() >= 0 and queryset.count() <= 3):
-                # Managers
+                # Editor / Managers
                 setattr(user, "is_superuser", False)
                 setattr(user, "is_staff", True)
             else:
@@ -317,7 +317,7 @@ class UsersRegistrationView(AllauthSignupView):
             # CELERY + REDIS
             task_of_cache.delay(*args, **kwargs)
         except Exception as e:
-            log_t = f"[UsersRegistrationView]: {e.args[0] if e.args else str(e)}"
+            log_t = f"[UsersRegistrationView]: {list(e.args)[0] if e.args else str(e)}"
             raise ValueError(log_t)
         finally:
             log.info(
@@ -410,7 +410,7 @@ class UsersVerificationDuringRegistration(View):
                             continue
                     except Exception as e:
                         log.error(e)
-                        context["details"] = e.args[0] if e.args else str(e)
+                        context["details"] = list(e.args)[0] if e.args else str(e)
                         return await asyncio.to_thread(
                             lambda: render(
                                 request, "auth/register.html", context, status=500

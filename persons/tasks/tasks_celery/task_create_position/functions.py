@@ -147,7 +147,7 @@ async def greate_of_profile(
                 "{}[{}]: Warning => {}".format(
                     log_prefix,
                     greate_of_profile.__name__,
-                    e.args[0] if e.args else str(e),
+                    list(e.args)[0] if e.args else str(e),
                 )
             )
             return None
@@ -155,7 +155,9 @@ async def greate_of_profile(
     except Exception as e:
         raise ProfileValueError(
             "{}[{}]: 'ERROR => {}".format(
-                log_prefix, greate_of_profile.__name__, e.args[0] if e.args else str(e)
+                log_prefix,
+                greate_of_profile.__name__,
+                list(e.args)[0] if e.args else str(e),
             )
         ) from e
 
@@ -169,6 +171,8 @@ def get_fields_of_model(
         return fields_names
     except Exception as e:
         log_t = "{}[{}]: ProfileValueError => {}".format(
-            prefix_log, greate_of_profile.__name__, str(e.args[0]) if e.args else str(e)
+            prefix_log,
+            greate_of_profile.__name__,
+            str(list(e.args)[0]) if e.args else str(e),
         )
         raise ProfileValueError(log_t) from e

@@ -1,6 +1,5 @@
 # download/task_save_file/subprocess.py:1
 import asyncio
-import base64
 import logging
 import queue
 import re
@@ -24,7 +23,21 @@ log = logging.getLogger(__name__)
 start_time = 0
 
 
-async def subprocess_data(data: pd.array, user_id):
+async def task_sub_process_data(data: pd.array, user_id) -> None:
+    """
+    Here we take the Excel file (from 'media/document/*.xs*') and it shares on chunks (by column).
+    Then received data we save in database.
+    First we create some  quantity tasks, then they are starting in async mode.
+    If we run not first file, we can look the error in log file. This is not crazy. But, we should look to the character of message:
+     This is 'info' or 'error'.
+     If it is:
+      - 'info' means we have repeating data in database and App simple informs that it.
+      - 'error' means we must take actions and fix errors from the log file.
+
+    :param pandas.array data:
+    :param int user_id: This is the user under which session we got data
+    :return: None
+    """
     from catalog.models import (
         BrandModel,
         CategoryModel,
@@ -115,8 +128,8 @@ async def subprocess_data(data: pd.array, user_id):
                         continue
                 except Exception as e:
                     log.error(
-                        "[subprocess_data]: Error => {}".format(
-                            e.args[0] if len(e.args) > 0 else str(e)
+                        "[task_sub_process_data]: Error => {}".format(
+                            list(e.args)[0] if len(e.args) > 0 else str(e)
                         )
                     )
 
@@ -166,8 +179,8 @@ async def subprocess_data(data: pd.array, user_id):
                     await product.asave()
                 except Exception as e:
                     log.warning(
-                        "[subprocess_data]: It seems this product was created before that. WARNING => {}".format(
-                            e.args[0] if len(e.args) > 0 else str(e)
+                        "[task_sub_process_data]: It seems this product was created before that. WARNING => {}".format(
+                            list(e.args)[0] if len(e.args) > 0 else str(e)
                         )
                     )
                     await write_error_data(q, [k, v, view_list[product_name_index]])
@@ -206,8 +219,8 @@ async def subprocess_data(data: pd.array, user_id):
                             await asyncio.gather(*tasks_collection)
                         except Exception as e:
                             log.error(
-                                "[subprocess_data]: Error => {}".format(
-                                    e.args[0] if len(e.args) > 0 else str(e)
+                                "[task_sub_process_data]: Error => {}".format(
+                                    list(e.args)[0] if len(e.args) > 0 else str(e)
                                 )
                             )
                             v_list.append(view_list[product_name_index])

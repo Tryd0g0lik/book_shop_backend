@@ -72,7 +72,7 @@ class PersonServiceDatabaseAdapter:
         except Exception as e:
             log_t = (
                 PersonServiceDatabaseAdapter.log_t[:-1]
-                + f"[PersonServiceDatabaseAdapter.get_user_by_id.__name__]: {e.args[0] if e.args else str(e)}"
+                + f"[PersonServiceDatabaseAdapter.get_user_by_id.__name__]: {list(e.args)[0] if e.args else str(e)}"
             )
             raise PersonErrorImproperlyConfigured(log_t) from e
 
@@ -115,7 +115,7 @@ class PersonServiceDatabaseAdapter:
         except Exception as e:
             log_t = (
                 PersonServiceDatabaseAdapter.log_t[:-1]
-                + f"[{PersonServiceDatabaseAdapter.get_user_by_email.__name__}]: {e.args[0] if e.args else str(e)}"
+                + f"[{PersonServiceDatabaseAdapter.get_user_by_email.__name__}]: {list(e.args)[0] if e.args else str(e)}"
             )
             raise PersonErrorImproperlyConfigured(log_t) from e
         return None
@@ -141,7 +141,7 @@ class PersonServiceDatabaseAdapter:
         except Exception as e:
             log_t = (
                 PersonServiceDatabaseAdapter.log_t[:-1]
-                + f"[{PersonServiceDatabaseAdapter.search_by_email.__name__}]: {e.args[0] if e.args else str(e)}"
+                + f"[{PersonServiceDatabaseAdapter.search_by_email.__name__}]: {list(e.args)[0] if e.args else str(e)}"
             )
             raise PersonErrorImproperlyConfigured(log_t) from e
 
@@ -176,7 +176,7 @@ class PersonServiceDatabaseAdapter:
             except Exception as e:
                 log_t = (
                     PersonServiceDatabaseAdapter.log_t[:-1]
-                    + f"[{PersonServiceDatabaseAdapter.save.__name__}]: {e.args[0] if e.args else str(e)}"
+                    + f"[{PersonServiceDatabaseAdapter.save.__name__}]: {list(e.args)[0] if e.args else str(e)}"
                 )
                 raise PersonErrorImproperlyConfigured(log_t) from e
 
@@ -187,7 +187,7 @@ class PersonServiceDatabaseAdapter:
         except Exception as e:
             log_t = (
                 PersonServiceDatabaseAdapter.log_t[:-1]
-                + f"[{PersonServiceDatabaseAdapter.save.__name__}]: {e.args[0] if e.args else str(e)}"
+                + f"[{PersonServiceDatabaseAdapter.save.__name__}]: {list(e.args)[0] if e.args else str(e)}"
             )
             raise PersonErrorImproperlyConfigured(log_t) from e
 
@@ -203,7 +203,7 @@ class PersonServiceDatabaseAdapter:
         except Exception as e:
             log_t = (
                 PersonServiceDatabaseAdapter.log_t[:-1]
-                + f"[{PersonServiceDatabaseAdapter.is_email.__name__}]: {e.args[0] if e.args else str(e)}"
+                + f"[{PersonServiceDatabaseAdapter.is_email.__name__}]: {list(e.args)[0] if e.args else str(e)}"
             )
             log.error(log_t)
             return False
@@ -225,7 +225,7 @@ class PersonServiceDatabaseAdapter:
         except Exception as e:
             log_t = (
                 PersonServiceDatabaseAdapter.log_t[:-1]
-                + f"[{PersonServiceDatabaseAdapter.is_password.__name__}]: {e.args[0] if e.args else str(e)}"
+                + f"[{PersonServiceDatabaseAdapter.is_password.__name__}]: {list(e.args)[0] if e.args else str(e)}"
             )
             raise PersonErrorImproperlyConfigured(log_t) from e
 
@@ -278,7 +278,7 @@ class PersonServiceDatabaseAdapter:
                 + f"[{PersonServiceDatabaseAdapter.hashes_password.__name__}]:"
             )
             raise PersonErrorImproperlyConfigured(
-                log_T + "Password should be a hashable string. " + e.args[0]
+                log_T + "Password should be a hashable string. " + list(e.args)[0]
                 if e.args
                 else str(e)
             ) from e
@@ -288,7 +288,7 @@ class PersonServiceDatabaseAdapter:
                 + f"[{PersonServiceDatabaseAdapter.hashes_password.__name__}]:"
             )
             raise PersonErrorImproperlyConfigured(
-                log_T + "Password should be a hashable string. " + e.args[0]
+                log_T + "Password should be a hashable string. " + list(e.args)[0]
                 if e.args
                 else str(e)
             ) from e
@@ -388,13 +388,17 @@ class PersonServiceDatabaseAdapter:
             try:
                 query_set_object = Users.objects.filter(id=user_id)
             except PersonErrorImproperlyConfigured as e:
-                raise PersonErrorImproperlyConfigured(e.args[0] if e.args else str(e))
+                raise PersonErrorImproperlyConfigured(
+                    list(e.args)[0] if e.args else str(e)
+                )
         elif user_email is not None:
             log.info("# USER EMAIL")
             try:
                 query_set_object = Users.objects.filter(email=user_email)
             except PersonErrorImproperlyConfigured as e:
-                raise PersonErrorImproperlyConfigured(e.args[0] if e.args else str(e))
+                raise PersonErrorImproperlyConfigured(
+                    list(e.args)[0] if e.args else str(e)
+                )
         query_object_first = query_set_object.first()
         log.info("# WHAT WE RECEIVED FROM DATABASE")
         if query_object_first is None:
@@ -481,4 +485,4 @@ class PersonServiceDatabaseAdapter:
             )
             return queryset_valid
         except Exception as e:
-            raise PersonErrorImproperlyConfigured(e.args[0] if e.args else str(e))
+            raise PersonErrorImproperlyConfigured(list(e.args)[0] if e.args else str(e))

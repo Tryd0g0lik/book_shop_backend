@@ -4,7 +4,7 @@ import logging
 
 import pytest
 
-from __tests__.fixtures.fixture_django2 import pytest_generate_tests
+from __tests__.fixtures.fixture_parametrize2 import pytest_generate_tests
 
 log = logging.getLogger(__name__)
 

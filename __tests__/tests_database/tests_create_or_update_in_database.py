@@ -5,7 +5,7 @@ import logging
 import pytest
 from django.contrib.auth.models import Group
 
-from __tests__.fixtures.fixture_django2 import pytest_generate_tests
+from __tests__.fixtures.fixture_parametrize2 import pytest_generate_tests
 from persons.interfaces import (
     PersonServiceDatabaseAdapter as PersonServiceDatabaseAdapterInitialize,
 )
@@ -63,7 +63,7 @@ class TestCreateOrUpdateInDatabase:
             category_obj = category_queryset.first()
             user.groups.add(category_obj)
         except (InterruptedError, LookupError) as e:
-            log.error("{} TEST ERROR => {}".format(log_t, e.args[0] if e.args else str(e)))
+            log.error("{} TEST ERROR => {}".format(log_t, list(e.args)[0] if e.args else str(e)))
             raise e
         return [new_users_registration, user, old_email, new_email]
 

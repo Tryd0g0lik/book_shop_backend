@@ -44,7 +44,7 @@ class PlaywrightManager:
             self.browser: Sync_Browser = p.firefox.launch(**browser_option)
             log.info(log_t + " Run the playwright chromium")
         except Exception as e:
-            error_t = log_t + e.args[0] if e.args else str(e)
+            error_t = log_t + list(e.args)[0] if e.args else str(e)
             log.error(error_t)
             raise e
 
@@ -56,7 +56,7 @@ class PlaywrightManager:
             self.abrowser = await p.firefox.launch(**browser_option)
             log.info(log_t + " Run the playwright chromium")
         except Exception as e:
-            error_t = log_t + e.args[0] if e.args else str(e)
+            error_t = log_t + list(e.args)[0] if e.args else str(e)
             log.error(error_t)
             raise e
 
@@ -88,7 +88,7 @@ class PlaywrightManager:
         try:
             yield page
         except Exception as e:
-            error_t = log_t + f" {e.args[0] if e.args else str(e)}"
+            error_t = log_t + f" {list(e.args)[0] if e.args else str(e)}"
             log.error(error_t)
             raise e
         finally:
@@ -121,7 +121,7 @@ class PlaywrightManager:
         try:
             yield page
         except Exception as e:
-            error_t = log_t + f" {e.args[0] if e.args else str(e)}"
+            error_t = log_t + f" {list(e.args)[0] if e.args else str(e)}"
             log.error(error_t)
             raise e
         finally:

@@ -70,5 +70,5 @@ async def create_some_position_at_wagtail_profile(
         )
         return None
     except Exception as e:
-        log.warning(log_t + " ERROR => " + e.args[0] if e.args else str(e))
+        log.warning(log_t + " ERROR => " + list(e.args)[0] if e.args else str(e))
         return None

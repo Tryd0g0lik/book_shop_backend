@@ -70,7 +70,9 @@ async def create_some_position_allauth(*args, **kwargs: dict[str, int]) -> None:
                 )
                 return None
             except Exception as e:
-                log.warning(log_t + " ERROR => " + e.args[0] if e.args else str(e))
+                log.warning(
+                    log_t + " ERROR => " + list(e.args)[0] if e.args else str(e)
+                )
                 return None
         else:
             # Allauth
@@ -90,11 +92,15 @@ async def create_some_position_allauth(*args, **kwargs: dict[str, int]) -> None:
                 log.warning(log_t + " TimeoutError data didn't update in database!")
                 return None
             except Exception as e:
-                log.warning(log_t + " ERROR => " + e.args[0] if e.args else str(e))
+                log.warning(
+                    log_t + " ERROR => " + list(e.args)[0] if e.args else str(e)
+                )
                 return None
 
         else:
             log.info(log_t + "Allauth did not save new email!")
             return None
     except Exception as e:
-        log.warning("{} ERROR => {}".format(log_t, e.args[0] if e.args else str(e)))
+        log.warning(
+            "{} ERROR => {}".format(log_t, list(e.args)[0] if e.args else str(e))
+        )

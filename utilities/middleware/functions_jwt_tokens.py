@@ -7,7 +7,7 @@ from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.tokens import RefreshToken
 
 
-def get_tokens_for_user(user):
+def get_tokens_for_user(user) -> str:
     """Coding the dictionary tokens to the base64 string"""
     if not user.is_active:
         raise AuthenticationFailed("User is not active")
@@ -21,7 +21,7 @@ def get_tokens_for_user(user):
     return base64_str
 
 
-def decode_tokens_from_base64(base64_str: str):
+def decode_tokens_from_base64(base64_str: str) -> dict:
     """Decoding Base64 string to the dist of tokens"""
     base64_bytes = base64_str.encode("utf-8")
     json_bytes = base64.b64decode(base64_bytes)

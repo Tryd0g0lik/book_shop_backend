@@ -191,6 +191,8 @@ class UserProfileManagerModel(models.Model):
             return q_objects
         except Exception as e:
             log.warning(
-                "{} Error => {}".format(log_t, e.args[0] if len(e.args) > 0 else str(e))
+                "{} Error => {}".format(
+                    log_t, list(e.args)[0] if len(e.args) > 0 else str(e)
+                )
             )
             return None

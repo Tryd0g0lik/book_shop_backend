@@ -68,7 +68,7 @@ def task_create_profile_from_signal(*args, **kwargs) -> None:
         log.error(log_t + " User's profile has not found at the Wagtail's profile!")
         return None
     except Exception as e:
-        log.error(log_t + " ERROR => " + e.args[0] if len(e.args) else str(e))
+        log.error(log_t + " ERROR => " + list(e.args)[0] if len(e.args) else str(e))
         return None
 
 

@@ -1,32 +1,31 @@
 # __tests__/tests_api/test_api_catalogs/test_products.py:1
-import asyncio
-import base64
-import json
+# Whis is a Valid test. Here is checking (only) a property of load file.
+import io
 import logging
-import math
 import os
 from typing import Optional
 
 import pytest
-from aiohttp import ClientSession, FormData
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db.models import QuerySet
-from django.test import override_settings
 from rest_framework import status
-from rest_framework_simplejwt.exceptions import TokenError
-from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
 
-from __tests__.fixtures.fixture_django2 import pytest_generate_tests
+from __tests__.fixtures.fixture_parametrize2 import pytest_generate_tests
+from download.views.view_load_file import DownloadOfCatalogViewSet
 from project import BASE_DIR
 from utilities.middleware.functions_jwt_tokens import (
-    decode_tokens_from_base64,
     get_tokens_for_user,
 )
 
-# Before test need the run the APP !!
-
 log = logging.getLogger(__name__)
 log.info("============= STARTING TESTS =============")
-
+# parametrize_roles = [
+#     ("admin", {"staff": True, "superadmin": True, },201, "Superadmin has rights for a load Excel"),
+#     ("Moderator", {"staff": True, "superadmin": False,}, 201, "Moderator has rights for a load Excel"),
+#     ("Manager", {"staff": True, "superadmin": False, }, 201, "Manager has rights for a load Excel"),
+#     ("editor", {"staff": True, "superadmin": False, },201,  "Editor has rights for a load Excel"),
+#     ("client", {"staff": False, "superadmin": False, },401, "Client does not have rights for a load Excel"),
+# ]
 
 class TestApiCatalogsValid:
     PREFIX_LOG = "[TestApiCatalogsValid]"
@@ -57,7 +56,7 @@ class TestApiCatalogsValid:
         user = Users.objects.create(**new_users_registration)
         # --- user group/role/permissions
         group = Group.objects.get(name=category.capitalize())
-        log.info("{} Got a group name: {}".format(log_t, str(group.name)))
+        log.info("{} Got a group name: {} User ID: {}".format(log_t, str(group.name), str(user.id)))
         user.groups.add(group)
         role_queryset: QuerySet = user.groups.values_list("name", flat=True)
         assert role_queryset.count() == 1
@@ -65,7 +64,9 @@ class TestApiCatalogsValid:
             "{} Created user. User Index: {} email: {} role: {}".format(log_t, user.id, new_users_registration["email"],
                                                                         role_queryset.first()))
         log.info("{} User got a group.".format(log_t))
-        return user
+        yield user
+        # user.delete()
+
 
     @pytest.fixture()
     def fixture_reade_file(self, path_file: Optional[str] = None) -> bool:
@@ -77,109 +78,133 @@ class TestApiCatalogsValid:
         return True
 
     # @override_settings(MIDDLEWARE=TEST_MIDDLEWARE)
-    @pytest.mark.django_db(transaction=True)
-    async def test_file_send_to_user_email_valid(self, mocker, fixture_reade_file, fixture_create_user):
-        from django.contrib.auth import authenticate, login
-
-        from catalog.permissions.permissions_checker import PermissionsChecker
+    # @pytest.mark.parametrize("role, basis_role, expect, descript", parametrize_roles)
+    @pytest.mark.django_db()
+    @pytest.mark.asyncio
+    async def test_upload_file_valid(self, mocker, fixture_reade_file, fixture_create_user):
+        regex_exclude = r"\u0871"
+        global response, total_file_line, total_chunks
         group = await fixture_create_user.groups.afirst()
         assert group is not None and hasattr(group, "name"), "Check a user role "
+        # ============================================
+        # MOCKER Users MODELS
+        # ============================================
+        mocker.patch("wagtail.tasks.update_reference_index_task", return_value=lambda app_label, model_name, pk: None)
+        mocker.patch("download.task_save_file.task_sub_process_data", return_value=lambda data, user_id: None)
+        mock_saving_data = mocker.patch("download.task_save_file.__init__.task_saving_data_oFfile")
+
+        mock_saving_data.return_value=lambda *args, **kwargs: tuple("Hallo!")
 
         # ProductViewSet
-        log_t = "{}[test_file_send_to_user_email_valid]:".format(self.PREFIX_LOG, )
+        log_t = "{}[test_upload_file_valid]:".format(self.PREFIX_LOG, )
         log.info("{} start test".format(log_t))
         assert fixture_create_user.is_active == True
         # ============================================
-        # STARTING A SESSION
+        # STARTING A MOCK/PSEUDO SESSION
         # ============================================
-        async with (ClientSession() as session):
-            session.headers["contant_type"] = "multipart/form-data"
-            setattr(session, "user", fixture_create_user)
-            setattr(session.user, "is_active", True)
-            setattr(session.user, "is_sent", True)
-            setattr(session.user, "is_verified", True)
-            if group.name.lower() == "admin":
-                setattr(session.user, "is_staff", True)
-                setattr(session.user, "is_superuser", True)
-            elif group.name.lower() == "client":
-                setattr(session.user, "is_staff", False)
-                setattr(session.user, "is_superuser", False)
-            elif group.name.lower() != "client":
-                setattr(session.user, "is_staff", True)
+        class Session:
+            def __init__(self, user):
+                self.user = user
+                self.headers = dict()
+        session = Session(fixture_create_user)
+        session.headers.update({"contant_type": "multipart/form-data"})
 
-            # ============================================
-            # TEST PERMISSION
-            # ============================================
-            try:
-                permission_bool = await asyncio.to_thread(lambda: PermissionsChecker.can_add_product(session.user))
-                if getattr(group, "name").lower() == "admin" or getattr(group, "name").lower() != "client":
-                    assert permission_bool == True
-                else:
-                    assert permission_bool == False
-                log.info("{} Permission check successful".format(log_t))
-            except Exception as e:
-                log.error("{} Error => {}".format(log_t, e.args[0] if e.args else str(e)))
-                raise e
-            log.info("{} Got a request user: {}".format(log_t, str(session.user)))
-            test_path = self.TEST_FILES[0][:]
-            log.info("{} Got a test_path: {}".format(log_t, test_path.split("\\")[-1]))
+        setattr(session.user, "is_active", True)
+        setattr(session.user, "is_sent", True)
+        setattr(session.user, "is_verified", True)
+        if group.name.lower() == "admin":
+            setattr(session.user, "is_staff", True)
+            setattr(session.user, "is_superuser", True)
+        elif group.name.lower() == "client":
+            setattr(session.user, "is_staff", False)
+            setattr(session.user, "is_superuser", False)
+        elif group.name.lower() != "client":
+            setattr(session.user, "is_staff", True)
 
-            size_chunk = 100
-            total_chunks = 0
-            total_file = bytes()
-            # ============================================
-            # READING THE TEST FILE XLSX
-            # ============================================
-            with open(file=test_path, mode="r+", encoding="utf-8", errors="ignore") as f:
-                total_file = f.read()
-                # Getting of chunks
-                SEEK_END = f.seek(0, os.SEEK_END)
-                log.info("{} Got a SEEK_END: {}".format(log_t, SEEK_END))
-                file_size = f.tell()
-                log.info("{} Got a st_size: {}".format(log_t, file_size))
-                total_chunks = float(file_size / 1024 / size_chunk)
-            sent_size = 0
-            log.info("{} Got a total_chunks: {}".format(log_t, math.ceil(total_chunks)))
-            # ============================================
-            # GETTING USER TOKEN
-            # ============================================
-            base64_token = get_tokens_for_user(fixture_create_user)
+        test_path = self.TEST_FILES[0][:]
+        log.info("{} Got a test_path: {}".format(log_t, test_path.split("\\")[-1]))
+        size_chunk = self.CHUNK_SIZE
+        # ============================================
+        # GETTING USER TOKEN
+        # ============================================
+        base64_token = get_tokens_for_user(fixture_create_user)
+        session.headers.update({"Authorization":"Bearer {}".format(base64_token)})
+        # ============================================
+        # OPENING FILE
+        # ============================================
+        with open(file=test_path, mode="rb", ) as f:
+
+            total_file_line = f.read(size_chunk)
+
+            log.debug("{} GotTYpe: {}, the total_file_line: {}".format(log_t, type(total_file_line), total_file_line[:50]))
+
             # ============================================
             # GETTING A FORM DATA FOR THE EVERYTHING CHUNK
             # ============================================
-            form_data = FormData()
-
-            # Add the additional fields to the request.POST
-            form_data.add_field('file_name', str(test_path.split("\\")[-1]))
-            form_data.add_field('total_chunks', str(total_chunks))
+            data = dict()
+            data.__setitem__('file_name', str(test_path.split("\\")[-1]))
             # ============================================
-            # FILE IS SENDING THROUGH CHUNKS
+            # BUFFER
             # ============================================
-            for i in range(0, math.ceil(total_chunks)):
-                end_index = (i + 1) * size_chunk
-                chunk_of_file = total_file[sent_size:end_index]
-                sent_size += end_index
-                log.info("{} Got a chunk_of_file: {}".format(log_t, chunk_of_file))
+            f = io.BytesIO(total_file_line)
+            files_line = InMemoryUploadedFile(
+                file=f,
+                field_name="file",
+                size=len(total_file_line),
+                name=str(test_path.split("\\")[-1]),
+                content_type="application/vnd.ms-excel" if test_path.endswith('.xls') else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", #"application/octet-stream",
+                charset=None,
+            )
 
-                form_data.add_field('chunk_index', str(i))
-                # Add (below) the additional fields to the request.FILES
-                form_data.add_field(
-                    'file',  # name of variable
-                    chunk_of_file,  # That contains data/chunks of file.
-                    filename=str(test_path.split("\\")[-1]),  # THe file name
-                )
-                log.info("{} Got a form data: {}".format(log_t, str(form_data)))
+            data.__setitem__('total_chunks', str(len(list(files_line.chunks()))))
+            log.debug("{} total_chunks: {}, ".format(log_t, data.get("total_chunks", "")))
+            # ============================================
+            # CHUNKS
+            # ============================================
+            for i, view in enumerate(files_line.chunks()):
 
-                log.info("{} Got a JWT-token".format(log_t))
-                log.info("{} Got a JWT-token to the base64 coding".format(log_t))
+                data.__setitem__('chunk_size', str(len(view)))
+                data.__setitem__("chunk_index", str(i))
+
                 # ============================================
-                # SEND REQUEST TO THE SERVER
+                # FORM DATA
                 # ============================================
-                async with session.post("http://127.0.0.1:8000/api/download/load/file/",
-                                        data=form_data,
-                                        headers= {"Authorization": "Bearer {}".format(base64_token)}
-                                        ) as response:
-                    log.info("{} Got a load the XLS file to the request HTTP: {}".format(log_t, str(response.__dict__)))
-                    log.info("{} Response content: {}".format(log_t, str(response.content)))
-                    log.info("{} Response Status code: {}".format(log_t, str(response.status)))
-                    assert response.status == status.HTTP_200_OK
+                class FormData:
+                    def __init__(self, file_line: str,
+                                 total_chunks: str,
+                                 chunk_size: str,
+                                 file_name: str):
+                        self.file: str = file_line # InMemoryUploadedFile
+                        self.total_chunks: str = total_chunks
+                        self.chunk_size: str = chunk_size
+                        self.file_name: str = file_name
+
+                    def get(self, key: str, default=None):
+                        # This should work like a dictionary's get method
+                        if hasattr(self, key):
+                            return getattr(self, key)
+                        return default
+
+                    def __getitem__(self, key):
+                        # Support dictionary-like access
+                        if hasattr(self, key):
+                            return getattr(self, key)
+                        raise KeyError(key)
+
+                    def __contains__(self, key):
+                        return hasattr(self, key)
+
+
+                formdata = FormData(file_line=view, chunk_size=str(len(view)), total_chunks=str(data.get("total_chunks")), file_name=data.get("file_name"), )
+                files_line.close()
+
+                class TestRequest:
+                    def __init__(self,user, data: dict=None, files: Optional[FormData]=None):
+                        self.POST = data
+                        self.FILES = files
+                        self.user=user
+                request = TestRequest(user=session.user, data={"files":formdata, **data}, files=formdata)
+                catalog_file = DownloadOfCatalogViewSet()
+                response = await catalog_file.create(request)
+
+        assert response.status_code == status.HTTP_201_CREATED

@@ -61,7 +61,7 @@ async def storage_errors(q: queue.Queue):
             except Exception as e:
                 log.error(
                     "[storage_errors]: {}".format(
-                        e.args[0] if len(e.args) > 0 else str(e)
+                        list(e.args)[0] if len(e.args) > 0 else str(e)
                     )
                 )
                 return
@@ -99,6 +99,6 @@ async def storage_errors(q: queue.Queue):
     except Exception as e:
         log.error(
             "[storage_errors]: ERROR => {}".format(
-                e.args[0] if len(e.args) > 0 else str(e)
+                list(e.args)[0] if len(e.args) > 0 else str(e)
             )
         )

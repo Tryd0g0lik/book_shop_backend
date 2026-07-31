@@ -63,7 +63,7 @@ class UserLoginView(LoginView):
                     % (
                         self.get.__name__,
                         datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                        e.args[0] if e.args else str(e),
+                        list(e.args)[0] if e.args else str(e),
                     ),
                 ]
             )
@@ -167,7 +167,7 @@ class UserLoginView(LoginView):
                         % (
                             self.post.__name__,
                             datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                            e.args[0] if e.args else str(e),
+                            list(e.args)[0] if e.args else str(e),
                         ),
                     ]
                 )
