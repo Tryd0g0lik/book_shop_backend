@@ -1,8 +1,10 @@
 # __tests__/tests_api/test_api_catalogs/test_products.py:1
 # Whis is a Valid test. Here is checking (only) a property of load file.
+
 import io
 import logging
 import os
+from enum import Enum
 from typing import Optional
 
 import pytest
@@ -27,8 +29,14 @@ log.info("============= STARTING TESTS =============")
 #     ("client", {"staff": False, "superadmin": False, },401, "Client does not have rights for a load Excel"),
 # ]
 
-class TestApiCatalogsValid:
-    PREFIX_LOG = "[TestApiCatalogsValid]"
+class EnumExpansion(Enum):
+    """It is expansion of files."""
+    XSL = ['.xls', "application/vnd.ms-excel"]
+    XSLX = ['.xlsx', "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"]
+
+
+class TestApiUploadFileValid:
+    PREFIX_LOG = "[TestApiUploadFileValid]"
     TEST_FILES = [os.path.join(BASE_DIR, "__tests__", "fixtures", "template_catalog.xlsx")]
     CHUNK_SIZE: int = 1024 * 1024
 
@@ -77,28 +85,11 @@ class TestApiCatalogsValid:
         log.info("{} Got a file to the 'path_file' path: {}".format(log_t, str(path_file)))
         return True
 
-    # @override_settings(MIDDLEWARE=TEST_MIDDLEWARE)
-    # @pytest.mark.parametrize("role, basis_role, expect, descript", parametrize_roles)
-    @pytest.mark.django_db()
-    @pytest.mark.asyncio
-    async def test_upload_file_valid(self, mocker, fixture_reade_file, fixture_create_user):
-        regex_exclude = r"\u0871"
-        global response, total_file_line, total_chunks
-        group = await fixture_create_user.groups.afirst()
-        assert group is not None and hasattr(group, "name"), "Check a user role "
-        # ============================================
-        # MOCKER Users MODELS
-        # ============================================
-        mocker.patch("wagtail.tasks.update_reference_index_task", return_value=lambda app_label, model_name, pk: None)
-        mocker.patch("download.task_save_file.task_sub_process_data", return_value=lambda data, user_id: None)
-        mock_saving_data = mocker.patch("download.task_save_file.__init__.task_saving_data_oFfile")
-
-        mock_saving_data.return_value=lambda *args, **kwargs: tuple("Hallo!")
-
-        # ProductViewSet
-        log_t = "{}[test_upload_file_valid]:".format(self.PREFIX_LOG, )
-        log.info("{} start test".format(log_t))
+    @pytest.fixture
+    def fixture_session_of_user(self, fixture_create_user):
         assert fixture_create_user.is_active == True
+        group = fixture_create_user.groups.first()
+        assert group is not None and hasattr(group, "name"), "Check a user role "
         # ============================================
         # STARTING A MOCK/PSEUDO SESSION
         # ============================================
@@ -106,6 +97,7 @@ class TestApiCatalogsValid:
             def __init__(self, user):
                 self.user = user
                 self.headers = dict()
+
         session = Session(fixture_create_user)
         session.headers.update({"contant_type": "multipart/form-data"})
 
@@ -120,81 +112,121 @@ class TestApiCatalogsValid:
             setattr(session.user, "is_superuser", False)
         elif group.name.lower() != "client":
             setattr(session.user, "is_staff", True)
-
-        test_path = self.TEST_FILES[0][:]
-        log.info("{} Got a test_path: {}".format(log_t, test_path.split("\\")[-1]))
-        size_chunk = self.CHUNK_SIZE
         # ============================================
         # GETTING USER TOKEN
         # ============================================
         base64_token = get_tokens_for_user(fixture_create_user)
-        session.headers.update({"Authorization":"Bearer {}".format(base64_token)})
+        session.headers.update({"Authorization": "Bearer {}".format(base64_token)})
+        yield session
+    @pytest.fixture
+    def fixture_form_data(self):
         # ============================================
-        # OPENING FILE
+        # FORM DATA
         # ============================================
-        with open(file=test_path, mode="rb", ) as f:
+        class FormData:
+            def __init__(self, file_line: str,
+                         total_chunks: str,
+                         chunk_size: str,
+                         file_name: str):
+                self.file: str = file_line  # InMemoryUploadedFile
+                self.total_chunks: str = total_chunks
+                self.chunk_size: str = chunk_size
+                self.file_name: str = file_name
 
-            total_file_line = f.read(size_chunk)
+            def get(self, key: str, default=None):
+                # This should work like a dictionary's get method
+                if hasattr(self, key):
+                    return getattr(self, key)
+                return default
 
-            log.debug("{} GotTYpe: {}, the total_file_line: {}".format(log_t, type(total_file_line), total_file_line[:50]))
+            def __getitem__(self, key):
+                # Support dictionary-like access
+                if hasattr(self, key):
+                    return getattr(self, key)
+                raise KeyError(key)
 
+            def __contains__(self, key):
+                return hasattr(self, key)
+        yield FormData
+
+    @pytest.fixture
+    def fixture_open_file(self):
+        log_t = "{}[fixture_open_file]:".format(self.PREFIX_LOG, )
+
+        def wraper( test_path: str, size_chunk: int):
+            # ============================================
+            # OPENING FILE
+            # ============================================
+            with open(file=test_path, mode="rb", ) as f:
+                part_file_line = f.read(size_chunk)
+                log.info(
+                    "{} GotTYpe: {}, the total_file_line: {}".format(log_t, type(part_file_line), part_file_line[:50]))
+                try:
+                    # ============================================
+                    # BUFFER
+                    # ============================================
+                    f = io.BytesIO(part_file_line)
+                    files_line = InMemoryUploadedFile(
+                        file=f,
+                        field_name="file",
+                        size=len(part_file_line),
+                        name=str(test_path.split("\\")[-1]),
+                        content_type=EnumExpansion.XSL.value[1] if test_path.endswith(EnumExpansion.XSL.value[0]) else
+                        EnumExpansion.XSLX.value[1],
+                        charset=None,
+                    )
+                    yield files_line
+                    log.debug(
+                        "{} GotTYpe: {}, the total_file_line: {} sent success!".format(log_t, type(part_file_line),
+                                                                         part_file_line[:50]))
+                except (FileNotFoundError, FileExistsError) as e:
+                    error_t = "{} FileNotFoundError => {}", log_t, list(e.args)[0] if e.args else str(e)
+                    log.error(error_t)
+                    raise FileNotFoundError(error_t) from e
+                except Exception as e:
+                    error_t = "{} Error => {}", log_t, list(e.args)[0] if e.args else str(e)
+                    log.error(error_t)
+                    raise ValueError(error_t) from e
+
+        return wraper
+    # @pytest.mark.parametrize("role, basis_role, expect, descript", parametrize_roles)
+    @pytest.mark.django_db()
+    @pytest.mark.asyncio
+    async def test_upload_file_valid(self, mocker, fixture_reade_file, fixture_form_data, fixture_open_file, fixture_session_of_user):
+        global response, total_file_line, total_chunks
+        FormData = fixture_form_data
+        # ============================================
+        # MOCKERS
+        # ============================================
+        mocker.patch("wagtail.tasks.update_reference_index_task", return_value=lambda app_label, model_name, pk: None)
+        mocker.patch("download.task_save_file.task_sub_process_data", return_value=lambda data, user_id: None)
+        mock_saving_data = mocker.patch("download.task_save_file.__init__.task_saving_data_oFfile")
+        mock_saving_data.return_value=lambda *args, **kwargs: tuple("Hallo!")
+        # ---
+        log_t = "{}[test_upload_file_valid]:".format(self.PREFIX_LOG, )
+        log.info("{} start test".format(log_t))
+
+        test_path = self.TEST_FILES[0][:]
+        log.info("{} Got a test_path: {}".format(log_t, test_path.split("\\")[-1]))
+        size_chunk = self.CHUNK_SIZE
+
+        for files_line in fixture_open_file(test_path, size_chunk):
             # ============================================
             # GETTING A FORM DATA FOR THE EVERYTHING CHUNK
             # ============================================
             data = dict()
             data.__setitem__('file_name', str(test_path.split("\\")[-1]))
-            # ============================================
-            # BUFFER
-            # ============================================
-            f = io.BytesIO(total_file_line)
-            files_line = InMemoryUploadedFile(
-                file=f,
-                field_name="file",
-                size=len(total_file_line),
-                name=str(test_path.split("\\")[-1]),
-                content_type="application/vnd.ms-excel" if test_path.endswith('.xls') else "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", #"application/octet-stream",
-                charset=None,
-            )
-
             data.__setitem__('total_chunks', str(len(list(files_line.chunks()))))
             log.debug("{} total_chunks: {}, ".format(log_t, data.get("total_chunks", "")))
             # ============================================
             # CHUNKS
             # ============================================
             for i, view in enumerate(files_line.chunks()):
-
                 data.__setitem__('chunk_size', str(len(view)))
                 data.__setitem__("chunk_index", str(i))
-
                 # ============================================
                 # FORM DATA
                 # ============================================
-                class FormData:
-                    def __init__(self, file_line: str,
-                                 total_chunks: str,
-                                 chunk_size: str,
-                                 file_name: str):
-                        self.file: str = file_line # InMemoryUploadedFile
-                        self.total_chunks: str = total_chunks
-                        self.chunk_size: str = chunk_size
-                        self.file_name: str = file_name
-
-                    def get(self, key: str, default=None):
-                        # This should work like a dictionary's get method
-                        if hasattr(self, key):
-                            return getattr(self, key)
-                        return default
-
-                    def __getitem__(self, key):
-                        # Support dictionary-like access
-                        if hasattr(self, key):
-                            return getattr(self, key)
-                        raise KeyError(key)
-
-                    def __contains__(self, key):
-                        return hasattr(self, key)
-
-
                 formdata = FormData(file_line=view, chunk_size=str(len(view)), total_chunks=str(data.get("total_chunks")), file_name=data.get("file_name"), )
                 files_line.close()
 
@@ -203,7 +235,7 @@ class TestApiCatalogsValid:
                         self.POST = data
                         self.FILES = files
                         self.user=user
-                request = TestRequest(user=session.user, data={"files":formdata, **data}, files=formdata)
+                request = TestRequest(user=fixture_session_of_user.user, data={"files":formdata, **data}, files=formdata)
                 catalog_file = DownloadOfCatalogViewSet()
                 response = await catalog_file.create(request)
 
