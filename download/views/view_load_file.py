@@ -19,6 +19,7 @@ import pandas as pd
 from adrf.viewsets import ViewSet
 from django.http import JsonResponse
 from rest_framework import status
+from rest_framework.decorators import permission_classes
 
 from catalog.models import ProductGalleryImageModel
 from download.permissions.permission_drf import CanLoadFilePermission
@@ -31,8 +32,9 @@ log = logging.getLogger(__name__)
 class DownloadOfCatalogViewSet(ViewSet):
     queryset = ProductGalleryImageModel.objects.all()
     PREFIX_LOG = "[CatalogViewSet]:"
-    permission_classes = [CanLoadFilePermission]
 
+    # permission_classes = [CanLoadFilePermission]
+    @permission_classes([CanLoadFilePermission])
     async def create(self, request, *args, **kwargs):
         """
         TODO: Put a signal for alert about loads file.
@@ -44,6 +46,9 @@ class DownloadOfCatalogViewSet(ViewSet):
         :param kwargs:
         :return:
         """
+        user = request.user
+        # permiCanLoadFilePermission()
+        # if
         # regex_exclude = r"\u0871"
         log_t = "{}[{}]:".format(self.PREFIX_LOG[:-1], self.create.__name__)
         lock = asyncio.Lock()
@@ -93,9 +98,7 @@ class DownloadOfCatalogViewSet(ViewSet):
             )
             if post_files is None:
                 return await asyncio.to_thread(
-                    lambda: JsonResponse(
-                        {"detail": "Missing file or filename"}, status=400
-                    )
+                    lambda: JsonResponse({"detail": "File not found"}, status=400)
                 )
         log.debug("{} DEBUG after post_files: {}".format(log_t, str(post_files)[:50]))
         one_chunk = post_files.get("file", None)
@@ -112,7 +115,11 @@ class DownloadOfCatalogViewSet(ViewSet):
         if not chunk_size or not file_name or not one_chunk:
             return await asyncio.to_thread(
                 lambda: JsonResponse(
-                    {"detail": "Missing file or filename"},
+                    {
+                        "detail": "Missing file: '{}' or filename: '{}', or size: '{}' of file".format(
+                            one_chunk, file_name, chunk_index
+                        )
+                    },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             )
