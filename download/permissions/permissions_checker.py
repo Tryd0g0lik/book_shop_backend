@@ -1,9 +1,12 @@
 # download/permissions/permissions_checker.py:1
+import logging
 from typing import Optional
 
 from persons.interfaces import Users
 from profiles.interfaces import UserProfileType
 from utilities.permissions import PermissionsMixin
+
+log = logging.getLogger(__name__)
 
 
 class PermissionsChecker(PermissionsMixin):
@@ -36,7 +39,13 @@ class PermissionsChecker(PermissionsMixin):
         is_admin = PermissionsChecker.is_admin(user)
         is_moderator = PermissionsChecker.is_moderator(user)
         if is_active and (is_admin or is_manager or is_moderator or is_editor):
+            log.debug("All success.")
             return True
+        log.debug(
+            "DEBUG after can_add_product. is_active: {}, is_admin: {}, is_manager: {}, is_moderator: {}, is_editor: {}".format(
+                is_active, is_admin, is_manager, is_moderator, is_editor
+            )
+        )
         return False
 
     @staticmethod

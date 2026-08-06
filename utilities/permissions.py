@@ -1,6 +1,9 @@
+import logging
 from typing import Optional
 
 from persons.interfaces import Users
+
+log = logging.getLogger(__name__)
 
 
 class PermissionsMixin:
@@ -42,11 +45,14 @@ class PermissionsMixin:
     def is_editor(user: Users) -> bool:
         try:
             group = getattr(user, "groups")
-            return (
-                isinstance(group.name, str)
-                and group.name.lower() == "editors"
+            first = group.first()
+            result_bool = (
+                isinstance(first.name, str)
+                and first.name.lower() == "editors"
                 and user.is_staff
             )
+            return result_bool
+
         except Exception:
             return False
 
@@ -54,11 +60,13 @@ class PermissionsMixin:
     def is_moderator(user: Users) -> bool:
         try:
             group = getattr(user, "groups")
-            return (
-                isinstance(group.name, str)
-                and group.name.lower() == "moderators"
+            first = group.first()
+            result_bool = (
+                isinstance(first.name, str)
+                and first.name.lower() == "moderators"
                 and user.is_staff
             )
+            return result_bool
         except Exception:
             return False
 
@@ -66,9 +74,10 @@ class PermissionsMixin:
     def is_manager(user: Users) -> bool:
         try:
             group = getattr(user, "groups")
+            first = group.first()
             return (
-                isinstance(group.name, str)
-                and group.name.lower() == "manager"
+                isinstance(first.name, str)
+                and first.name.lower() == "manager"
                 and user.is_staff
             )
         except Exception:
@@ -78,6 +87,7 @@ class PermissionsMixin:
     def is_client(user: Users) -> bool:
         try:
             group = getattr(user, "groups")
-            return isinstance(group.name, str) and group.name.lower() == "client"
+            first = group.first()
+            return isinstance(first.name, str) and first.name.lower() == "client"
         except Exception:
             return False

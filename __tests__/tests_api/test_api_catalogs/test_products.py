@@ -81,17 +81,21 @@ class TestApiUploadFileValid:
         del new_users_registration["password1"], new_users_registration["password2"], \
             new_users_registration["check_user"], new_users_registration["category"]
         new_users_registration["password"] = password
-        user = Users.objects.create(**new_users_registration)
+        user, _ = Users.objects.get_or_create(**new_users_registration)
         # --- user group/role/permissions
-        group = Group.objects.get(name=category.capitalize())
-        log.info("{} Got a group name: {} User ID: {}".format(log_t, str(group.name), str(user.id)))
+        group_name = category.capitalize()
+        group, created = Group.objects.get_or_create(name=group_name)
         user.groups.add(group)
+        if created:
+            log.info("{} Group '{}' created successfully!".format(log_t, group_name))
+        else:
+            log.info("{} Group {} already exists!".format(log_t, group_name))
         role_queryset: QuerySet = user.groups.values_list("name", flat=True)
         assert role_queryset.count() == 1
         log.info(
             "{} Created user. User Index: {} email: {} role: {}".format(log_t, user.id, new_users_registration["email"],
                                                                         role_queryset.first()))
-        log.info("{} User got a group.".format(log_t))
+        log.info("{} User got a group {}.".format(log_t, (user.groups.first()).name))
         yield user
         # user.delete()
 
@@ -109,7 +113,7 @@ class TestApiUploadFileValid:
     def fixture_session_of_user(self, fixture_create_user):
         assert fixture_create_user.is_active == True
         group = fixture_create_user.groups.first()
-        assert group is not None and hasattr(group, "name"), "Check a user role "
+        assert group.name is not None and isinstance(group.name, str), "Check a user role "
         # ============================================
         # STARTING A MOCK/PSEUDO SESSION
         # ============================================
@@ -224,50 +228,6 @@ class TestApiUploadFileValid:
                 self.user = user
         return TestRequest
 
-    @pytest.fixture
-    def fixture_api_request(self):
-        """
-        THis is the generator
-        ```text
-        client = aiohttp.ClientSession()
-        async with fixture_api_request(....) as response:
-            ....
-        ```
-        :return:
-        """
-        @asynccontextmanager
-        async def wraper(*args, **kwargs: ReqDict):
-            log_t = "{}[fixture_api_request]:".format(self.PREFIX_LOG, )
-            log.info("{} Start the fixture_api_request.wraper.".format(log_t))
-            log.debug("{} Start **kwargs: {}".format(log_t, str(kwargs)[:50]))
-            client: Optional[AsyncAPIClient] = list(args)[0] if len(args) > 0 else None
-            # ============================================
-            # CHECKING THE KWARGS ATTRIBUTES
-            # ============================================
-            if client is None:
-                client = AsyncAPIClient()
-                log.info("{} Created new AsyncAPIClient".format(log_t))
-            else:
-                log.info("{} Using provided AsyncAPIClient".format(log_t))
-            if "method" in kwargs:
-                res: str = (kwargs.get("method")).lower()
-                assert res == "post", "Allows POST requests only!"
-            # ============================================
-            # RUN REQUEST
-            # ============================================
-            resp = await client.post(**kwargs)
-            log.debug("{} DEBUG 1 Response Type: {}".format(log_t, type(resp)))
-            log.debug("{} DEBUG 1 Response: {}".format(log_t, str(resp.__dict__)))
-
-            try:
-                yield resp
-            except Exception as e:
-                log.error("{} Error => {}".format(log_t, list(e.args)[0] if e.args else str(e)))
-                raise e
-            finally:
-                if hasattr(client, "close"):
-                    await client.close()
-        return wraper
 
     @pytest.mark.django_db()
     @pytest.mark.asyncio
@@ -347,13 +307,11 @@ class TestApiUploadFileValid:
         assert "File to small size" in detail_dict.get("detail")
         assert response.status_code == status.HTTP_400_BAD_REQUEST
 
-    # @patch("django.contrib.auth.middleware.AuthenticationMiddleware.process_request")
-
-    # @patch("utilities.middleware.jwt_authentication_middleware.JWTAuthenticationMiddleware.process_request")
     @pytest.mark.asyncio
-    async def test_permissions_upload_file(self, mocker, fixture_api_request,
+    async def test_permissions_upload_file(self,
                                            fixture_session_of_user, ):
         log_t = "{}[test_permissions_upload_file]:".format(self.PREFIX_LOG, )
+        log.info("{} start test".format(log_t))
         from django.contrib.auth import get_user_model
         from django.test import AsyncRequestFactory
         Users = get_user_model()
@@ -361,20 +319,10 @@ class TestApiUploadFileValid:
 
         for file in path.iterdir(): file.unlink()
 
-        await Users.objects.aget(email=fixture_session_of_user.user.email)
-        log.info("{} ✅ User exists!".format(log_t,))
-
-        # mocker_process_request = mocker.patch("django.contrib.auth.middleware.AuthenticationMiddleware.__call__")
-        # mocker_process_request.side_effect = lambda req: setattr(req, "user", fixture_session_of_user.user)
-
-        log.info("{} start test".format(log_t))
         file_name = self.TEST_FILES[0].split("\\")[-1]
         total_chunks_size = 3
         file_line = ""
         test_response = None
-        # fixture_session_of_user.headers.update({"Content-Type": "application/vnd.ms-excel"})
-        # fixture_session_of_user.headers.update({"Content-Type": "multipart/form-data"})
-        # del fixture_session_of_user.headers["Content-Type"]
 
         with open(self.TEST_FILES[0], "rb" ) as f:
             file_line = f.read()
@@ -401,19 +349,16 @@ class TestApiUploadFileValid:
                            "chunk_size":str(len(file_line[start:end])),
                            "file_name":file_name,
                            "filename":file_name,
-                           "chunk_index": str(i)} # str(i)}
-            # kwargs.__setitem__("content", one_chunk)
-            kwargs.__setitem__("data", files)
-            # kwargs.__setitem__("method", "POST")
+                           "chunk_index": str(i)}
+            # kwargs.__setitem__("data", files)
             kwargs.__setitem__("content_type", "multipart/form-data")
-
-            # kwargs.__setitem__("content_type",f'multipart/form-data; boundary={boundary}')
-
-            # kwargs.__setitem__( "format",'multipart')
-            # переписать на AsyncAPIClient
+            # ============================================
+            # START THE HANDLER OF FILE
+            # ============================================
             factory = AsyncRequestFactory()
             requests = factory.post(**kwargs)
             requests.user = fixture_session_of_user.user
+            # if await requests.user.groups.acount() == 0:
 
             setattr(requests.user, "is_sent", True)
             setattr(requests.user, "is_verified", True)
@@ -423,9 +368,7 @@ class TestApiUploadFileValid:
             requests.session = {}
             requests.session.__setitem__("user_id", fixture_session_of_user.user.id)
             requests._request = requests
-            # requests.headers = fixture_session_of_user.headers
             requests.METHOD = "POST"
-            # requests.path = "/api/download/load/file/"
             requests.META = {
                 'REQUEST_METHOD': 'POST',
                 'PATH_INFO': '/api/download/load/file/',

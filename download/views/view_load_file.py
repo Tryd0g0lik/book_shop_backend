@@ -56,7 +56,10 @@ class DownloadOfCatalogViewSet(ViewSet):
         post_data = request.POST if request.POST is None else request.data
         post_files = request.FILES if request.FILES is None else None
         permission = CanLoadFilePermission()
-        if not permission.has_permission(request, permission):
+        result_bool = await asyncio.to_thread(
+            lambda: permission.has_permission(request, permission)
+        )
+        if not result_bool:
             return JsonResponse(
                 {"detail": "Permission Denied"}, status=status.HTTP_403_FORBIDDEN
             )
@@ -65,6 +68,7 @@ class DownloadOfCatalogViewSet(ViewSet):
                 log_t,
             )
         )
+        del result_bool
         file_name = post_data.get("file_name")
         count_str = post_data.get("total_chunks", "0")
         log.debug(
