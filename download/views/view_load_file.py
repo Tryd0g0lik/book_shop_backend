@@ -6,6 +6,7 @@ Here is we only loading files. It is the one file *.xlsx that was sent from the:
     .
 """
 import asyncio
+import json
 import logging
 import math
 import os
@@ -34,7 +35,7 @@ class DownloadOfCatalogViewSet(ViewSet):
     PREFIX_LOG = "[CatalogViewSet]:"
 
     # permission_classes = [CanLoadFilePermission]
-    @permission_classes([CanLoadFilePermission])
+    # @permission_classes([CanLoadFilePermission])
     async def create(self, request, *args, **kwargs):
         """
         TODO: Put a signal for alert about loads file.
@@ -52,22 +53,20 @@ class DownloadOfCatalogViewSet(ViewSet):
         # regex_exclude = r"\u0871"
         log_t = "{}[{}]:".format(self.PREFIX_LOG[:-1], self.create.__name__)
         lock = asyncio.Lock()
-        post_data = request.POST
-        post_files = request.FILES
+        post_data = request.POST if request.POST is None else request.data
+        post_files = request.FILES if request.FILES is None else None
+        permission = CanLoadFilePermission()
+        if not permission.has_permission(request, permission):
+            return JsonResponse(
+                {"detail": "Permission Denied"}, status=status.HTTP_403_FORBIDDEN
+            )
         log.debug(
             "DEBUG ================= START {} =================".format(
                 log_t,
             )
         )
-        log.debug(
-            "{} DEBUG before Request: {}".format(
-                log_t,
-                str(request.__dict__)[:50],
-            )
-        )
-
-        file_name = post_data.get("file_name", "name_didnot_found")
-        count_str = post_data.get("total_chunks", "1")
+        file_name = post_data.get("file_name")
+        count_str = post_data.get("total_chunks", "0")
         log.debug(
             "{} DEBUG count_str: {} Type: {}".format(
                 log_t, str(count_str), type(count_str)
@@ -85,23 +84,32 @@ class DownloadOfCatalogViewSet(ViewSet):
         # ============================================
 
         log.debug(
-            "{} DEBUG before post_files: {} Mode bool: {}".format(
+            "{} DEBUG after post_data: {} ".format(
+                log_t,
+                str(post_data)[:50],
+            )
+        )
+        log.debug(
+            "{} DEBUG before post_files: {} & Mode bool: {}".format(
                 log_t, post_files, bool(post_files)
             )
         )
         if not post_files:
-            post_files = post_data.get("files")
-            log.debug(
-                "{} DEBUG middle Type: {},  post_files: {}".format(
-                    log_t, type(post_files), str(post_files)[:50]
-                )
-            )
-            if post_files is None:
-                return await asyncio.to_thread(
-                    lambda: JsonResponse({"detail": "File not found"}, status=400)
-                )
+            post_files = post_data.get("file")
+        #     log.debug(
+        #         "{} DEBUG middle Type: {},  post_files: {}".format(
+        #             log_t, type(post_files), str(post_files)[:50]
+        #         )
+        #     )
+        #     if post_files is None:
+        #         return await asyncio.to_thread(
+        #             lambda: JsonResponse({"detail": "File not found"}, status=400)
+        #         )
         log.debug("{} DEBUG after post_files: {}".format(log_t, str(post_files)[:50]))
-        one_chunk = post_files.get("file", None)
+        post_files = (
+            json.loads(post_files) if isinstance(post_files, str) else post_files
+        )
+        one_chunk = post_files  # .get("file")
         log.debug(
             "{} DEBUG after one_chunk: {} Type: {}".format(
                 log_t,
@@ -170,7 +178,6 @@ class DownloadOfCatalogViewSet(ViewSet):
                         )
                     )
                     with open(str(chunk_path).replace("\\", "/"), "wb") as f:
-                        # for chunk_part in one_chunk.chunks(): # one_chunk.chunks()
                         log.debug(
                             "{} DEBUG type of 'chunk_part': {}".format(
                                 log_t, type(one_chunk)
@@ -195,7 +202,7 @@ class DownloadOfCatalogViewSet(ViewSet):
                         },
                         status=status.HTTP_400_BAD_REQUEST,
                     )
-            except TypeError:
+            except TypeError as e:
                 try:
                     with open(str(chunk_path).replace("\\", "/"), "wb") as f:
                         for chunk_part in one_chunk.chunks():  # one_chunk.chunks()

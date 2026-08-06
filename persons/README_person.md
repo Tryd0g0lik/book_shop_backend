@@ -6,3 +6,6 @@
 |*Editor*| *False*         | *True*      ||
 |*Clients*| *False*         | *False*     ||
 ||                 |             ||
+
+
+token_of_user.png  Token of user

@@ -34,7 +34,7 @@ class PermissionsMixin:
     @staticmethod
     def is_admin(user: Optional[Users]) -> bool:
         try:
-            return hasattr(user, "is_superuser") and bool(getattr(user, "is_superuser"))
+            return hasattr(user, "is_superuser") and getattr(user, "is_superuser")
         except Exception:
             return False
 
@@ -42,7 +42,11 @@ class PermissionsMixin:
     def is_editor(user: Users) -> bool:
         try:
             group = getattr(user, "groups")
-            return isinstance(group.name, str) and group.name.lower() == "editors"
+            return (
+                isinstance(group.name, str)
+                and group.name.lower() == "editors"
+                and user.is_staff
+            )
         except Exception:
             return False
 
@@ -50,7 +54,11 @@ class PermissionsMixin:
     def is_moderator(user: Users) -> bool:
         try:
             group = getattr(user, "groups")
-            return isinstance(group.name, str) and group.name.lower() == "moderators"
+            return (
+                isinstance(group.name, str)
+                and group.name.lower() == "moderators"
+                and user.is_staff
+            )
         except Exception:
             return False
 
@@ -58,7 +66,11 @@ class PermissionsMixin:
     def is_manager(user: Users) -> bool:
         try:
             group = getattr(user, "groups")
-            return isinstance(group.name, str) and group.name.lower() == "manager"
+            return (
+                isinstance(group.name, str)
+                and group.name.lower() == "manager"
+                and user.is_staff
+            )
         except Exception:
             return False
 

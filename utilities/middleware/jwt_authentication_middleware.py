@@ -20,7 +20,6 @@ class JWTAuthenticationMiddleware(AuthenticationMiddleware):
         global user_token, token_dict, user_id
         from django.contrib.auth import get_user_model
         from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
-        from rest_framework_simplejwt.tokens import AccessToken
 
         from .functions_jwt_tokens import decode_tokens_from_base64, get_tokens_for_user
 
