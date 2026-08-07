@@ -96,7 +96,7 @@ class TestCacherAdapter:
         test_cacher = fixture_cacher_adapter_mixin
 
         mocker.patch(
-            "persons.adapters.CacherAdapter.is_connected",
+            "utilities.adapters.CacherAdapter.is_connected",
             new_callable=mocker.PropertyMock,
             return_value=True,
         )

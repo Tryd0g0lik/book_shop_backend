@@ -1,13 +1,15 @@
+# __tests__/test_caching/tests_resave_cache_after_sent_letter.py:5
 import asyncio
 import json
 import logging
 import re
 
+from __tests__.fixtures.fixture_parametrize2 import pytest_generate_tests
 from project.settings_conf.settings_first import DEFAULT_CHARSET
 
 log = logging.getLogger(__name__)
 
-
+# FIRST/BEFORE RUN THE Celery + REDIS !!
 class TestResaveCacheAfterSentLetter:
     async def test_resave_cache_after_sent_letter(self, new_users_registration):
         from utilities.services import AccountManager
@@ -19,6 +21,9 @@ class TestResaveCacheAfterSentLetter:
         sub_person = SubPerson()
         cachemanager = sub_person.cachemanager
         await sub_person.cachemanager.asynccacher.related()
+        # ============================================
+        # Create one Key for start & one ker for completed
+        # ============================================
         k1 = re.sub(
             r"[@.]+",
             repl="",
@@ -31,8 +36,9 @@ class TestResaveCacheAfterSentLetter:
             string=f"user:pending:letter:{new_users_registration["email"]}",
             flags=re.ASCII,
         )
-        assert k1.count(":") == 2
-        assert k2.count(":") == 3
+        assert k1.count(":") == 3 and k2.count(":") == 3, "Checking a count of the ':' symbols  in string."
+        assert k1.count("@") == 0 and k2.count("@") == 0, "Checking a count of the '@' symbols  in string."
+        assert k1.count(".") == 0 and k2.count(".") == 0, "Checking a count of the '.' symbols  in string."
 
         keys = [k1]
         tasks = []
@@ -44,7 +50,7 @@ class TestResaveCacheAfterSentLetter:
 
         async def resave_cache_after_sent_letter(*args) -> bool:
             """
-            Test property is a basis check logic
+            Test property is the basis check logic
             :param str args: It is the one old key of cache.
             persons/tasks/tasks_celery/task_send_letter_to_user_email.py:130
             :return:
@@ -80,7 +86,7 @@ class TestResaveCacheAfterSentLetter:
                     return response_bool
 
                 except Exception as e:
-                    log.error(lt + " ERROR => " + e.args[0] if e.args else str(e))
+                    log.error(lt + " ERROR => " + list(e.args)[0] if e.args else str(e))
                     return False
             return True
 
@@ -88,7 +94,9 @@ class TestResaveCacheAfterSentLetter:
 
             tasks.append(resave_cache_after_sent_letter(*(key,)))
         await asyncio.gather(*tasks, return_exceptions=True)
-
+        # ============================================
+        # CHECK RECEIVED A RESULT (fron cache server)
+        # ============================================
         data_list = []
         result_bool = await cachemanager.aget(key=k2, collection=data_list, ex=1300)
         assert len(data_list) > 0
@@ -100,4 +108,4 @@ class TestResaveCacheAfterSentLetter:
             key=k1,
             collection=data_list,
         )
-        assert result_bool is None
+        assert result_bool is True

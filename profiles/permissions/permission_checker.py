@@ -1,18 +1,15 @@
 # profiles/permissiona/permission_checker.py:1
 from typing import Optional
 
-from django.contrib.auth import get_user_model
-
-from profiles.interfaces.interface_roles import UserProfile
+from persons.interfaces import Users
+from profiles.interfaces import UserProfileType
 from utilities.permissions import PermissionsMixin
-
-Users = get_user_model()
 
 
 class PermissionsChecker(PermissionsMixin):
 
     @staticmethod
-    def is_owner(user: Optional[Users], user_owner: UserProfile) -> bool:
+    def is_owner(user: Optional[Users], user_owner: UserProfileType) -> bool:
         user_owner = (
             getattr(user_owner, "user") if hasattr(user_owner, "user") else None
         )
@@ -24,7 +21,7 @@ class PermissionsChecker(PermissionsMixin):
         return False
 
     @staticmethod
-    def can_view_to_profile(user: Optional[Users], user_owner: UserProfile) -> bool:
+    def can_view_to_profile(user: Optional[Users], user_owner: UserProfileType) -> bool:
         user_owner = PermissionsChecker.is_owner(user, user_owner)
         is_moderator = PermissionsChecker.is_moderator(user)
         is_manager = PermissionsChecker.is_manager(user)
@@ -43,7 +40,7 @@ class PermissionsChecker(PermissionsMixin):
         return False
 
     @staticmethod
-    def can_adit_to_profile(user: Optional[Users], user_owner: UserProfile) -> bool:
+    def can_adit_to_profile(user: Optional[Users], user_owner: UserProfileType) -> bool:
         user_owner = PermissionsChecker.is_owner(user, user_owner)
         is_active = PermissionsChecker.is_active(user)
         is_manager = PermissionsChecker.is_manager(user)

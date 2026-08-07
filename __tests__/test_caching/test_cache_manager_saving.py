@@ -8,7 +8,7 @@ import queue
 
 import pytest
 
-from __tests__.fixtures.fixture_django import django_setup
+from __tests__.fixtures.fixture_parametrize import django_setup
 
 log = logging.getLogger(__name__)
 log.info("""

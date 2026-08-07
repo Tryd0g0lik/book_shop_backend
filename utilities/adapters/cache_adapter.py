@@ -73,7 +73,7 @@ class CacherAdapter(CacherBaseMixin):
                 )
                 self.server_client = self.__get_client()
             except Exception as e:
-                log_t = self.log_t + " %s" % e.args[0] if e.args else str(e)
+                log_t = self.log_t + " %s" % list(e.args)[0] if e.args else str(e)
                 raise ValueError(log_t)
         return True
 
@@ -104,7 +104,7 @@ class CacherAdapter(CacherBaseMixin):
             raise TimeoutError(log_t) from e
         except AuthenticationError as e:
             log_t = self.log_t[:-1] + " AuthenticationError error. %s" % str(
-                e.args[0] if e.args else str(e)
+                list(e.args)[0] if e.args else str(e)
             )
             raise AuthenticationError(log_t) from e
 
@@ -113,7 +113,7 @@ class CacherAdapter(CacherBaseMixin):
             raise RedisError(log_t) from e
 
         except Exception as e:
-            log_t = self.log_t + e.args[0] if e.args else str(e)
+            log_t = self.log_t + list(e.args)[0] if e.args else str(e)
             raise ValueError(log_t)
         finally:
             pass

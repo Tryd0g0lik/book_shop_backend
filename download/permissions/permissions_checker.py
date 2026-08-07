@@ -1,0 +1,68 @@
+# download/permissions/permissions_checker.py:1
+import logging
+from typing import Optional
+
+from persons.interfaces import Users
+from profiles.interfaces import UserProfileType
+from utilities.permissions import PermissionsMixin
+
+log = logging.getLogger(__name__)
+
+
+class PermissionsChecker(PermissionsMixin):
+
+    @staticmethod
+    def is_owner(user: Optional[Users], user_owner: UserProfileType) -> bool:
+        user_owner = (
+            getattr(user_owner, "user") if hasattr(user_owner, "user") else None
+        )
+        if user is not None and user_owner is not None:
+            if PermissionsChecker.is_active(user_owner) and getattr(
+                user, "id"
+            ) == getattr(user_owner, "id"):
+                return True
+        return False
+
+    @staticmethod
+    def can_view_to_catalog():
+        return True
+
+    @staticmethod
+    def can_view_to_product():
+        return True
+
+    @staticmethod
+    def can_add_product(user: Optional[Users]) -> bool:
+        is_active = PermissionsChecker.is_active(user)
+        is_manager = PermissionsChecker.is_manager(user)
+        is_editor = PermissionsChecker.is_editor(user)
+        is_admin = PermissionsChecker.is_admin(user)
+        is_moderator = PermissionsChecker.is_moderator(user)
+        if is_active and (is_admin or is_manager or is_moderator or is_editor):
+            log.debug("All success.")
+            return True
+        log.debug(
+            "DEBUG after can_add_product. is_active: {}, is_admin: {}, is_manager: {}, is_moderator: {}, is_editor: {}".format(
+                is_active, is_admin, is_manager, is_moderator, is_editor
+            )
+        )
+        return False
+
+    @staticmethod
+    def can_delete_product(user: Optional[Users], user_owner: UserProfileType) -> bool:
+        is_admin = PermissionsChecker.is_admin(user)
+        is_manager = PermissionsChecker.is_manager(user)
+        is_editor = PermissionsChecker.is_editor(user)
+        is_owner = PermissionsChecker.is_owner(user, user_owner)
+        if PermissionsChecker.can_add_product(user, user_owner):
+            if is_admin:
+                return True
+            elif (is_editor or is_manager) and is_owner:
+                return True
+        return False
+
+    @staticmethod
+    def can_edit_product(user: Optional[Users], user_owner: UserProfileType) -> bool:
+        if PermissionsChecker.can_add_product(user):
+            return True
+        return False

@@ -4,6 +4,8 @@ import logging
 
 import pytest
 
+from __tests__.fixtures.fixture_parametrize2 import pytest_generate_tests
+
 log = logging.getLogger(__name__)
 
 
@@ -17,7 +19,7 @@ class TestCacheUserData:
         "args, qwargs, expected",
         [
             (
-                ("user:pending:work80mailry",),
+                ("user:pending:letter:work80mailry",),
                 {"username": "Sergey", "email": "work80@mail.ry"},
                 True,
             ),

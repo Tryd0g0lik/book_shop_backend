@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     "daphne",
     "rest_framework",
     "drf_spectacular",
+    "rest_framework_simplejwt",
     "corsheaders",
     "drf_yasg",
     "adrf",
@@ -102,8 +103,7 @@ INSTALLED_APPS = [
     # My moduls
     "persons",
     "orders",
-    "cart",
-    "catalog.apps.CatalogConfig",
+    "catalog",
     "content_pages",
     "profiles",
     "crispy_forms",
@@ -124,6 +124,8 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "wagtail.contrib.redirects.middleware.RedirectMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "utilities.middleware.empty_middleware.EmptyMiddleware",
+    "utilities.middleware.JWTAuthenticationMiddleware",
     # "wagtail.core.middleware.SiteMiddleware",
     # "wagtail.contrib.redirects.middleware.RedirectMiddleware",
 ]
@@ -230,10 +232,10 @@ AUTH_PASSWORD_VALIDATORS = [
 # ============================================
 # https://docs.djangoproject.com/en/5.2/topics/auth/passwords/
 PASSWORD_HASHERS = [
+    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
     "django.contrib.auth.hashers.PBKDF2PasswordHasher",
     "django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
     "django.contrib.auth.hashers.Argon2PasswordHasher",
-    "django.contrib.auth.hashers.BCryptSHA256PasswordHasher",
     "django.contrib.auth.hashers.BCryptPasswordHasher",
     "django.contrib.auth.hashers.ScryptPasswordHasher",
     "django.contrib.auth.hashers.MD5PasswordHasher",

@@ -84,7 +84,7 @@ class PostmanAdapter:
             self.log_t = "[%s]:" % self.__class__.__name__
             super().__init__(self.log_t, person_index, person_email)
             log.info(
-                f"\n[SubPerson][get_model]: DEBUG person_index: {self.get_index} & get_email: {self.get_email}"
+                f"\n[SubPerson][__init__]: DEBUG person_index: {self.get_index} & get_email: {self.get_email}"
             )
             self.cachemanager = CacheManager()
             self.value_of_cache: Optional[list[bytes] | dict] = []
@@ -106,7 +106,6 @@ class PostmanAdapter:
             try:
                 get_index = self.get_index
                 get_email = self.get_email
-                user_old = None
                 get_person_model = self.get_person_model
                 user_old: Optional[UsersPydantic] = None
                 if get_person_model is None and get_email is None and get_index is None:
@@ -156,7 +155,9 @@ class PostmanAdapter:
                 )
                 return get_data
             except Exception as e:
-                log.warning(" ".join([self.log_t, e.args[0] if e.args else str(e)]))
+                log.warning(
+                    " ".join([self.log_t, list(e.args)[0] if e.args else str(e)])
+                )
                 return None
 
         async def _get_data(
@@ -313,5 +314,5 @@ class PostmanAdapter:
                 )
                 return True
         except Exception as e:
-            raise PersonErrorImproperlyConfigured(e.args[0] if e.args else str(e))
+            raise PersonErrorImproperlyConfigured(list(e.args)[0] if e.args else str(e))
         return False

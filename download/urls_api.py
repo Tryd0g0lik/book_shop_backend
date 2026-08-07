@@ -1,7 +1,7 @@
 from rest_framework import routers
 
-from download.views.view_load_file import CatalogViewSet
+from download.views.view_load_file import DownloadOfCatalogViewSet
 
 router = routers.DefaultRouter()
-router.register("load/file", CatalogViewSet)
+router.register("load/file", DownloadOfCatalogViewSet)
 urlpatterns = router.urls

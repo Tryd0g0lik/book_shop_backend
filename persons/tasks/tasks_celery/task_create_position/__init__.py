@@ -4,7 +4,9 @@ from threading import Thread
 
 from celery import shared_task
 
-from persons.tasks.tasks_celery.task_create_position.create_position import create_position_for_EmailConfiguration
+from persons.tasks.tasks_celery.task_create_position.create_position import (
+    create_position_for_EmailConfiguration,
+)
 from utilities.services import CustomizationSyncAsyncLoop
 
 log = logging.getLogger(__name__)
@@ -27,5 +29,5 @@ def task_create_position_for_EmailConfiguration(self, *args, **kwargs):
         wrapper = custom_loop.get_new_loop()
         Thread(target=wrapper).start()
     except Exception as e:
-        log.warning(log_t + e.args[0] if e.args else str(e))
+        log.warning(log_t + list(e.args)[0] if e.args else str(e))
         raise self.retry(exc=e, max_retries=3)

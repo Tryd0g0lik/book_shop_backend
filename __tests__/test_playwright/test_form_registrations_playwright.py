@@ -7,7 +7,7 @@ from typing import Optional
 
 import pytest
 
-from __tests__.fixtures.fixture_django3 import TEST_FORM_DATA
+from __tests__.fixtures.fixture_parametrize3 import TEST_FORM_DATA
 from __tests__.test_playwright.playwright_client import PlaywrightManager
 
 pathname_local = "__tests__/test_playwright/screenshots/"

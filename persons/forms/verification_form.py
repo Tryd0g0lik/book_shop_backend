@@ -72,7 +72,9 @@ class UsersCheckCodeVerificationForm(UserTokenForm):
 
             raise ErrorCodeVerificationForm("Code verification invalid.")
         except Exception as e:
-            raise ErrorCodeVerificationForm(e.args[0] if e.args else str(e)) from e
+            raise ErrorCodeVerificationForm(
+                list(e.args)[0] if e.args else str(e)
+            ) from e
 
     def clean(self) -> dict:
         """

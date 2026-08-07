@@ -81,3 +81,4 @@ celerybeat-*
 .coverage
 caching
 __tests__/**/screenshots/*
+utilities/remove.py

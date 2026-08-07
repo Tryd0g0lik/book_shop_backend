@@ -1,5 +1,14 @@
 from enum import Enum
 
+CATEGORY_STATUS = [
+    ("BASE", "Base"),
+    ("ADMIN", "Admin"),
+    ("MANAGER", "Manager"),
+    ("CLIENT", "Client"),
+    ("MODERATORS", "Moderators"),
+    ("EDITORS", "Editors"),
+]
+
 
 class EnumTemplatesKeysCache(Enum):
     """

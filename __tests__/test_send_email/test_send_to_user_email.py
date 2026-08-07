@@ -10,6 +10,7 @@ import logging
 from __tests__.fixtures.fixture_mock_patch import (
     mock_database_get_user_model_2,
 )
+from __tests__.fixtures.fixture_parametrize import pytest_generate_tests
 from persons import EnumEmailLetter
 from utilities.adapters import PostmanAdapter
 
@@ -34,7 +35,7 @@ class TestSendToUserEmail:
             )
         except Exception as e:
             assert (
-                "We do not have the valid data!" in e.args[0] if e.args else str(e)
+                "We do not have the valid data!" in list(e.args)[0] if e.args else str(e)
             ), "We should have the PersonErrorImproperlyConfigured."
         assert result_bool is not True, "User's Email or user's index must not be None."
 

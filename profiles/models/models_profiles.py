@@ -11,7 +11,6 @@ from project.settings_conf.settings_first import (
 
 
 class ProfilesModel(models.Model):
-
     # Settings
     language = models.CharField(
         max_length=10, choices=WAGTAIL_CONTENT_LANGUAGES, default=LANGUAGE_CODE

@@ -1,7 +1,8 @@
-# profiles/interfaces/interface_role_admine.py:1
+# profiles/interfaces/interface_roles.py:1
 from typing import Optional
 
 from dulwich.protocol import Protocol
+from pydantic import BaseModel
 
 
 class Basis(Protocol):
@@ -34,7 +35,7 @@ class EditorProfileModel(ClientProfileModel):
     def __str__(self) -> str: ...
 
 
-class UserProfile(Basis):
+class UserProfileType(Basis):
     user: int
     submitted_notifications: bool
     approved_notifications: bool
@@ -53,3 +54,17 @@ class UserProfile(Basis):
     def __str__(self) -> str: ...
 
     def clean_profile_name(self) -> None: ...
+
+
+class UserProfilePydantic(BaseModel):
+    id: Optional[int]
+    moderator: Optional[int]
+    manager: Optional[int]
+    editor: Optional[int]
+    admin: Optional[int]
+    client: Optional[int]
+
+    def to_dict_from_model(self) -> dict:
+        """All data/field from a model"""
+        data_dict: dict = self.model_dump()
+        return data_dict

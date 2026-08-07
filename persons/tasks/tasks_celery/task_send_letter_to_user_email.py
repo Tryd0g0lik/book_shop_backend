@@ -43,7 +43,7 @@ async def child_process_get_keys_0(
         же ключами и в том же количестве.
     Here we are creating a queue of tasks. Every task it is a request to the cache Radis's server.
     We collect all result in the queue.
-    :param asyncio.Lock lock: It is beholder.
+
     :param str key_pattern: This is a pattern of the cache's key
     :param str log_t: This is simple the prefix text (subtext) for a log row/line.
     :param queue.Queue queue: This is the queue.Queue object.
@@ -156,7 +156,7 @@ async def child_process_get_keys_0(
                     return response_bool
 
                 except Exception as e:
-                    log.error(lt + " ERROR => " + e.args[0] if e.args else str(e))
+                    log.error(lt + " ERROR => " + list(e.args)[0] if e.args else str(e))
                     return False
             return True
 
@@ -180,7 +180,7 @@ async def child_process_get_keys_0(
             :-1
         ] + f"[{child_process_get_keys_0.__name__}]: ERORR_TEXT: %s" % str(e)
         log.error(error_t)
-        raise PersonErrorTasks(e.args[0] if len(e.args) else str(e))
+        raise PersonErrorTasks(list(e.args)[0] if len(e.args) else str(e))
     return True
 
 
@@ -194,9 +194,6 @@ def sub_function_send_mail(
     context_: Optional[Mapping[str, Any]],
 ) -> Union[list, bool]:
     """
-    :param queue keys_queue: Required.
-    :param str log_t: Required. It is a prefix for the logs.
-    :param result_bool: Required.
     :param str subject_: Required. It is thema/heading for a letter.
     :param str text_context_: Required. It is massage in the letter body
     :param Optional[Mapping[str, Any]] context_: It is acontext data from the letter body.
@@ -384,7 +381,7 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
 
     except Exception as e:
         log.error(log_t + "ERROR TEXT => %s" % str(e))
-        raise PersonErrorTasks(e.args[0] if len(e.args) else str(e))
+        raise PersonErrorTasks(list(e.args)[0] if len(e.args) else str(e))
 
     return True
 

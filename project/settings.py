@@ -28,6 +28,8 @@ Template is : "%s$%d$%s$%s" (algorithm,iterations, salt, hash )
 import logging
 import os
 
+from project.settings_conf.settings_env import DJANGO_ENV
+
 # from .settings_conf.settings_env import SECRET_KEY_DJ
 JWT_SECRET_KEY = SECRET_KEY_DJ = os.getenv("SECRET_KEY_DJ", "fr4d6650h0_d")
 # Quick-get_new_loop development settings - unsuitable for production
@@ -52,95 +54,115 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 # ============================================
 # lOGGING
 # ============================================
-LOGGING = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "verbose": {
-            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
-            "style": "{",
+LOGGING = dict()
+LOGGING.update(
+    {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "verbose": {
+                "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+                "style": "{",
+            },
+            "simple": {
+                "format": "{levelname} {message}",
+                "style": "{",
+            },
         },
-        "simple": {
-            "format": "{levelname} {message}",
-            "style": "{",
+        "handlers": {
+            "console": {
+                "class": "logging.StreamHandler",
+                "level": "INFO",
+                "formatter": "verbose",
+            },
+            "file": {
+                "class": "logging.FileHandler",
+                "filename": "logs/log_putout.log",
+                "level": "INFO",
+                "formatter": "verbose",
+            },
         },
-    },
-    "handlers": {
-        "console": {
-            "class": "logging.StreamHandler",
-            "level": "INFO",
-            "formatter": "verbose",
-        },
-        "file": {
-            "class": "logging.FileHandler",
-            "filename": "logs/log_putout.log",
-            "level": "INFO",
-            "formatter": "verbose",
-        },
-    },
-    "root": {
-        "handlers": ["console", "file"],
-        "level": "DEBUG",
-    },
-    "loggers": {
-        "django": {
-            "handlers": ["console", "file"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "django.request": {
-            "handlers": ["console", "file"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "django.contrib.messages": {
-            "handlers": ["console", "file"],
-            "level": "INFO",
-            "propagate": False,
-            # "propagate": False,
-        },
-        "django.contrib.staticfiles": {
-            "handlers": ["console", "file"],
-            "level": "WARNING",
-        },
-        "django.contrib.auth": {
-            "handlers": ["console", "file"],
-            "level": "WARNING",
-            "propagate": False,
-            # "propagate": False,
-        },
-        "persons": {
+        "root": {
             "handlers": ["console", "file"],
             "level": "DEBUG",
-            "propagate": False,
         },
-        "allauth": {
-            "handlers": ["console", "file"],
-            "level": "INFO",
-            "propagate": False,
+        "loggers": {
+            "django": {
+                "handlers": ["console", "file"],
+                "level": "INFO",
+                "propagate": False,
+            },
+            "django.request": {
+                "handlers": ["console", "file"],
+                "level": "INFO",
+                "propagate": False,
+            },
+            "django.contrib.messages": {
+                "handlers": ["console", "file"],
+                "level": "INFO",
+                "propagate": False,
+                # "propagate": False,
+            },
+            "django.contrib.staticfiles": {
+                "handlers": ["console", "file"],
+                "level": "WARNING",
+            },
+            "django.contrib.auth": {
+                "handlers": ["console", "file"],
+                "level": "WARNING",
+                "propagate": False,
+                # "propagate": False,
+            },
+            "persons": {
+                "handlers": ["file"],
+                "level": "INFO",
+                "propagate": False,
+            },
+            "download": {
+                "handlers": ["file"],
+                "level": "INFO",
+                "propagate": False,
+            },
+            "catalog": {
+                "handlers": ["file"],
+                "level": "INFO",
+                "propagate": False,
+            },
+            "allauth": {
+                "handlers": ["console", "file"],
+                "level": "INFO",
+                "propagate": False,
+            },
+            "allauth.account": {
+                "handlers": ["console", "file"],
+                "level": "INFO",
+                "propagate": False,
+            },
+            "wagtail": {
+                "handlers": ["console", "file"],
+                "level": "WARNING",
+                "propagate": False,
+            },
+            "wagtail.admin": {
+                "handlers": ["console", "file"],
+                "level": "WARNING",
+                "propagate": False,
+            },
+            "celery": {
+                "handlers": ["console", "file"],
+                "level": "WARNING",
+                "propagate": False,
+            },
         },
-        "allauth.account": {
-            "handlers": ["console", "file"],
-            "level": "INFO",
-            "propagate": False,
-        },
-        "wagtail": {
-            "handlers": ["console", "file"],
-            "level": "WARNING",
-            "propagate": False,
-        },
-        "wagtail.admin": {
-            "handlers": ["console", "file"],
-            "level": "WARNING",
-            "propagate": False,
-        },
-        "celery": {
-            "handlers": ["console", "file"],
-            "level": "WARNING",
-            "propagate": False,
-        },
-    },
-}
+    }
+)
+if DJANGO_ENV == "testing":
+    LOGGING["loggers"]["persons"]["handlers"] = ["console"]
+    LOGGING["loggers"]["persons"]["level"] = "DEBUG"
+    LOGGING["loggers"]["download"]["handlers"] = ["console"]
+    LOGGING["loggers"]["download"]["level"] = "DEBUG"
+    LOGGING["loggers"]["catalog"]["handlers"] = ["console"]
+    LOGGING["loggers"]["catalog"]["level"] = "DEBUG"
 from project.settings_conf.settings_first import *
 from project.settings_conf.settings_options import *
 from project.settings_conf.settings_security import *

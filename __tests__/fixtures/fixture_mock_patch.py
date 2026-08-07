@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, Mock
 
 import pytest
 
-from __tests__.fixtures.fixture_django import (
+from __tests__.fixtures.fixture_parametrize import (
     mock_user_django,
 )
 from __tests__.fixtures.fixture_pydantic import mock_pydantic_user

@@ -2,7 +2,6 @@
 # Model of Product
 from decimal import Decimal
 
-from allauth.account.models import EmailAddress
 from django.core.validators import (
     DecimalValidator,
     MaxLengthValidator,
@@ -20,7 +19,6 @@ from wagtail.admin.panels import (
     FieldRowPanel,
     InlinePanel,
     MultiFieldPanel,
-    PageChooserPanel,
 )
 from wagtail.fields import RichTextField
 
@@ -34,10 +32,48 @@ class ProductModel(ClusterableModel, AbstractModel):
         validators=[
             MinLengthValidator(3),
             MaxLengthValidator(80),
+            RegexValidator(
+                regex=r"(^[A-ZА-ЯЁ0-9][\w\dА-ЯЁа-яё\s]+$)",
+                message="Only letters, numbers, spaces \
+            and underscores are allowed.",
+            ),
         ],
         unique=True,
         help_text=_("The name of the product"),
+        verbose_name=_("Product Name"),
+    )
+    product_sku = models.CharField(
+        max_length=100,
+        unique=True,
+        verbose_name=_("Product SKU"),
         db_index=True,
+        help_text=_("The required unique SKU/code/name of the product"),
+        validators=[
+            MinLengthValidator(3),
+            MaxLengthValidator(100),
+            RegexValidator(
+                regex=r"^[a-zA-Z0-9_\-]+$",
+                message="Only letters, numbers and underscores are allowed.",
+            ),
+        ],
+    )
+    price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=Decimal("0.00"),
+        validators=[
+            MinValueValidator(Decimal("0.00")),
+            DecimalValidator(max_digits=10, decimal_places=2),
+        ],
+        verbose_name=_("Product Price on the order moment"),
+        help_text=_("The price of the product"),
+    )
+    product_discount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        verbose_name=_("Product Discount on the order moment"),
+        validators=[MinValueValidator(Decimal("0.00"))],
+        default=Decimal("0.00"),
     )
     describe_preview = RichTextField(
         null=True,
@@ -71,17 +107,7 @@ class ProductModel(ClusterableModel, AbstractModel):
         on_delete=models.SET_NULL,
         help_text=_("The brand of the product"),
     )
-    price = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=Decimal("0.00"),
-        validators=[
-            MinValueValidator(Decimal("0.00")),
-            MaxValueValidator(Decimal("99999999.99")),
-            DecimalValidator(max_digits=10, decimal_places=2),
-        ],
-        help_text=_("The price of the product"),
-    )
+
     discount_percent = models.DecimalField(
         max_digits=4,
         decimal_places=2,
@@ -93,7 +119,7 @@ class ProductModel(ClusterableModel, AbstractModel):
         ],
         help_text=_("The discount percentage of the product"),
     )
-    stock_quantity = models.IntegerField(
+    stock_quantity = models.PositiveIntegerField(
         default=0,
         help_text=_("The quantity of the product"),
         db_index=True,

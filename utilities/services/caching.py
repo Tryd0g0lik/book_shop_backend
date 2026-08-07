@@ -105,7 +105,7 @@ class CacheManager:
                 [
                     self.log_t[:-1] + "[asave]:",
                     " ERROR TEXT => %s ",
-                    e.args[0] if e.args else str(e),
+                    list(e.args)[0] if e.args else str(e),
                 ]
             )
             log.error(log_t)
@@ -427,7 +427,7 @@ class CacheManager:
                 [
                     self.log_t[:-1] + "[aget]:",
                     " ERROR TEXT => ",
-                    e.args[0] if e.args else str(e),
+                    list(e.args)[0] if e.args else str(e),
                 ]
             )
             log.error(log_t)

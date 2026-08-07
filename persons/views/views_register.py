@@ -19,12 +19,12 @@ from django.utils.translation import gettext_lazy as _
 from django.views import View
 from django.views.decorators.http import require_GET, require_POST
 
-from persons import CATEGORY_STATUS, PATH_NAMES
+from persons import PATH_NAMES
 from persons.apps import account_manager, cachemanager
 from persons.forms import UsersRegistrationForm
 from persons.forms.verification_form import UsersCheckCodeVerificationForm
-from persons.models import Users
 from persons.tasks.tasks_celery.task_send_letter_to_user_email import task_postman
+from utilities import CATEGORY_STATUS
 
 # from project.settings_conf.settings_first import LOGIN_URL
 
@@ -153,7 +153,7 @@ class UsersRegistrationView(AllauthSignupView):
                     self.log_t[-1] + f"{self.post.__name__}:",
                     datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     " Server error under user registration. URL: %s TEXT_ERROR: %s"
-                    % (pathname, e.args[0] if e.args else str(e)),
+                    % (pathname, list(e.args)[0] if e.args else str(e)),
                 ]
             )
             log.error(ERROR_TEXT)
@@ -215,7 +215,7 @@ class UsersRegistrationView(AllauthSignupView):
                     datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     (
                         " Server error to the user registration GET. ERROR_TEXT: %s"
-                        % e.args[0]
+                        % list(e.args)[0]
                         if e.args
                         else str(e)
                     ),
@@ -236,7 +236,9 @@ class UsersRegistrationView(AllauthSignupView):
         return resp
 
     def form_valid(self, form):
-        from persons.apps import account_manager
+        from django.contrib.auth import get_user_model
+
+        Users = get_user_model()
         from persons.tasks.tasks_celery.task_set_cache import (
             task_of_cache,
         )
@@ -276,13 +278,13 @@ class UsersRegistrationView(AllauthSignupView):
             elif role.upper() in CATEGORY_STATUS[4] and (
                 queryset_staff.count() >= 0 and queryset_staff.count() <= 2
             ):
-                # Admins
+                # Admins/Moderator
                 setattr(user, "is_superuser", False)
                 setattr(user, "is_staff", True)
             elif (
                 role.upper() in CATEGORY_STATUS[2] or role.upper() in CATEGORY_STATUS[5]
             ) and (queryset.count() >= 0 and queryset.count() <= 3):
-                # Managers
+                # Editor / Managers
                 setattr(user, "is_superuser", False)
                 setattr(user, "is_staff", True)
             else:
@@ -316,9 +318,12 @@ class UsersRegistrationView(AllauthSignupView):
             # CELERY + REDIS
             task_of_cache.delay(*args, **kwargs)
         except Exception as e:
-            log_t = f"[UsersRegistrationView]: {e.args[0] if e.args else str(e)}"
+            log_t = f"[UsersRegistrationView]: {list(e.args)[0] if e.args else str(e)}"
             raise ValueError(log_t)
         finally:
+            log.info(
+                f"[UsersRegistrationView]: DEBUG *args: {str(args)}, **kwargs: {str(kwargs)}"
+            )
             task_postman.delay(*args, **kwargs)
         # messages.success(self.request, message)
 
@@ -329,8 +334,6 @@ class UsersVerificationDuringRegistration(View):
     form_class = UsersCheckCodeVerificationForm
     success_url = "register/"
     template_name = "auth/register.html"
-    # async def dispatch(self, request, *args, **kwargs):
-    #     return super().dispatch(request, *args, **kwargs)
 
     async def get(self, request, *args, **kwargs):
         """
@@ -406,7 +409,7 @@ class UsersVerificationDuringRegistration(View):
                             continue
                     except Exception as e:
                         log.error(e)
-                        context["details"] = e.args[0] if e.args else str(e)
+                        context["details"] = list(e.args)[0] if e.args else str(e)
                         return await asyncio.to_thread(
                             lambda: render(
                                 request, "auth/register.html", context, status=500

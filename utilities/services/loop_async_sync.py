@@ -116,7 +116,7 @@ class CustomizationSyncAsyncLoop:
                             self.log_t[:-1]
                             + "[async_wrapper]:"
                             + "Writing ASYNC to the cache server failed! TEXT_ERROR: %s"
-                            % e.args[0]
+                            % list(e.args)[0]
                             if e.args
                             else str(e)
                         )
@@ -135,7 +135,7 @@ class CustomizationSyncAsyncLoop:
                         self.log_t,
                         " ConnectionError: ",
                         self.log_datetime.now().strftime("%Y-%m-%d %H:%M:%S.%m"),
-                        e.args[0] if e.args else str(e),
+                        list(e.args)[0] if e.args else str(e),
                     ]
                 )
                 raise ValueError(TEXT_ERROR)
@@ -145,7 +145,7 @@ class CustomizationSyncAsyncLoop:
                         self.log_t,
                         " Error: ",
                         self.log_datetime.now().strftime("%Y-%m-%d %H:%M:%S.%m"),
-                        e.args[0] if e.args else str(e),
+                        list(e.args)[0] if e.args else str(e),
                     ]
                 )
                 raise ValueError(TEXT_ERROR)
@@ -165,7 +165,7 @@ class CustomizationSyncAsyncLoop:
                 except Exception as e:
                     log.error(
                         "Writing SYNC to the cache server failed! TEXT_ERROR: %s"
-                        % e.args[0]
+                        % list(e.args)[0]
                         if e.args
                         else str(e)
                     )
@@ -179,7 +179,7 @@ class CustomizationSyncAsyncLoop:
                     self.log_t,
                     " ConnectionError: ",
                     self.log_datetime.now().strftime("%Y-%m-%d %H:%M:%S.%m"),
-                    e.args[0] if e.args else str(e),
+                    list(e.args)[0] if e.args else str(e),
                 ]
             )
             raise ValueError(TEXT_ERROR)
@@ -189,7 +189,7 @@ class CustomizationSyncAsyncLoop:
                     self.log_t,
                     " Error: ",
                     self.log_datetime.now().strftime("%Y-%m-%d %H:%M:%S.%m"),
-                    e.args[0] if e.args else str(e),
+                    list(e.args)[0] if e.args else str(e),
                 ]
             )
             raise ValueError(TEXT_ERROR)
