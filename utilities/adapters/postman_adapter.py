@@ -106,7 +106,6 @@ class PostmanAdapter:
             try:
                 get_index = self.get_index
                 get_email = self.get_email
-                user_old = None
                 get_person_model = self.get_person_model
                 user_old: Optional[UsersPydantic] = None
                 if get_person_model is None and get_email is None and get_index is None:

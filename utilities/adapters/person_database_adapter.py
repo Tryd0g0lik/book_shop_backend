@@ -49,7 +49,9 @@ class PersonServiceDatabaseAdapter:
     @staticmethod
     def get_user_by_id(user_id: Optional[int] = None) -> Optional[UsersPydantic]:
         """GEt user from the database and conversion through the Pydantic"""
-        from persons.models import Users
+        from django.contrib.auth import get_user_model
+
+        Users = get_user_model()
 
         log.info(
             f"""
@@ -85,7 +87,9 @@ class PersonServiceDatabaseAdapter:
         Here we are not to use a cache
         :return None or Pydantic
         """
-        from persons.models import Users
+        from django.contrib.auth import get_user_model
+
+        Users = get_user_model()
 
         log.info(
             f"""
@@ -123,7 +127,9 @@ class PersonServiceDatabaseAdapter:
     @staticmethod
     def search_by_email(user_email: str) -> list[UsersPydantic]:
         """Search users by email"""
-        from persons.models import Users
+        from django.contrib.auth import get_user_model
+
+        Users = get_user_model()
 
         log.info(
             f"""
@@ -154,7 +160,9 @@ class PersonServiceDatabaseAdapter:
         :param dict user_dict: Example '{"id": < USER_ID >, .... }'
         :return  list[UsersPydantic]: [...view]
         """
-        from persons.models import Users
+        from django.contrib.auth import get_user_model
+
+        Users = get_user_model()
 
         user: Optional[Users] = None
         id_: Optional[int] = user_dict.get("id", None)
@@ -194,8 +202,9 @@ class PersonServiceDatabaseAdapter:
     @staticmethod
     def is_email(user_email: str) -> bool:
         """Search users by email"""
-        from persons.models import Users
+        from django.contrib.auth import get_user_model
 
+        Users = get_user_model()
         try:
             Users.objects.get(email=user_email)
 

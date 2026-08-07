@@ -23,7 +23,6 @@ from persons import PATH_NAMES
 from persons.apps import account_manager, cachemanager
 from persons.forms import UsersRegistrationForm
 from persons.forms.verification_form import UsersCheckCodeVerificationForm
-from persons.models import Users
 from persons.tasks.tasks_celery.task_send_letter_to_user_email import task_postman
 from utilities import CATEGORY_STATUS
 
@@ -237,7 +236,9 @@ class UsersRegistrationView(AllauthSignupView):
         return resp
 
     def form_valid(self, form):
-        from persons.apps import account_manager
+        from django.contrib.auth import get_user_model
+
+        Users = get_user_model()
         from persons.tasks.tasks_celery.task_set_cache import (
             task_of_cache,
         )
@@ -333,8 +334,6 @@ class UsersVerificationDuringRegistration(View):
     form_class = UsersCheckCodeVerificationForm
     success_url = "register/"
     template_name = "auth/register.html"
-    # async def dispatch(self, request, *args, **kwargs):
-    #     return super().dispatch(request, *args, **kwargs)
 
     async def get(self, request, *args, **kwargs):
         """

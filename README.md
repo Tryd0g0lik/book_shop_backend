@@ -224,3 +224,14 @@ or
 
 ✅ разрешено,  
 ❌ запрещено
+ ---
+## API Map (first)
+
+![API map](img/API_map.png)
+
+## Else files
+
+- [README_orders.md](orders/README_orders.md)
+- [README_person.md](persons/README_person.md)
+- [README_profile.md](profiles/README_profile.md)
+- [README.md](download/README.md)

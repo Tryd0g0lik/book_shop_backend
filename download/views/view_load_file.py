@@ -39,6 +39,7 @@ class DownloadOfCatalogViewSet(ViewSet):
         Method: POST.
         View: Form data.
         Pathname: 'download/load/file/'
+        ============================================
         This is a method for use permissions. It is where the upload allows to be and not.
         The upload of file (xls) allows user to be:
         - user.groups == "admin"
@@ -48,13 +49,20 @@ class DownloadOfCatalogViewSet(ViewSet):
         and not allows:
         - user.groups == "client"
         - user.groups == "Base"
+
+        Else infor to  the '`operation_summary`' from the class '`DownloadOfCatalogViewSet.create`'.
+        ---
         Note: User token contain a two views. It is view a 'refresh' and 'access' view. For get all (a working ) token
-        use 'utilities/middleware/functions_jwt_tokens.py'
+        use '`utilities/middleware/functions_jwt_tokens.py`'
         """,
         operation_summary="""
         Note!! This method upload a file through chucks.
+        Every thing a chunk single we get to tne '`/media/temp/chunked_uploads`' at view the '`< FILE_NAME>.xls.part<CHUNK_INDEX>'`.
+        Example: It is '`media/temp/chunked_uploads/template_catalog.xls.part0`'
+        ============================================
         If files of 'xls' upload and their we can using that the files of 'xlsx' need manual
         restart for recovery after upload.
+        ============================================
         """,
         tags=[
             "download",
@@ -107,15 +115,21 @@ class DownloadOfCatalogViewSet(ViewSet):
                 ),
             },
         ),
-        # required=["file", "total_chunks", "chunk_size", "file_name", "chunk_index"]
         responses={
-            200: openapi.Response(description="Got an intermediate chunk of file"),
-            201: openapi.Response(
-                description="All chunks were sent and data were records in database."
+            200: openapi.Response(
+                description="Got an intermediate chunk of file",
+                examples={
+                    "application/json": {"status": "uploading", "chunk_index": "2"}
+                },
             ),
-            400: openapi.Response(description="Bad request"),
+            201: openapi.Response(
+                description="All chunks were sent and data were records in database.",
+                examples={"application/json": {"success": "Ok"}},
+            ),
+            400: openapi.Response(description="Bad request. View a byte code."),
             403: openapi.Response(description="Permission denied"),
             401: openapi.Response(description="Unauthorized"),
+            500: openapi.Response(description="Server error"),
         },
     )
     async def create(self, request, *args, **kwargs):
@@ -125,8 +139,8 @@ class DownloadOfCatalogViewSet(ViewSet):
             При этом старый файл передаётся без ошибок.
             Попробовать через кеш
         :param request:
-        :param args:
-        :param kwargs:
+        :param args: empty
+        :param kwargs: empty
         :return:
         """
         log_t = "{}[{}]:".format(self.PREFIX_LOG[:-1], self.create.__name__)
@@ -146,8 +160,12 @@ class DownloadOfCatalogViewSet(ViewSet):
         # ============================================
         # GETTING DATA
         # ============================================
-        post_data = request.POST if request.POST is None else request.data
-        post_files = request.FILES if request.FILES is None else None
+        post_data = (
+            request.POST
+            if (request.POST is not None and len(list(request.POST)) > 0)
+            else request.data
+        )
+        post_files = request.FILES if request.FILES is not None else None
         file_name = post_data.get("file_name")
         count_str = post_data.get("total_chunks", "0")
         log.debug(
@@ -184,23 +202,25 @@ class DownloadOfCatalogViewSet(ViewSet):
         post_files = (
             json.loads(post_files) if isinstance(post_files, str) else post_files
         )
-        one_chunk = post_files
+
         log.debug(
             "{} DEBUG after one_chunk: {} Type: {}".format(
                 log_t,
-                str(one_chunk)[:25] if one_chunk is not None else str(one_chunk),
-                type(one_chunk),
+                str(post_files)[:25] if post_files is not None else str(post_files),
+                type(post_files),
             )
         )
-        if one_chunk is None:
-            return JsonResponse({"detail": "Missing 'one_chunk'"}, status=400)
+        if post_files is None:
+            return JsonResponse(
+                {"detail": "Missing 'one_chunk'"}, status=status.HTTP_400_BAD_REQUEST
+            )
         # --- Size & Name
-        if not chunk_size or not file_name or not one_chunk:
+        if not chunk_size or not file_name or not post_files:
             return await asyncio.to_thread(
                 lambda: JsonResponse(
                     {
                         "detail": "Missing file: '{}' or filename: '{}', or size: '{}' of file".format(
-                            one_chunk, file_name, chunk_index
+                            post_files, file_name, chunk_index
                         )
                     },
                     status=status.HTTP_400_BAD_REQUEST,
@@ -222,6 +242,7 @@ class DownloadOfCatalogViewSet(ViewSet):
 
         # ============================================
         # COLLECTION OF TEMPS CHUNKS
+        # Create files for the 'media/temp/chunked_uploads/<file_name.part<chunk_index>'
         # ============================================
         temp_dir = os.path.join(settings_first.MEDIA_ROOT, "temp", "chunked_uploads")
         os.makedirs(temp_dir, exist_ok=True)
@@ -255,10 +276,10 @@ class DownloadOfCatalogViewSet(ViewSet):
                     with open(str(chunk_path).replace("\\", "/"), "wb") as f:
                         log.debug(
                             "{} DEBUG type of 'chunk_part': {}".format(
-                                log_t, type(one_chunk)
+                                log_t, type(post_files)
                             )
                         )
-                        f.write(one_chunk)
+                        f.write(post_files)
                     log.debug(
                         "{} DEBUG after the record of while file. Chunk index: {} successfully!".format(
                             log_t, chunk_index
@@ -280,7 +301,7 @@ class DownloadOfCatalogViewSet(ViewSet):
             except TypeError:
                 try:
                     with open(str(chunk_path).replace("\\", "/"), "wb") as f:
-                        for chunk_part in one_chunk.chunks():  # one_chunk.chunks()
+                        for chunk_part in post_files.chunks():  # one_chunk.chunks()
                             log.debug(
                                 "{} DEBUG type from chunks 'chunk_part': {}".format(
                                     log_t, type(chunk_part)
@@ -346,7 +367,7 @@ class DownloadOfCatalogViewSet(ViewSet):
                     )
                     # ---
                     return JsonResponse(
-                        {"success": True}, status=status.HTTP_201_CREATED
+                        {"success": "Ok"}, status=status.HTTP_201_CREATED
                     )
             except Exception as e:
                 return JsonResponse(
@@ -356,7 +377,7 @@ class DownloadOfCatalogViewSet(ViewSet):
         return JsonResponse(
             {
                 "status": "uploading",
-                "chunk": chunk_index,
+                "chunk_index": chunk_index,
             },
             status=status.HTTP_200_OK,
         )
@@ -390,11 +411,6 @@ class DownloadOfCatalogViewSet(ViewSet):
                     with open(part_path.replace("\\", "/"), "rb") as part_file:
                         part_str = part_file.read()
                         f.write(part_str)
-                        log.debug(
-                            "{} DEBUG WAS RECORDED PART: {}".format(
-                                "[record_to_whole_file]: ", part_path
-                            )
-                        )
                     await asyncio.sleep(0.5)
                     Path(part_path).unlink()
                 except Exception as e:

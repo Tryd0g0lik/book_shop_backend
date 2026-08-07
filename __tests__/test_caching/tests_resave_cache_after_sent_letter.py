@@ -1,3 +1,4 @@
+# __tests__/test_caching/tests_resave_cache_after_sent_letter.py:5
 import asyncio
 import json
 import logging
@@ -8,7 +9,7 @@ from project.settings_conf.settings_first import DEFAULT_CHARSET
 
 log = logging.getLogger(__name__)
 
-
+# FIRST/BEFORE RUN THE Celery + REDIS !!
 class TestResaveCacheAfterSentLetter:
     async def test_resave_cache_after_sent_letter(self, new_users_registration):
         from utilities.services import AccountManager
@@ -20,6 +21,9 @@ class TestResaveCacheAfterSentLetter:
         sub_person = SubPerson()
         cachemanager = sub_person.cachemanager
         await sub_person.cachemanager.asynccacher.related()
+        # ============================================
+        # Create one Key for start & one ker for completed
+        # ============================================
         k1 = re.sub(
             r"[@.]+",
             repl="",
@@ -46,7 +50,7 @@ class TestResaveCacheAfterSentLetter:
 
         async def resave_cache_after_sent_letter(*args) -> bool:
             """
-            Test property is a basis check logic
+            Test property is the basis check logic
             :param str args: It is the one old key of cache.
             persons/tasks/tasks_celery/task_send_letter_to_user_email.py:130
             :return:
@@ -90,7 +94,9 @@ class TestResaveCacheAfterSentLetter:
 
             tasks.append(resave_cache_after_sent_letter(*(key,)))
         await asyncio.gather(*tasks, return_exceptions=True)
-
+        # ============================================
+        # CHECK RECEIVED A RESULT (fron cache server)
+        # ============================================
         data_list = []
         result_bool = await cachemanager.aget(key=k2, collection=data_list, ex=1300)
         assert len(data_list) > 0
