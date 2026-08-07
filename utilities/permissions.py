@@ -88,6 +88,6 @@ class PermissionsMixin:
         try:
             group = getattr(user, "groups")
             first = group.first()
-            return isinstance(first.name, str) and first.name.lower() == "client"
+            return isinstance(first.name, str) and first.name.lower() == "clients"
         except Exception:
             return False

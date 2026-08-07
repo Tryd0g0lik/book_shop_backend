@@ -134,7 +134,7 @@ class TestApiUploadFileValid:
         elif group.name.lower() == "client":
             # setattr(session.user, "is_staff", False)
             setattr(session.user, "is_superuser", False)
-        elif group.name.lower() != "client":
+        elif group.name.lower() != "client" and group.name.lower() != "base":
             setattr(session.user, "is_staff", True)
         # ============================================
         # GETTING USER TOKEN
@@ -310,15 +310,37 @@ class TestApiUploadFileValid:
     @pytest.mark.asyncio
     async def test_permissions_upload_file(self,
                                            fixture_session_of_user, ):
+        """
+        This test for testing the upload of file (xls) and permissions where the upload allows to be:
+        - user.groups == "admin"
+        - user.groups == "moderators"
+        - user.groups == "editors"
+        - user.groups == "manager"
+        and not allows:
+        - user.groups == "client"
+        - user.groups == "Base"
+        :param fixture_session_of_user: This is Nock of a session was created for before tests and it is using now.
+        ````text
+            class Session:
+            def __init__(self, user):
+                self.user = user
+                self.headers = dict()
+        ```
+        :return: We get a status code: 200 or 201 or 400 or 403
+        """
         log_t = "{}[test_permissions_upload_file]:".format(self.PREFIX_LOG, )
         log.info("{} start test".format(log_t))
-        from django.contrib.auth import get_user_model
+
         from django.test import AsyncRequestFactory
-        Users = get_user_model()
+
+        # ============================================
+        # CLEARING THE DATABASE 1/2
+        # ============================================
         path = Path(str(BASE_DIR).replace("\\", "/") + "/media" + "/documents")
-
         for file in path.iterdir(): file.unlink()
-
+        # ============================================
+        # START A NEW TEST
+        # ============================================
         file_name = self.TEST_FILES[0].split("\\")[-1]
         total_chunks_size = 3
         file_line = ""
@@ -337,29 +359,21 @@ class TestApiUploadFileValid:
             kwargs = dict()
             kwargs.__setitem__("path", "http://127.0.0.1:8000/api/download/load/file/")
             kwargs.__setitem__("headers", fixture_session_of_user.headers)
-            # kwargs.__setitem__("content", None)
-            # one_chunk = SimpleUploadedFile(
-            #     file_name,
-            #     file_line[start:end],
-            #     content_type=EnumExpansion.XSL.value[1] if  EnumExpansion.XSL.value[0] in file_name else EnumExpansion.XSLX.value[1]
-            # )
-            # boundary = 'BoUnDaRyStRiNg'
+
             files: dict = {"file": file_line[start:end],
                            "total_chunks":str(total_chunks_size),
                            "chunk_size":str(len(file_line[start:end])),
                            "file_name":file_name,
                            "filename":file_name,
                            "chunk_index": str(i)}
-            # kwargs.__setitem__("data", files)
+
             kwargs.__setitem__("content_type", "multipart/form-data")
             # ============================================
-            # START THE HANDLER OF FILE
+            # START THE HANDLER OF FILES
             # ============================================
             factory = AsyncRequestFactory()
             requests = factory.post(**kwargs)
             requests.user = fixture_session_of_user.user
-            # if await requests.user.groups.acount() == 0:
-
             setattr(requests.user, "is_sent", True)
             setattr(requests.user, "is_verified", True)
 
@@ -374,6 +388,9 @@ class TestApiUploadFileValid:
                 'PATH_INFO': '/api/download/load/file/',
             }
             log.debug("{} Got Requests: {}".format(log_t, str(requests.__dict__))[:50])
+            # ============================================
+            # OPEN THE VIEW CLASS FOR TESTS
+            # ============================================
             view = DownloadOfCatalogViewSet()
             resp = await view.create(requests)
             test_response = resp
@@ -382,14 +399,16 @@ class TestApiUploadFileValid:
             # User: {}
             # ============================================
             """.format(str(requests.user.__dict__)))
-
+        # ============================================
+        # CHECK A RESPONSE (STATUS CODE) AFTER THE UPLOAD
+        # ============================================
         status_code =  status.HTTP_201_CREATED if fixture_session_of_user.user.is_staff \
             else  status.HTTP_403_FORBIDDEN
         response_status_code = test_response.status_code
-        log.debug("{} resp.status: {}".format(log_t, str(response_status_code)))
-        log.debug("{} Got status_code: {}".format(log_t, str(status_code)))
         assert response_status_code == status_code, "Allows {} status code!".format(status_code)
-
+        # ============================================
+        # CLEARING THE DATABASE 2/2
+        # ============================================
         ProductModel = apps.get_model("catalog", "ProductModel")
         await ProductModel.objects.all().adelete()
 

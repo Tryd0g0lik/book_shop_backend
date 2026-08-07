@@ -11,7 +11,6 @@ import logging
 import math
 import os
 import re
-import tempfile
 import zipfile
 from io import BytesIO
 from pathlib import Path
@@ -19,8 +18,9 @@ from pathlib import Path
 import pandas as pd
 from adrf.viewsets import ViewSet
 from django.http import JsonResponse
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
-from rest_framework.decorators import permission_classes
 
 from catalog.models import ProductGalleryImageModel
 from download.permissions.permission_drf import CanLoadFilePermission
@@ -34,8 +34,90 @@ class DownloadOfCatalogViewSet(ViewSet):
     queryset = ProductGalleryImageModel.objects.all()
     PREFIX_LOG = "[CatalogViewSet]:"
 
-    # permission_classes = [CanLoadFilePermission]
-    # @permission_classes([CanLoadFilePermission])
+    @swagger_auto_schema(
+        operation_description="""
+        Method: POST.
+        View: Form data.
+        Pathname: 'download/load/file/'
+        This is a method for use permissions. It is where the upload allows to be and not.
+        The upload of file (xls) allows user to be:
+        - user.groups == "admin"
+        - user.groups == "moderators"
+        - user.groups == "editors"
+        - user.groups == "manager"
+        and not allows:
+        - user.groups == "client"
+        - user.groups == "Base"
+        Note: User token contain a two views. It is view a 'refresh' and 'access' view. For get all (a working ) token
+        use 'utilities/middleware/functions_jwt_tokens.py'
+        """,
+        operation_summary="""
+        Note!! This method upload a file through chucks.
+        If files of 'xls' upload and their we can using that the files of 'xlsx' need manual
+        restart for recovery after upload.
+        """,
+        tags=[
+            "download",
+        ],
+        manual_parameters=[
+            openapi.Parameter(
+                name="Content-Type",
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                example="multipart/form-data",
+            ),
+            openapi.Parameter(
+                name="Authorization",
+                required=True,
+                in_=openapi.IN_HEADER,
+                type=openapi.TYPE_STRING,
+                example="Bearer <KEY>",
+            ),
+        ],
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=["total_chunks", "chunk_size", "file_name", "chunk_index", "file"],
+            properties={
+                "total_chunks": openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description="Total number of chunks for an upload",
+                    example="3",
+                ),
+                "chunk_size": openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description="Size of current chunk in bytes",
+                    example="18092",
+                ),
+                "file_name": openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description="Original file name",
+                    example="template_catalog.xls",
+                ),
+                "chunk_index": openapi.Schema(
+                    type=openapi.TYPE_STRING,
+                    description="Current chunk index",
+                    example="2",
+                ),
+                "file": openapi.Schema(
+                    type=openapi.TYPE_FILE,
+                    description="Excel file to upload (.xls or .xlsx). Note: Format .xlsx of file is uploading\
+                                 not correctly!!\
+                                 Note: This data can be to the form or body.",
+                    example="b'\x00\x00\xfd\x00\n\x00\t\x00\t\x00\x0f\x00,\x00'",
+                ),
+            },
+        ),
+        # required=["file", "total_chunks", "chunk_size", "file_name", "chunk_index"]
+        responses={
+            200: openapi.Response(description="Got an intermediate chunk of file"),
+            201: openapi.Response(
+                description="All chunks were sent and data were records in database."
+            ),
+            400: openapi.Response(description="Bad request"),
+            403: openapi.Response(description="Permission denied"),
+            401: openapi.Response(description="Unauthorized"),
+        },
+    )
     async def create(self, request, *args, **kwargs):
         """
         TODO: Put a signal for alert about loads file.
@@ -47,14 +129,11 @@ class DownloadOfCatalogViewSet(ViewSet):
         :param kwargs:
         :return:
         """
-        user = request.user
-        # permiCanLoadFilePermission()
-        # if
-        # regex_exclude = r"\u0871"
         log_t = "{}[{}]:".format(self.PREFIX_LOG[:-1], self.create.__name__)
         lock = asyncio.Lock()
-        post_data = request.POST if request.POST is None else request.data
-        post_files = request.FILES if request.FILES is None else None
+        # ============================================
+        # CHECKING PERMISSIONS
+        # ============================================
         permission = CanLoadFilePermission()
         result_bool = await asyncio.to_thread(
             lambda: permission.has_permission(request, permission)
@@ -63,12 +142,12 @@ class DownloadOfCatalogViewSet(ViewSet):
             return JsonResponse(
                 {"detail": "Permission Denied"}, status=status.HTTP_403_FORBIDDEN
             )
-        log.debug(
-            "DEBUG ================= START {} =================".format(
-                log_t,
-            )
-        )
         del result_bool
+        # ============================================
+        # GETTING DATA
+        # ============================================
+        post_data = request.POST if request.POST is None else request.data
+        post_files = request.FILES if request.FILES is None else None
         file_name = post_data.get("file_name")
         count_str = post_data.get("total_chunks", "0")
         log.debug(
@@ -100,20 +179,12 @@ class DownloadOfCatalogViewSet(ViewSet):
         )
         if not post_files:
             post_files = post_data.get("file")
-        #     log.debug(
-        #         "{} DEBUG middle Type: {},  post_files: {}".format(
-        #             log_t, type(post_files), str(post_files)[:50]
-        #         )
-        #     )
-        #     if post_files is None:
-        #         return await asyncio.to_thread(
-        #             lambda: JsonResponse({"detail": "File not found"}, status=400)
-        #         )
+
         log.debug("{} DEBUG after post_files: {}".format(log_t, str(post_files)[:50]))
         post_files = (
             json.loads(post_files) if isinstance(post_files, str) else post_files
         )
-        one_chunk = post_files  # .get("file")
+        one_chunk = post_files
         log.debug(
             "{} DEBUG after one_chunk: {} Type: {}".format(
                 log_t,
@@ -121,8 +192,8 @@ class DownloadOfCatalogViewSet(ViewSet):
                 type(one_chunk),
             )
         )
-        # if one_chunk is None:
-        #     return JsonResponse({"detail": "Missing 'one_chunk'"}, status=400)
+        if one_chunk is None:
+            return JsonResponse({"detail": "Missing 'one_chunk'"}, status=400)
         # --- Size & Name
         if not chunk_size or not file_name or not one_chunk:
             return await asyncio.to_thread(
@@ -206,7 +277,7 @@ class DownloadOfCatalogViewSet(ViewSet):
                         },
                         status=status.HTTP_400_BAD_REQUEST,
                     )
-            except TypeError as e:
+            except TypeError:
                 try:
                     with open(str(chunk_path).replace("\\", "/"), "wb") as f:
                         for chunk_part in one_chunk.chunks():  # one_chunk.chunks()
