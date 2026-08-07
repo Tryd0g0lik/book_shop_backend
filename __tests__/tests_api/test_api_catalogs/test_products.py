@@ -1,36 +1,27 @@
 # __tests__/tests_api/test_api_catalogs/test_products.py:1
 # Whis is a Valid test. Here is checking (only) a property of load file.
-# This test does not contain user's permissions!
+# This test contain user's permissions and the mocker!
+# Here is we checking upload Excel file,
+# Excel file: small size; and checking the roles and permissions of roles.
 import asyncio
-import io
 import json
 import logging
 import math
 import os
-from contextlib import asynccontextmanager
 from enum import Enum
 from pathlib import Path
-from typing import Dict, Generator, Optional, TypedDict
-from unittest.mock import Mock, patch
+from typing import Dict, Optional, TypedDict
 
-import aiohttp
 import pytest
-from adrf.test import AsyncAPIClient
-from aiohttp.web_middlewares import middleware
 from django.apps import apps
-from django.contrib.auth.middleware import AuthenticationMiddleware
-from django.contrib.sessions.middleware import SessionMiddleware
-from django.core.files.uploadedfile import InMemoryUploadedFile, SimpleUploadedFile
-from django.core.handlers.base import BaseHandler
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.db.models import QuerySet
-from pytest_django.fixtures import client
-from pytest_mock import mocker
+from django.test import AsyncRequestFactory
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.test import APIClient, RequestsClient
 from yarl import URL
 
-# from adrf.test import
+# THE LINE BELOW/under it ( this notification) NOT DELETE!!
 from __tests__.fixtures.fixture_parametrize2 import pytest_generate_tests
 from download.views.view_load_file import DownloadOfCatalogViewSet
 from project import BASE_DIR
@@ -40,14 +31,7 @@ from utilities.middleware.functions_jwt_tokens import (
 
 ReqDict = TypedDict("ReqDict", {"method": str, "url": URL|str, "headers": Optional[Dict[str, str]],"data": Optional[Dict[str, str|bytes|int]]})
 log = logging.getLogger(__name__)
-log.info("============= STARTING TESTS =============")
-# parametrize_roles = [
-#     ("admin", {"staff": True, "superadmin": True, },201, "Superadmin has rights for a load Excel"),
-#     ("Moderator", {"staff": True, "superadmin": False,}, 201, "Moderator has rights for a load Excel"),
-#     ("Manager", {"staff": True, "superadmin": False, }, 201, "Manager has rights for a load Excel"),
-#     ("editor", {"staff": True, "superadmin": False, },201,  "Editor has rights for a load Excel"),
-#     ("client", {"staff": False, "superadmin": False, },401, "Client does not have rights for a load Excel"),
-# ]
+log.info("============= STARTING 'TestApiUploadFileValid' TESTS =============")
 
 class EnumExpansion(Enum):
     """It is expansion of files."""
@@ -62,6 +46,8 @@ class TestApiUploadFileValid:
 
     @pytest.fixture()
     def fixture_create_user(self, transactional_db, new_users_registration):
+        """here is we creating a User (From common usr's data) in database and
+         transmit the user data to the next test method. """
         from django.contrib.auth import get_user_model
         from django.contrib.auth.models import Group
         from django.core.management import call_command
@@ -83,6 +69,10 @@ class TestApiUploadFileValid:
         new_users_registration["password"] = password
         user, _ = Users.objects.get_or_create(**new_users_registration)
         # --- user group/role/permissions
+        # ============================================
+        # ADD A USER's GROUP
+        #  it is regulator of permissions/right
+        # ============================================
         group_name = category.capitalize()
         group, created = Group.objects.get_or_create(name=group_name)
         user.groups.add(group)
@@ -97,8 +87,6 @@ class TestApiUploadFileValid:
                                                                         role_queryset.first()))
         log.info("{} User got a group {}.".format(log_t, (user.groups.first()).name))
         yield user
-        # user.delete()
-
 
     @pytest.fixture()
     def fixture_reade_file(self, path_file: Optional[str] = None) -> bool:
@@ -143,172 +131,97 @@ class TestApiUploadFileValid:
         session.headers.update({"Authorization": "Bearer {}".format(base64_token)})
         yield session
 
-    @pytest.fixture
-    def fixture_form_data(self):
-        # ============================================
-        # FORM DATA
-        # ============================================
-        class FormData:
-            def __init__(self, file_line: str|bytes,
-                         total_chunks: str,
-                         chunk_size: str,
-                         file_name: str):
-                self.file: str = file_line  # InMemoryUploadedFile
-                self.total_chunks: str = total_chunks
-                self.chunk_size: str = chunk_size
-                self.file_name: str = file_name
-
-            def get(self, key: str, default=None):
-                # This should work like a dictionary's get method
-                if hasattr(self, key):
-                    return getattr(self, key)
-                return default
-
-            def __getitem__(self, key):
-                # Support dictionary-like access
-                if hasattr(self, key):
-                    return getattr(self, key)
-                raise KeyError(key)
-
-            def __contains__(self, key):
-                return hasattr(self, key)
-
-            # def add_field(self, *fields: Any):
-            #     from aiohttp.formdata import FormData
-            #     FormData.add_field(*fields)
-        yield FormData
 
     @pytest.fixture
-    def fixture_open_file(self):
-        log_t = "{}[fixture_open_file]:".format(self.PREFIX_LOG, )
-
-        def wraper( test_path: str, size_chunk: int) -> Generator["InMemoryUploadedFile"]:
-            # ============================================
-            # OPENING FILE
-            # ============================================
-            with open(file=test_path, mode="rb", ) as f:
-                part_file_line = f.read(size_chunk)
-                log.info(
-                    "{} GotTYpe: {}, the total_file_line: {}".format(log_t, type(part_file_line), part_file_line[:50]))
-                try:
-                    # ============================================
-                    # BUFFER
-                    # ============================================
-                    f = io.BytesIO(part_file_line)
-                    files_line = InMemoryUploadedFile(
-                        file=f,
-                        field_name="file",
-                        size=len(part_file_line),
-                        name=str(test_path.split("\\")[-1]),
-                        content_type=EnumExpansion.XSL.value[1] if test_path.endswith(EnumExpansion.XSL.value[0]) else
-                        EnumExpansion.XSLX.value[1],
-                        charset=None,
-                    )
-                    yield files_line
-                    log.debug(
-                        "{} GotTYpe: {}, the total_file_line: {} sent success!".format(log_t, type(part_file_line),
-                                                                         part_file_line[:50]))
-                except (FileNotFoundError, FileExistsError) as e:
-                    error_t = "{} FileNotFoundError => {}", log_t, list(e.args)[0] if e.args else str(e)
-                    log.error(error_t)
-                    raise FileNotFoundError(error_t) from e
-                except Exception as e:
-                    error_t = "{} Error => {}", log_t, list(e.args)[0] if e.args else str(e)
-                    log.error(error_t)
-                    raise ValueError(error_t) from e
-
-        return wraper
-    @pytest.fixture
-    def fixture_test_request(self, fixture_form_data):
-        FormData = fixture_form_data
-        class TestRequest:
-            def __init__(self, user, data: dict = None, files: Optional[FormData] = None):
-                self.POST = data
-                self.FILES = files
-                self.user = user
-        return TestRequest
-
-
-    @pytest.mark.django_db()
-    @pytest.mark.asyncio
-    async def test_upload_file_valid(self, mocker, fixture_reade_file, fixture_form_data,
-                                     fixture_open_file, fixture_session_of_user,
-                                     fixture_test_request):
-        global response, total_file_line, total_chunks
-        FormData = fixture_form_data
-        TestRequest = fixture_test_request
-        # ============================================
-        # MOCKERS
-        # ============================================
-        mocker.patch("wagtail.tasks.update_reference_index_task", return_value=lambda app_label, model_name, pk: None)
-        mocker.patch("download.task_save_file.task_sub_process_data", return_value=lambda data, user_id: None)
-        mock_saving_data = mocker.patch("download.task_save_file.__init__.task_saving_data_oFfile")
-        mock_saving_data.return_value=lambda *args, **kwargs: tuple("Hallo!")
-        # ---
-        log_t = "{}[test_upload_file_valid]:".format(self.PREFIX_LOG, )
-        log.info("{} start test".format(log_t))
-
-        test_path = self.TEST_FILES[0][:]
-        log.info("{} Got a test_path: {}".format(log_t, test_path.split("\\")[-1]))
-        size_chunk = self.CHUNK_SIZE
-
-        for files_line in fixture_open_file(test_path, size_chunk):
-            # ============================================
-            # GETTING A FORM DATA FOR THE EVERYTHING CHUNK
-            # ============================================
-            data = dict()
-            data.__setitem__('file_name', str(test_path.split("\\")[-1]))
-            data.__setitem__('total_chunks', str(len(list(files_line.chunks()))))
-            log.debug("{} total_chunks: {}, ".format(log_t, data.get("total_chunks", "")))
-            # ============================================
-            # CHUNKS
-            # ============================================
-            for i, view in enumerate(files_line.chunks()):
-                data.__setitem__('chunk_size', str(len(view)))
-                data.__setitem__("chunk_index", str(i))
+    def fixture_clearner(self):
+        log_t = "{}[fixture_clearner]:".format(self.PREFIX_LOG, )
+        # UP
+        async def clearner_documents():
+            try:
                 # ============================================
-                # FORM DATA
+                # CLEARING THE DATABASE 1/2
                 # ============================================
-                formdata = FormData(file_line=view, chunk_size=str(len(view)), total_chunks=str(data.get("total_chunks")), file_name=data.get("file_name"), )
-                files_line.close()
+                path = Path(str(BASE_DIR).replace("\\", "/") + "/media" + "/documents")
+                for file in path.iterdir(): file.unlink()
+            except Exception as e:
+                error_t = "{} ERROR => {}".format(log_t, list(e.args)[0] if e.args else str(e))
+                log.error(error_t)
+                return False, list(e.args)[0] if e.args else str(e)
+        # DOWN
+        async def clearner_database():
+            # ============================================
+            # CLEARING THE DATABASE 2/2
+            # ============================================
+            try:
+                ProductModel = apps.get_model("catalog", "ProductModel")
+                await ProductModel.objects.all().adelete()
+                return True, "The 'ProductModel' database was cleared successfully."
+            except Exception as e:
+                error_t = "{} ERROR => {}".format(log_t, list(e.args)[0] if e.args else str(e))
+                log.error(error_t)
+                return False, list(e.args)[0] if e.args else str(e)
 
+        return clearner_documents, clearner_database
 
-                request = TestRequest(user=fixture_session_of_user.user, data={"files":formdata, **data}, files=formdata)
-                catalog_file = DownloadOfCatalogViewSet()
-                response = await catalog_file.create(request)
-
-        assert response.status_code == status.HTTP_201_CREATED
 
     @pytest.mark.asyncio
-    async def test_upload_small_file(self, fixture_test_request,fixture_form_data, fixture_session_of_user):
-        """Test uploading empty file"""
+    async def test_upload_small_file(self,fixture_clearner, fixture_session_of_user):
+        """Test uploading empty file, the permissions does not matter."""
         log_t = "{}[test_upload_small_file]:".format(self.PREFIX_LOG, )
-        global request
         log.info("{} start test".format(log_t))
-        TestRequest = fixture_test_request
-        FormData = fixture_form_data
+        clearner_documents, clearner_database = fixture_clearner
+        # ============================================
+        # CLEARING THE DATABASE 1/2
+        # ============================================
+        await clearner_documents()
         empty_file = SimpleUploadedFile("empty.xlsx", b"dasdasdwqre 34242 rfasdfdsf", content_type=EnumExpansion.XSLX.value[1])
-        data = dict()
-        for view in empty_file.chunks():
-            data.__setitem__('total_chunks', str(len(list(empty_file.chunks()))))
-            data.__setitem__('file_name', "empty.xlsx")
-            formdata = FormData(file_line=view, chunk_size=str(len(view)),
-                                total_chunks=data.get('total_chunks'), file_name=data.get("file_name"), )
-            data.__setitem__('chunk_size', str(len(view)))
-            request = TestRequest(user=fixture_session_of_user.user, data={"file": formdata, **data}, files=formdata)
-            log.info("{} Before send to the API's handler DownloadOfCatalogViewSet".format(log_t))
-            catalog_file = DownloadOfCatalogViewSet()
-            response: Response = await catalog_file.create(request)
-            log.debug("{} DEBUG Got response: {}".format(log_t, str(response.__class__.__dict__)))
-            log.info("{} Got response: {}".format(log_t, str(response.__dict__)))
-
-        log.debug("{} response.content: {}".format(log_t, str(response.content)))
-        detail_dict = json.loads((response.content).decode())
-        assert "File to small size" in detail_dict.get("detail")
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-
+        kwargs = dict()
+        kwargs.__setitem__("path", "http://127.0.0.1:8000/api/download/load/file/")
+        kwargs.__setitem__("headers", fixture_session_of_user.headers)
+        files: dict = {"file": empty_file,
+                       "total_chunks": str(len(list(empty_file.chunks()))),
+                       "chunk_size": str(empty_file.size),
+                       "file_name": empty_file.name,
+                       "chunk_index": str(0)}
+        kwargs.__setitem__("content_type", "multipart/form-data")
+        # ============================================
+        # START THE HANDLER OF FILES
+        # ============================================
+        factory = AsyncRequestFactory()
+        requests = factory.post(**kwargs)
+        requests.user = fixture_session_of_user.user
+        setattr(requests.user, "is_sent", True)
+        setattr(requests.user, "is_verified", True)
+        setattr(requests.user, "is_superuser", True)
+        requests.session = {}
+        requests.session.__setitem__("user_id", fixture_session_of_user.user.id)
+        requests._request = requests
+        requests.METHOD = "POST"
+        requests.META = {
+            "REQUEST_METHOD": "POST",
+            "PATH_INFO": "/api/download/load/file/",
+        }
+        requests.data = files
+        # ============================================
+        # OPEN THE VIEW CLASS FOR TESTS
+        # ============================================
+        log.info("{} Before send to the API's handler DownloadOfCatalogViewSet".format(log_t))
+        catalog_file = DownloadOfCatalogViewSet()
+        try:
+            response: Response = await catalog_file.create(requests)
+            log.info("{} Got Response: {}".format(log_t, str(response.__dict__)[:50]))
+            detail_dict = json.loads((response.content).decode())
+            assert "File to small size" in detail_dict.get("detail")
+            assert response.status_code == status.HTTP_400_BAD_REQUEST
+        except Exception as e:
+            raise e
+        finally:
+            # ============================================
+            # CLEARING THE DATABASE 2/2
+            # ============================================
+            await clearner_database()
     @pytest.mark.asyncio
-    async def test_permissions_upload_file(self,
+    async def test_permissions_upload_file(self,fixture_clearner,
                                            fixture_session_of_user, ):
         """
         This test for testing the upload of file (xls) and permissions where the upload allows to be:
@@ -331,13 +244,12 @@ class TestApiUploadFileValid:
         log_t = "{}[test_permissions_upload_file]:".format(self.PREFIX_LOG, )
         log.info("{} start test".format(log_t))
 
-        from django.test import AsyncRequestFactory
+        clearner_documents, clearner_database = fixture_clearner
 
         # ============================================
         # CLEARING THE DATABASE 1/2
         # ============================================
-        path = Path(str(BASE_DIR).replace("\\", "/") + "/media" + "/documents")
-        for file in path.iterdir(): file.unlink()
+        await clearner_documents()
         # ============================================
         # START A NEW TEST
         # ============================================
@@ -409,7 +321,5 @@ class TestApiUploadFileValid:
         # ============================================
         # CLEARING THE DATABASE 2/2
         # ============================================
-        ProductModel = apps.get_model("catalog", "ProductModel")
-        await ProductModel.objects.all().adelete()
-
+        await clearner_database()
         await asyncio.sleep(1)
