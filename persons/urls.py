@@ -1,9 +1,7 @@
 # persons/urls.py:1
-from django.urls import path, re_path
+from django.urls import re_path
 
 from persons.views import UserLoginView, UsersRegistrationView
-
-# from persons.views import  UsersRegistrationView
 from persons.views.views_register import UsersVerificationDuringRegistration
 
 urlpatterns = [

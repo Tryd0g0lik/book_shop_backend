@@ -1,5 +1,4 @@
 # download/wagtail_hooks.py:1
-# catalog/wagtail_hooks.py:1
 import os
 import re
 from os import path

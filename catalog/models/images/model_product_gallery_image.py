@@ -1,4 +1,4 @@
-# catalog/models/model_product_gallery_image.py:1
+# catalog/models/images/model_product_gallery_image.py:1
 # Intermediate model between product, image for product and pages of one product,
 
 from datetime import datetime

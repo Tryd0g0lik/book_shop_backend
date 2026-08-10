@@ -2,10 +2,7 @@
 from datetime import datetime
 from typing import Protocol
 
-from django.db import models
 from django.http import HttpRequest
-
-# from allauth.account.managers import (EmailAddressManager, EmailConfirmationManager)
 
 
 class EmailConfirmationMixin:

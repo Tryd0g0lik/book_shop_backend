@@ -5,11 +5,8 @@ This a content will use for how auxiliary classes for data typing.
 
 from datetime import datetime
 from typing import Optional, Protocol, TypedDict, Union
-from unicodedata import category
 
 from django.utils import timezone
-
-# from django.contrib.auth.models import Group
 from pydantic import BaseModel, ConfigDict
 
 from persons.interfaces.interface_emailStr import EmailString

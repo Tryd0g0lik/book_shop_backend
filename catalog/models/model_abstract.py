@@ -1,6 +1,4 @@
 # catalog/models/model_bstract.py:1
-from datetime import datetime
-
 # from allauth.account.models import EmailAddress
 from django.core.validators import (
     MaxLengthValidator,

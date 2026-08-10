@@ -29,7 +29,7 @@ log = logging.getLogger(__name__)
 
 
 class UsersRegistrationForm(SignupForm):
-    # def __init__(self, *args, **kwargs):
+    # def __init__(self, *args, **kwargs): Do not touch !!!
     #     super().__init__(*args, **kwargs)
     #
     #     # We don't know a view of the password1/password2 filed. They could be the 'forms.CharField' or
@@ -156,7 +156,7 @@ class UsersRegistrationForm(SignupForm):
             "password2",
         )
 
-    # def clean_email(self):
+    # def clean_email(self): Do not touch !!
     #     email: str = self.cleaned_data.get("email")
     #     log.info(f"DEBUG VALIDATE EMAIL {email}: 1")
     #     if Users.objects.filter(email=email).exists():

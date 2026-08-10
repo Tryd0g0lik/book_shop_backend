@@ -1,7 +1,7 @@
 # persons/interfaces/interface_cache_adapter.py:3
 
 from contextlib import asynccontextmanager, contextmanager
-from typing import TYPE_CHECKING, Any, ClassVar, Optional, Protocol, Union
+from typing import TYPE_CHECKING, ClassVar, Optional, Protocol, Union
 
 if TYPE_CHECKING:
     import queue
@@ -68,29 +68,6 @@ class CacherAdapter(CacherBaseMixin, Protocol):
 
     @property
     def is_connected(self) -> bool: ...
-
-
-#
-# class CacherAdapter(Protocol):
-#     _pool: ClassVar[Optional[Any]] = None
-#     _pool_lock: ClassVar[Optional["threading.Lock"]] = None
-#
-#     def _init_pool(self) -> None: ...
-#
-#     def __get_client(self) -> Optional["Redis"]: ...
-#
-#     def related(self) -> bool: ...
-#
-#     @contextmanager
-#     def connected(self) -> "AbstractContextManager[Any]": ...
-#
-#     def _recreated_pool(self) -> None: ...
-#
-#     def close(self) -> None: ...
-#
-#     @property
-#     def is_connected(self) -> bool: ...
-#
 
 
 class CacheManager(Protocol):
