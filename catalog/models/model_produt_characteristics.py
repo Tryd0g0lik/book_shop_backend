@@ -44,7 +44,7 @@ class ProductCharacteristics(AbstractCategoryPage):
         null=True,
         blank=True,
         on_delete=models.CASCADE,
-        verbose_name="product Characteristics",
+        verbose_name=_("product Characteristics"),
         related_name="characteristics",
     )
 
@@ -53,7 +53,7 @@ class ProductCharacteristics(AbstractCategoryPage):
         verbose_name_plural = "Product Characteristics"
         unique_together = (("name", "value"),)
         ordering = ["name"]
-        verbose_name = "Product Characteristic"
+        verbose_name = _("Product Characteristic")
 
     def __str__(self):
         return f"{self.name} - {self.value}"

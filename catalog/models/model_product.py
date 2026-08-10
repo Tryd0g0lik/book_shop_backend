@@ -34,8 +34,10 @@ class ProductModel(ClusterableModel, AbstractModel):
             MaxLengthValidator(80),
             RegexValidator(
                 regex=r"(^[A-ZА-ЯЁ0-9][\w\dА-ЯЁа-яё\s]+$)",
-                message="Only letters, numbers, spaces \
-            and underscores are allowed.",
+                message=_(
+                    "Only letters, numbers, spaces \
+            and underscores are allowed."
+                ),
             ),
         ],
         unique=True,
@@ -53,7 +55,7 @@ class ProductModel(ClusterableModel, AbstractModel):
             MaxLengthValidator(100),
             RegexValidator(
                 regex=r"^[a-zA-Z0-9_\-]+$",
-                message="Only letters, numbers and underscores are allowed.",
+                message=_("Only letters, numbers and underscores are allowed."),
             ),
         ],
     )
@@ -257,11 +259,3 @@ class ProductModel(ClusterableModel, AbstractModel):
             using=using,
             update_fields=update_fields,
         )
-
-    # def clean_discount(self):
-    #     if (
-    #         (self.discount_percent is None or int(self.discount_percent) < 0)
-    #         if type(self.discount_percent) in (str,)
-    #         else self.discount_percent < 0
-    #     ):
-    #         self.discount_percent = 0

@@ -6,7 +6,6 @@ from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
 from profiles.exceptions.error_profile import ProfileNotFound, ProfileValueError
-from profiles.interfaces import UserProfilePydantic
 
 log = logging.getLogger(__name__)
 
@@ -32,7 +31,6 @@ class UserProfileManagerModel(models.Model):
     And added additional cell is profiles
     """
 
-    # id = models.AutoField(primary_key=True)
     moderator = models.ForeignKey(
         "profiles.ModeratorProfileModel",
         on_delete=models.CASCADE,
@@ -84,14 +82,6 @@ class UserProfileManagerModel(models.Model):
         db_index=True,
         db_comment="User profile",
     )
-    # product = models.ForeignKey(
-    #     "catalog.ProductModel",
-    #     on_delete=models.SET_NULL,
-    #     verbose_name=_("Product"),
-    #     blank=True,
-    #     null=True,
-    #     related_name="product",
-    # )
 
     class Meta:
         db_table = "profiles_users"

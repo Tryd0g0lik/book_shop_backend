@@ -2,7 +2,7 @@
 from django.db import models
 from modelcluster.fields import ParentalKey
 from wagtail.admin.panels import FieldPanel
-from wagtail.models import Orderable, Page
+from wagtail.models import Orderable
 from wagtail.snippets.models import register_snippet
 
 

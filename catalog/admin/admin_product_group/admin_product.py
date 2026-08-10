@@ -15,7 +15,7 @@ class ProductAdmin(ModelAdmin):
     menu_label = _("Products")
     add_to_settings_menu = True
     exclude_from_explorer = False
-    base_url_path = "catalog/product"
+    base_url_path = "catalog/products"
     menu_order = 500
     list_per_page = 25
     list_display = [

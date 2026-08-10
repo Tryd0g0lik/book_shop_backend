@@ -3,7 +3,6 @@
 
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from wagtail.admin.panels import FieldPanel, FieldRowPanel, MultiFieldPanel
 
 from .model_abstract import AbstractCategoryPage
 

@@ -197,7 +197,8 @@ class DownloadOfCatalogViewSet(ViewSet):
         )
         if not post_files:
             post_files = post_data.get("file")
-
+        elif "file" in post_files:
+            post_files = post_files.get("file")
         log.debug("{} DEBUG after post_files: {}".format(log_t, str(post_files)[:50]))
         post_files = (
             json.loads(post_files) if isinstance(post_files, str) else post_files

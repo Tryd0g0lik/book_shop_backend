@@ -12,10 +12,8 @@ from django.utils.translation import gettext_lazy as _
 from modelcluster.fields import ParentalKey
 from wagtail.admin.panels import FieldPanel
 from wagtail.images.widgets import AdminImageChooser
-from wagtail_modeladmin.options import modeladmin_register
 
 
-# @modeladmin_register
 class OneImageModels(models.Model):
     f"""
     Item for one image & additional this image hase a title and short description.

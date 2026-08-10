@@ -3,7 +3,7 @@
 from django.urls import path
 from rest_framework import routers
 
-from catalog.views import ProductViewSet
+from catalog.views_api import ProductViewSet
 
 router = routers.DefaultRouter()
 router.register("product", ProductViewSet)

@@ -1,3 +1,4 @@
+# profiles/exceptions/error_profile.py:2
 from typing import Optional
 
 from project import AbstractError

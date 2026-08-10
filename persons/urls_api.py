@@ -4,5 +4,5 @@ from rest_framework.routers import DefaultRouter
 
 from persons.forms import UsersRegistrationForm
 
-# router = DefaultRouter()
+# router = DefaultRouter() Do not touch else It.
 # router.register('users', UsersRegistrationForm)

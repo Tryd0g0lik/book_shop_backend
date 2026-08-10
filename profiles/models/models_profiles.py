@@ -2,6 +2,7 @@
 # Simply contain a common information of all roles/profiles
 
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from project.settings_conf.settings_first import (
     LANGUAGE_CODE,
@@ -17,8 +18,13 @@ class ProfilesModel(models.Model):
     )
     time_zone = models.CharField(max_length=50, default=TIME_ZONE)
     dashboard_preference = models.JSONField(
-        default=dict, blank=True, help_text="User preferences for dashboards and layout"
+        default=dict,
+        blank=True,
+        help_text=_("User preferences for dashboards and layout"),
     )
 
     class Meta:
         abstract = True
+
+    def __str__(self):
+        return "Time zone: {}".format(self.time_zone)

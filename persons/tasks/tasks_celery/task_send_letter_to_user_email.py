@@ -160,9 +160,6 @@ async def child_process_get_keys_0(
                     return False
             return True
 
-        # assert type(keys) in (list, tuple), "Check the type"
-        # assert len(keys) >= 1, "Check the count keys"
-
         for key in keys:
             log.info(f"[{child_process_get_keys_0.__name__}]: key: {key}")
             tasks.append(resave_cache_after_sent_letter(*(key,)))
@@ -256,10 +253,6 @@ async def send_letter_to_user_email(*args, **kwargs) -> bool:
             while not dict_queue.empty():
                 byte_code = dict_queue.get_nowait()
                 list_of_keys = json.loads(byte_code.decode(DEFAULT_CHARSET))
-
-                # list_of_keys.append(json_code)
-                # account_manager = AccountManager()
-                # generater = account_manager.inisialize_account()
                 log.info(
                     log_t
                     + f"""

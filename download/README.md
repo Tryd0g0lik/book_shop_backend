@@ -1,4 +1,5 @@
 
+- [confirm_convert_alias.txt](static/modal_pages/confirm_convert_alias.txt) This is template of upload Excel file to the server.
 ## Add
 ```text
 # project/settings_conf/settings_first.py

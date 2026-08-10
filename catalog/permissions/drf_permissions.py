@@ -1,16 +1,9 @@
 # catalog/permissions/drf_permissions.py:1
 import logging
 
-from django.db.models import Q, QuerySet
-from pandas import isnull
 from rest_framework.permissions import BasePermission
 from rest_framework.request import Request
 
-from persons.tasks.tasks_celery.task_create_position.functions import (
-    get_fields_of_model,
-)
-from profiles.exceptions.error_profile import ProfileNotFound
-from profiles.models import UserProfileManagerModel
 from utilities import CATEGORY_STATUS
 
 from ..exceptions import ProductValueError
@@ -73,7 +66,6 @@ class DRFPermissionsChecker(BasePermission):
 
             if profile.lower() in roles:
                 return True
-
             return False
         except Exception as e:
             log.error(list(e.args)[0])

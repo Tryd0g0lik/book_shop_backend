@@ -19,7 +19,7 @@ from project.settings_conf.settings_env import (
 
 
 class UsersLoginForm(forms.Form):
-    # username = forms.CharField(
+    # username = forms.CharField( Do not touch !!!
     #     label=_("Username"),
     #     validators=[
     #         MinLengthValidator(2),
