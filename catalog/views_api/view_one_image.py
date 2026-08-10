@@ -15,5 +15,5 @@ class OneImageSerializers(serializers.ModelSerializer):
 
 
 class OneImageViewSet(ModelViewSet):
-    queryset = OneImageModels.models.all()
+    queryset = OneImageModels.objects.all()
     serializers_class = OneImageSerializers

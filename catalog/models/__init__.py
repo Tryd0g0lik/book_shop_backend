@@ -18,5 +18,3 @@ from catalog.models.model_page import ProductPageModel
 from catalog.models.model_product import ProductModel
 from catalog.models.model_produt_characteristics import ProductCharacteristics
 from catalog.models.page_category import CategoryPage
-
-# from catalog.models.model_test import ProductPageTest

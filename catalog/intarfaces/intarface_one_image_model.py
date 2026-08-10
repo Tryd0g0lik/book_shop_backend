@@ -1,9 +1,9 @@
+# catalog/intarfaces/intarface_one_image_model.py
 from typing import TYPE_CHECKING, Protocol
 
 if TYPE_CHECKING:
-    from django.db import models
+    from django.db.models import ForeignKey
     from modelcluster.fields import ParentalKey
-    from wagtail.admin.panels import FieldPanel
 
 
 class OneImageModelsType(Protocol):
@@ -21,15 +21,16 @@ class OneImageModelsType(Protocol):
     :param {float} y: The x value of percent for image. Default it hase 0.0. Min: 0.0 Max: 100.0
     """
     title: str
-    image: models.ForeignKey
-    product: ParentalKey
+    image: "ForeignKey"
+    product: "ParentalKey"
     describe: str
     label: str
     x: float
     y: float
 
-    models = None
+    # def __init__(self):
+    objects = None
 
     def __str__(self) -> str: ...
 
-    panels: list[FieldPanel]
+    panels = None
