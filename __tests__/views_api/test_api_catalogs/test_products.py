@@ -283,11 +283,6 @@ class TestApiUploadFileValid:
                 await clearner_database()
                 await asyncio.sleep(1)
 
-                # debug_result = next(wrapper)
-
-                # debug_result = next(wrapper)
-
-                # log.debug("debug_result: {} & Type: {}".format(str(debug_result), type(debug_result)))
         finally:
             # ============================================
             # CLEARING THE DATA FROM DATABASE
