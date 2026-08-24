@@ -21,7 +21,10 @@ from django.http import JsonResponse
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAdminUser
 
+from __tests__.tests_api.openapi_schema.users_schema import user_schema
 from catalog.models import ProductGalleryImageModel
 from download.permissions.permission_drf import CanLoadFilePermission
 from download.task_save_file import task_saving_data_oFfile
@@ -32,13 +35,16 @@ log = logging.getLogger(__name__)
 
 class DownloadOfCatalogViewSet(ViewSet):
     queryset = ProductGalleryImageModel.objects.all()
+    permission_classes = [
+        IsAdminUser,
+    ]
     PREFIX_LOG = "[CatalogViewSet]:"
 
     @swagger_auto_schema(
         operation_description="""
         Method: POST.
         View: Form data.
-        Pathname: 'download/load/file/'
+        Pathname: '`/download/load/file/``'
         ============================================
         This is a method for use permissions. It is where the upload allows to be and not.
         The upload of file (xls) allows user to be:
@@ -46,9 +52,6 @@ class DownloadOfCatalogViewSet(ViewSet):
         - user.groups == "moderators"
         - user.groups == "editors"
         - user.groups == "manager"
-        and not allows:
-        - user.groups == "client"
-        - user.groups == "Base"
 
         Else infor to  the '`operation_summary`' from the class '`DownloadOfCatalogViewSet.create`'.
         ---
@@ -73,6 +76,7 @@ class DownloadOfCatalogViewSet(ViewSet):
                 in_=openapi.IN_HEADER,
                 type=openapi.TYPE_STRING,
                 example="multipart/form-data",
+                required=True,
             ),
             openapi.Parameter(
                 name="Authorization",
@@ -81,6 +85,12 @@ class DownloadOfCatalogViewSet(ViewSet):
                 type=openapi.TYPE_STRING,
                 example="Bearer <KEY>",
             ),
+            openapi.Schema(
+                name="user",
+                in_=openapi.IN_QUERY,
+                type=openapi.TYPE_OBJECT,
+                schema=user_schema,
+            ),
         ],
         request_body=openapi.Schema(
             type=openapi.TYPE_OBJECT,
@@ -88,11 +98,13 @@ class DownloadOfCatalogViewSet(ViewSet):
             properties={
                 "total_chunks": openapi.Schema(
                     type=openapi.TYPE_STRING,
+                    format=openapi.FORMAT_BINARY,
                     description="Total number of chunks for an upload",
                     example="3",
                 ),
                 "chunk_size": openapi.Schema(
                     type=openapi.TYPE_STRING,
+                    format=openapi.FORMAT_FLOAT,
                     description="Size of current chunk in bytes",
                     example="18092",
                 ),
@@ -103,17 +115,20 @@ class DownloadOfCatalogViewSet(ViewSet):
                 ),
                 "chunk_index": openapi.Schema(
                     type=openapi.TYPE_STRING,
-                    description="Current chunk index",
+                    description="Current chunk index. It ia the type str[int] ",
                     example="2",
+                    format=openapi.FORMAT_INT64,
                 ),
                 "file": openapi.Schema(
                     type=openapi.TYPE_FILE,
                     description="Excel file to upload (.xls or .xlsx). Note: Format .xlsx of file is uploading\
                                  not correctly!!\
                                  Note: This data can be to the form or body.",
-                    example="b'\x00\x00\xfd\x00\n\x00\t\x00\t\x00\x0f\x00,\x00'",
+                    example="\b'\x00\x00\xfd\x00\n\x00\t\x00\t\x00\x0f\x00,\x00'",
+                    format=openapi.FORMAT_BINARY,
                 ),
             },
+            additional_properties=False,
         ),
         responses={
             200: openapi.Response(
@@ -126,13 +141,28 @@ class DownloadOfCatalogViewSet(ViewSet):
                 description="All chunks were sent and data were records in database.",
                 examples={"application/json": {"success": "Ok"}},
             ),
-            400: openapi.Response(description="Bad request. View a byte code."),
-            403: openapi.Response(description="Permission denied"),
+            400: openapi.Response(
+                description="Bad request. View a byte code.",
+                examples={
+                    "application/json": {"detail": "Missing < POSSIBLE LOCATION >"}
+                },
+            ),
+            403: openapi.Response(
+                description="Permission denied",
+                examples={"application/json": {"detail": "Permission Denied"}},
+            ),
             401: openapi.Response(description="Unauthorized"),
-            500: openapi.Response(description="Server error"),
+            500: openapi.Response(
+                description="Server error",
+                examples={"application/json": {"detail": "< TEXT_ERROR >"}},
+            ),
         },
     )
-    async def create(self, request, *args, **kwargs):
+    @action(
+        detail=False,
+        methods=["post"],
+    )
+    async def acreate(self, request, *args, **kwargs):
         """
         TODO: Put a signal for alert about loads file.
             xlsx - передача chunks - ломает файл.
@@ -143,7 +173,7 @@ class DownloadOfCatalogViewSet(ViewSet):
         :param kwargs: empty
         :return:
         """
-        log_t = "{}[{}]:".format(self.PREFIX_LOG[:-1], self.create.__name__)
+        log_t = "{}[{}]:".format(self.PREFIX_LOG[:-1], self.acreate.__name__)
         lock = asyncio.Lock()
         # ============================================
         # CHECKING PERMISSIONS
@@ -152,7 +182,7 @@ class DownloadOfCatalogViewSet(ViewSet):
         result_bool = await asyncio.to_thread(
             lambda: permission.has_permission(request, permission)
         )
-        if not result_bool:
+        if request.method != "POST" or not result_bool:
             return JsonResponse(
                 {"detail": "Permission Denied"}, status=status.HTTP_403_FORBIDDEN
             )
