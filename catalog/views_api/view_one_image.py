@@ -1,12 +1,10 @@
 # catalog/views_api/view_one_image.py:1
 import asyncio
-import json
 import logging
 
 from adrf.requests import Request
 from adrf.viewsets import ModelViewSet
 from django.apps import apps
-from django.db.models.functions import TruncDay
 from django.http import JsonResponse
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -26,14 +24,17 @@ log = logging.getLogger(__name__)
 
 
 class OneImageViewSet(ModelViewSet):
-    queryset = OneImageModels.objects.all()
     serializer_class = OneImageSerializers
     permission_classes = [IsAdminUser]
     LOCK = asyncio.Lock()
 
     PREFIX_LOG = "[OneImageViewSet]"
-
-    @swagger_auto_schema(method_post=["post"], auto_schema=None)
+    def get_gueryset(self):
+        return OneImageModels.objects.select_related(
+            "image",
+            "product"
+        ).all()
+    @swagger_auto_schema(auto_schema=None)
     def create(self, request, *args, **kwargs):
         return super().create(request, *args, **kwargs)
 
@@ -191,7 +192,7 @@ class OneImageViewSet(ModelViewSet):
     @action(detail=False, methods=["post"])
     async def acreate(self, request: Request, *args, **kwargs):
         serialize, product_obj, image_obj = None, None, None
-        prefix_log = "{}[{}]:".format(self.PREFIX_LOG, self.create.__name__)
+        prefix_log = "{}[{}]:".format(self.PREFIX_LOG, self.acreate.__name__)
         try:
             self.check_permissions(request)
         except Exception as e:
@@ -200,15 +201,16 @@ class OneImageViewSet(ModelViewSet):
             )
             log.error(error_t)
             return JsonResponse({"detail": error_t}, status=status.HTTP_403_FORBIDDEN)
-
+        # Beginning collection data
         data = request.data
         product_id = data.get("product_id")
         image_id = data.get("image_id")
         try:
             # ============================================
-            # GETTING DEPENDENTS MODELS
+            # GETTING DATA FROM DEPENDENTS MODELS
             # ============================================
-            product_obj = await ProductModel.objects.aget(id=product_id)
+            product_obj = await asyncio.to_thread(lambda : self._get_product_raw(product_id))
+
             image_obj, created = await ImageModel.objects.aget_or_create(id=image_id)
         except ModuleNotFoundError as e:
             error_t = "{} ModuleNotFoundError => {}".format(
@@ -243,12 +245,11 @@ class OneImageViewSet(ModelViewSet):
                 )
             # ============================================
             # CHECKING A DATA VALIDATION
+            # Sending data to the front.
             # ============================================
-            # is_valid = await asyncio.to_thread(lambda: serialize.is_valid())
             is_valid = await asyncio.to_thread(serialize.is_valid)
             if is_valid:
                 await serialize.asave()
-
                 resource = JsonResponse(
                     {"detail": serialize.data}, status=status.HTTP_200_OK
                 )
@@ -266,3 +267,33 @@ class OneImageViewSet(ModelViewSet):
                 {"detail": error_t},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+    @swagger_auto_schema(auto_schema=None)
+    def update(self, request: Request, *args, **kwargs):
+        return super().update(request, *args, **kwargs)
+
+    @swagger_auto_schema(auto_schema=None)
+    async def aupdate(self, request: Request, *args, **kwargs):
+        return super().aupdate(request, *args, **kwargs)
+
+    @swagger_auto_schema(openation_description="")
+    @action(detail=False, methods=["patch"])
+    async def aupdate(self, request: Request, *args, **kwargs):
+        return super().aupdate(request, *args, **kwargs)
+
+    def _get_product_raw(self, product_id: int) -> ProductModel:
+        product_query = ProductModel.objects.raw("""
+            SELECT *, 
+                c.id as category_id, c.name as category_name,
+                b.id as brand_id, b.name as brand_name 
+                FROM product_model p 
+                INNER JOIN category c
+                ON p.category_id= c.id
+                INNER JOIN brand b 
+                ON p.brand_id = b.id
+                WHERE p.is_active = true AND p.id = %s
+                LIMIT 1;
+            """, [str(product_id)])
+
+        product_obj = list(product_query)[0] if product_query and len(list(product_query)) > 0 else None
+        return product_obj
