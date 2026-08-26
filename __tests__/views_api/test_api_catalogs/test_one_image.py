@@ -18,7 +18,7 @@ from rest_framework.test import force_authenticate
 # Getting parameters
 from __tests__.fixtures.fixture_parametrize2 import pytest_generate_tests
 from catalog.intarfaces import ProductModelType
-from catalog.views_api import OneImageViewSet
+from catalog.views_api import ProductImageViewSet
 from project import BASE_DIR
 
 # ============================================
@@ -42,7 +42,7 @@ pytest_plugins = [
 ]
 log = logging.getLogger(__name__)
 
-class TestOneImage:
+class TestProductImage:
     """It is a valid test for the 'OneImageViewSet' class"""
     PREFIX_LOG = "[TestOneImage]"
     TEST_FILE = [os.path.join(BASE_DIR, "__tests__", "fixtures", "jwt_by_api_map.png")]
@@ -67,7 +67,7 @@ class TestOneImage:
                 profile_manager = await UserProfileManagerModel.objects.acreate(moderator=profile_obj)
             return profile_obj, profile_manager
         return get_role
-    # @pytest.mark.asyncio
+    @pytest.mark.asyncio
     async def test_create_one_image_valid(self, transactional_db, fixture_session_of_user, fixture_mistake_role):
         """
         Checking valid data.
@@ -205,10 +205,10 @@ class TestOneImage:
                     # ============================================
                     # Create the OneImageViewSet model
                     # ============================================
-                    view = OneImageViewSet()
+                    view = ProductImageViewSet()
                     view.action = 'create'
                     test_response = await view.acreate(request)
-                    log.debug("{} DEBUG \n Content: \n {}  ".format(prefix_log, str(test_response.__class__), ))
+                    log.debug("{} DEBUG \n Content: \n {}  ".format(prefix_log, str(test_response.content.decode()), ))
                     log.debug("{} DEBUG \n R T: \n {}  ".format(prefix_log, str(test_response)[:50], ))
                     log.debug("{} DEBUG \n Response Type: \n {}  ".format(prefix_log, type(test_response), ))
                     log.debug("{} DEBUG \n Response: \n {}  ".format(prefix_log, str(test_response.__class__.__dict__),))
@@ -222,6 +222,7 @@ class TestOneImage:
                     assert test_response.status_code == status_code
                     assert type(test_response.content) == bytes
                     content = json.loads(test_response.content.decode())
+                    log.debug("{} DEBUG \n Response Content: \n {}  ".format(prefix_log, str(content),))
                     assert content.get("detail").get("title") == request.data.get("title")
 
                 except Exception as e:
@@ -229,7 +230,7 @@ class TestOneImage:
                     raise e
         finally:
             pass
-
+    # @pytest.mark.skip(reason="stop test")
     async def test_error_403(self, fixture_session_of_user):
         """Checking the 403 mistake"""
         # ============================================
@@ -252,12 +253,13 @@ class TestOneImage:
         # ============================================
         # STARTING A TEST
         # ============================================
-        view = OneImageViewSet()
+        view = ProductImageViewSet()
         view.action = "create"
         test_response = await view.acreate(request)
 
         assert test_response.status_code == 403
 
+    # @pytest.mark.skip(reason="stop test")
     async def test_error_400(self, transactional_db, fixture_session_of_user, fixture_mistake_role):
         """Checking the 400 mistake"""
         # ============================================
@@ -351,7 +353,7 @@ class TestOneImage:
             # ============================================
             # Create the OneImageViewSet model
             # ============================================
-            view = OneImageViewSet()
+            view = ProductImageViewSet()
             view.action = 'create'
 
             test_response = await view.acreate(request)
