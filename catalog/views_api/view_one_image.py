@@ -12,7 +12,11 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser
 
-from __tests__.tests_api.openapi_schema.users_schema import user_schema
+from utilities.openapi_schema import product_response_schema
+from utilities.openapi_schema.images_schema import image_response_schema
+from utilities.openapi_schema.users_schema import user_schema
+
+
 from catalog.intarfaces import OneImageModelsType, ProductModelType
 from catalog.serializers import OneImageSerializers
 
@@ -23,25 +27,25 @@ ImageModel = apps.get_model("wagtailimages", "Image")
 log = logging.getLogger(__name__)
 
 
-class OneImageViewSet(ModelViewSet):
+class ProductImageViewSet(ModelViewSet):
+    queryset = OneImageModels.objects.select_related(
+        "image",
+        "product"
+    ).all()
     serializer_class = OneImageSerializers
     permission_classes = [IsAdminUser]
-    LOCK = asyncio.Lock()
+    # LOCK = asyncio.Lock()
 
-    PREFIX_LOG = "[OneImageViewSet]"
-    def get_gueryset(self):
-        return OneImageModels.objects.select_related(
-            "image",
-            "product"
-        ).all()
+    PREFIX_LOG = "[ProductImageViewSet]"
+
     @swagger_auto_schema(auto_schema=None)
     def create(self, request, *args, **kwargs):
-        return super().create(request, *args, **kwargs)
+        return super().create(self, request, *args, **kwargs)
 
     @swagger_auto_schema(
         operation_description="""
         Method: '`POST`'
-        Pathname: '`/catalog/image/custom-create/`'
+        Pathname: '`/catalog/image/`'
         ============================================
         **THis image for the product page**
         This is a method for use permissions of the user's roles.
@@ -137,14 +141,11 @@ class OneImageViewSet(ModelViewSet):
                                 "id": openapi.Schema(
                                     type=openapi.TYPE_INTEGER, example=1
                                 ),
-                                "product": openapi.Schema(
-                                    type=openapi.TYPE_INTEGER, example=12
-                                ),
-                                "image": openapi.Schema(
-                                    type=openapi.TYPE_INTEGER, example=2
-                                ),
+                                "product":  product_response_schema,
+                                "image": image_response_schema,
                                 "title": openapi.Schema(
-                                    type=openapi.TYPE_STRING, example="Test title"
+                                    type=openapi.TYPE_STRING,
+                                    example="Test title"
                                 ),
                                 "describe": openapi.Schema(
                                     type=openapi.TYPE_STRING, example="Test description"
@@ -191,6 +192,13 @@ class OneImageViewSet(ModelViewSet):
     )
     @action(detail=False, methods=["post"])
     async def acreate(self, request: Request, *args, **kwargs):
+        """
+        TODO Dec-commenting the permissions
+        :param request:
+        :param args:
+        :param kwargs:
+        :return:
+        """
         serialize, product_obj, image_obj = None, None, None
         prefix_log = "{}[{}]:".format(self.PREFIX_LOG, self.acreate.__name__)
         try:
@@ -205,30 +213,11 @@ class OneImageViewSet(ModelViewSet):
         data = request.data
         product_id = data.get("product_id")
         image_id = data.get("image_id")
-        try:
-            # ============================================
-            # GETTING DATA FROM DEPENDENTS MODELS
-            # ============================================
-            product_obj = await asyncio.to_thread(lambda : self._get_product_raw(product_id))
 
-            image_obj, created = await ImageModel.objects.aget_or_create(id=image_id)
-        except ModuleNotFoundError as e:
-            error_t = "{} ModuleNotFoundError => {}".format(
-                prefix_log, e.args[0] if e.args else str(e)
-            )
-            log.error(error_t)
-            return JsonResponse({"detail": error_t}, status=status.HTTP_400_BAD_REQUEST)
-        except (ProductModel.DoesNotExist, ImageModel.DoesNotExist) as e:
-            error_t = "{} DoesNotExist => {}".format(
-                prefix_log, e.args[0] if e.args else str(e)
-            )
-            log.error(error_t)
-            return JsonResponse({"detail": error_t}, status=status.HTTP_400_BAD_REQUEST)
         try:
             del data["product_id"], data["image_id"]
-            data.__setitem__("product", product_obj.id)
-            data.__setitem__("image", image_obj.id)
-
+            data.__setitem__("product", product_id)
+            data.__setitem__("image", image_id)
             try:
                 serialize = OneImageSerializers(data=data)
             except TypeError as e:
@@ -237,7 +226,7 @@ class OneImageViewSet(ModelViewSet):
                 return JsonResponse(
                     {"detail": error_t}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
-
+            log.debug("DEBUG {} \nSerialize={} ".format(prefix_log, str(serialize),))
             if serialize is None:
                 return JsonResponse(
                     {"detail": "The serialise is invalid."},
@@ -250,8 +239,9 @@ class OneImageViewSet(ModelViewSet):
             is_valid = await asyncio.to_thread(serialize.is_valid)
             if is_valid:
                 await serialize.asave()
+                data = await serialize.adata
                 resource = JsonResponse(
-                    {"detail": serialize.data}, status=status.HTTP_200_OK
+                    {"detail": data}, status=status.HTTP_200_OK
                 )
                 return resource
             response = JsonResponse(
@@ -281,19 +271,19 @@ class OneImageViewSet(ModelViewSet):
     async def aupdate(self, request: Request, *args, **kwargs):
         return super().aupdate(request, *args, **kwargs)
 
-    def _get_product_raw(self, product_id: int) -> ProductModel:
-        product_query = ProductModel.objects.raw("""
-            SELECT *, 
-                c.id as category_id, c.name as category_name,
-                b.id as brand_id, b.name as brand_name 
-                FROM product_model p 
-                INNER JOIN category c
-                ON p.category_id= c.id
-                INNER JOIN brand b 
-                ON p.brand_id = b.id
-                WHERE p.is_active = true AND p.id = %s
-                LIMIT 1;
-            """, [str(product_id)])
-
-        product_obj = list(product_query)[0] if product_query and len(list(product_query)) > 0 else None
-        return product_obj
+    def _get_wgt_image_raw(self, image_id) -> ImageModel:
+        log_t = "{}[{}]:".format(self.PREFIX_LOG, self._get_wgt_image_raw.__name__)
+        image_query = ImageModel.objects.raw("""
+        SELECT * 
+            FROM wagtailimages_image wi
+            INNER JOIN person p
+            ON wi.uploaded_by_user_id = p.id
+            INNER JOIN wagtailcore_collection wc
+            ON wi.collection_id = wc.id
+            WHERE wi.id = %s
+            LIMIT 1;
+        """, [str(image_id)])
+        image_obj = list(image_query)[0] if image_query and len(list(image_query)) > 0 else None
+        if image_obj is None:
+            raise ImageModel.DoesNotExist("{} Image id: {} not found".format(log_t,image_id))
+        return image_obj
