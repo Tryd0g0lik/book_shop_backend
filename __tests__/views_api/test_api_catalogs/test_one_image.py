@@ -15,11 +15,12 @@ from rest_framework import status
 from rest_framework.exceptions import NotAuthenticated, PermissionDenied
 from rest_framework.test import force_authenticate
 
-# Getting parameters
+# Getting parameters - does not try to remove this the line
 from __tests__.fixtures.fixture_parametrize2 import pytest_generate_tests
 from catalog.intarfaces import ProductModelType
 from catalog.views_api import ProductImageViewSet
 from project import BASE_DIR
+from __tests__.tests_api.fixture_sessions_of_users import fixture_session_of_user
 
 # ============================================
 # GETTING MODELS - THE WORKS ENVIRONMENT
@@ -67,6 +68,7 @@ class TestProductImage:
                 profile_manager = await UserProfileManagerModel.objects.acreate(moderator=profile_obj)
             return profile_obj, profile_manager
         return get_role
+
     @pytest.mark.asyncio
     async def test_create_one_image_valid(self, transactional_db, fixture_session_of_user, fixture_mistake_role):
         """
@@ -230,7 +232,7 @@ class TestProductImage:
                     raise e
         finally:
             pass
-    # @pytest.mark.skip(reason="stop test")
+
     async def test_error_403(self, fixture_session_of_user):
         """Checking the 403 mistake"""
         # ============================================
@@ -238,12 +240,12 @@ class TestProductImage:
         # ============================================
         qwargs = {
             "path": "/api/catalog/image/acreate/",
-            "headers": fixture_session_of_user.headers,
+            "headers": dict(),
         }
         factory = AsyncRequestFactory()
         request = factory.post(**qwargs)
         request.session = {}
-        request.user = AnonymousUser
+        request.user = AnonymousUser()
         request._request = request
         request.METHOD = "POST",
         request.META = {
@@ -254,12 +256,10 @@ class TestProductImage:
         # STARTING A TEST
         # ============================================
         view = ProductImageViewSet()
-        view.action = "create"
-        test_response = await view.acreate(request)
+        test_response = await view.acreate(request,  args=[], qwargs={})
 
         assert test_response.status_code == 403
 
-    # @pytest.mark.skip(reason="stop test")
     async def test_error_400(self, transactional_db, fixture_session_of_user, fixture_mistake_role):
         """Checking the 400 mistake"""
         # ============================================
