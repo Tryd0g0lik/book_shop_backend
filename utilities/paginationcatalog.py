@@ -1,9 +1,7 @@
 # utilities/paginationcatalog.py:1
 import logging
-from doctest import Example
 from typing import Any, Optional
 
-from catalog.apps import cachemanager_catalog
 from project.settings_conf.settings_env import REST_FRAMEWORK_PAGINATION_SIZE
 log = logging.getLogger(__name__)
 
@@ -13,7 +11,17 @@ class PaginationCatalogData:
         self,
         data_list: Optional[list[dict[str, Any]]] = None,
     ):
-        self.__list: list[dict[str, Any]] = data_list
+        f"""
+        The {list[dict[str, Any]] | None} '__list' is data of type list[dict[str, Any]] that we want separate on chunks and
+            that one chunk will send to the user.
+        The {str[list[dict[str, Any]]] | None} '__list_of_cache' is a JSON's string from the cache's server.
+        The {str | None} '__key_cache' is a cache's key from the JSON's string.
+        The {int| None} 'page' is a number of pages
+        The {int| None } 'size_page' indicates the now much of lines can contain in one of chunk. 
+        """
+        self.__list: Optional[list[dict[str, Any]]] = data_list
+        self.__list_of_cache: Optional[str[list[dict[str, Any]]]] = None
+        self.__key_cache: Optional[str] = None
         self.page: Optional[int] = None
         self.size_page: Optional[int] = None
     def __new__(cls, *args, **kwargs):
@@ -47,6 +55,7 @@ class PaginationCatalogData:
             # ============================================
             # The logic of pagination and caching for working in the catalog code
             # ============================================
+
         except ValueError as err:
             raise err
         except Exception as err:
