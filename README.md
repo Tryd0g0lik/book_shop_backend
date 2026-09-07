@@ -1,4 +1,8 @@
-[frontend](https://github.com/Tryd0g0lik/book_shop_frontend)
+Все работы проводятся в сихронном рехиме так работаю с проектом - один: 
+- Тут [меняю базовую Wagtile admin панель](https://github.com/Tryd0g0lik/book_shop_frontend). 
+- Frontend - работаю над UI.
+- `Koa`/Node - [базовый сервер](https://github.com/Tryd0g0lik/book_shop_koa_server) для работ по разработке UI. 
+
 Евляется личным проектом. Репозиторий представлен для усиления резюме, но сама разработка продолжается.\
 Дерево проэкта представлено не полностью. Код сырой, но читабельный
 
