@@ -89,7 +89,7 @@
 
 |                                                                                                                         |||
 |:------------------------------------------------------------------------------------------------------------------------|:---|:---|
-| [<img src="img/one_images_model.png" stylle="cursor: pointer;" width="200"/>](img/one_images_model.png) |||
+| ![one_images_model](img/one_images_model.png) |||
 |                                                                                                                         |||
 
 ---
