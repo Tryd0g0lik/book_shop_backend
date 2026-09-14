@@ -275,6 +275,82 @@ Note: В коде используются как категория стату�
 
 ![API map](img/API_map.png)
 
+## .env
+
+```.env
+PYTHONPATH=< path_name_to_the_foot_folder_of_your_project > # The development mode 
+PYTHONUNBUFFERED=1 # The development mode
+PYTHONUTF8=1 # The development mode
+PYCHARM_PROPERTIES=d:/Programs/Pyacharm/PyCharm 2025.1.3.1/bin < It_is_the_root_my_IDE&for_different_the_junks_It_is_relocate_from_the_C_disk>
+SECRET_KEY_DJ=< The_secret_password_of_your_project >
+
+# ============== APP
+APP_NAME=BookShop # The name your servic 
+APP_PROTOCOL=http # http
+APP_HOST=127.0.0.1 
+APP_PORT=8000
+APP_TIME_ZONE=Asia/Krasnoyarsk
+
+APP_MINIMUM_PASSWORD_LENGTH=7 # The min length of the password string
+APP_MAX_PASSWORD_LENGTH=255 # The max length of the password string
+
+# ============== DaTABASE
+POSTGRES_USER= < the_your_name_of_user_db >
+POSTGRES_HOST= < host_your_db >
+POSTGRES_PORT= < port_your_db >
+POSTGRES_PASSWORD=< the_password_of_user_db >
+POSTGRES_DB= <The_name_of_the_your_db>
+
+# ============== VIEW DATABAS & MORE
+# "1" it is Yes/true & "0" it is not/false.
+IS_DEBUG=1
+
+DJANGO_ENV=development # Important!! THe mode (or environment) works for the your project 
+## Тестирование
+#DJANGO_ENV=testing
+## Стейджнг
+#DJANGO_ENV=staging
+## Продакшен
+#DJANGO_ENV=production
+
+# ============== Redis
+REDIS_URL=redis://< IP_your_redis >:< Port_your_redis >
+REDIS_DB=< Number_your_redis-db >
+REDIS_HOST=< IP_your_redis >
+REDIS_PORT=< Port_your_redis >
+
+# ============== Celery + Redis
+REDIS_MASTER_NAME=<user_name_of_redis-db> # It is my login from the SSH for the connection to the my server
+REDIS_PASSWORD= < password of_redis-db>  # It is my password from the SSH for the connection to the my server
+
+# ============== EMAILING
+# Letter
+SUBJECT_CONFIRM_EMAIL_LETTER_0='Book SHOP - Your email address was added' # Simple message for user 
+SUBJECT_KEY_PENDING_SECOND_1="Book SHOP - Code of verification"
+
+# User Emeil
+# Message about registration
+USER_EMAIL_BASIS_MASSAGE='Check the your email and follow the link'
+APP_EMAIL_HOST= < Your_email_server >
+APP_EMAIL_PORT=< Port_from_the_Your_email_server >
+# # https://docs.djangoproject.com/en/6.0/ref/settings/#default-from-email
+APP_DEFAULT_FROM_EMAIL= < your@email.ru>
+APP_EMAIL_HOST_PASSWORD=< Passwort_from_the_remote_app > # REading the document from your/on the email-server
+
+# ============== JWT (minutes)
+JWT_ACCESS_TOKEN_LIFETIME_MINUTES=20 # THe time life of your JWT-token
+JWT_REFRESH_TOKEN_LIFETIME_DAYS=60 # THe time life of your JWT-token
+JWT_SECRET_KEY= <sekret_key_for_encryption >
+# ============== TEST
+# PLAYWRIGHT TEST
+# True - It is when we can not to see the browsser or False
+HEADLESS_MODE=True
+
+# ============== API OPTIONS
+REST_FRAMEWORK_PAGINATION_SIZE=3 # It is how mach of lines from the db to the one page  
+
+```
+
 ## Else files
 
 - [README_orders.md](orders/README_orders.md)
@@ -282,3 +358,47 @@ Note: В коде используются как категория стату�
 - [README_profile.md](profiles/README_profile.md)
 - [README.md](download/README.md)
 - [README](persons/interfaces/README.md)
+
+
+## Root tree
+
+```text
+
+book_shop
+├── __tests__/
+├── .pytest_cache/
+├── caching/
+├── cart/
+├── catalog/
+├── collectstatic/
+├── content_pages/
+├── download/
+├── img/
+├── media/
+├── nginx/
+├── orders/
+├── persons/
+├── profiles/
+├── project/
+├── static/
+├── templates/
+├── utilities/
+├── .browserslistrc
+├── .coverage
+├── .dockerignore
+├── .editorconfig
+├── .env
+├── .flake8
+├── .gitignore
+├── .pre-commit-config.yaml
+├── .pylintrc
+├── docker-compose.yml
+├── Dockerfile
+├── LICENSE.md
+├── manage.py
+├── pyproject.toml
+├── pytest.ini
+├── README.md
+├── requirements.txt
+```
+
